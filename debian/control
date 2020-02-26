@@ -12,7 +12,7 @@ Build-Depends: bison,
                python3-packaging,
                python3-setuptools,
                python3-toml
-Build-Depends-Indep: dh-sequence-sphinxdoc, python3-sphinx
+Build-Depends-Indep: dh-sequence-sphinxdoc, python3-doc, python3-sphinx
 Rules-Requires-Root: no
 Standards-Version: 4.5.0
 Homepage: https://riverbankcomputing.com/software/sip/intro
@@ -67,6 +67,7 @@ Package: sip5-doc
 Architecture: all
 Section: doc
 Depends: ${misc:Depends}, ${sphinxdoc:Depends}
+Suggests: python3-doc
 Description: Python bindings generator for C/C++ libraries — documentation
  SIP is a collection of tools that makes it very easy to create Python bindings
  for C and C++ libraries.

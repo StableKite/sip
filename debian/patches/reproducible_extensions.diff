@@ -1,0 +1,21 @@
+From: Dmitry Shachnev <mitya57@debian.org>
+Date: Wed, 26 Feb 2020 18:28:36 +0300
+Subject: Sort the input files to make the generated .so files reproducible.
+
+---
+ setup.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/setup.py b/setup.py
+index 5d46f63..daab5bf 100644
+--- a/setup.py
++++ b/setup.py
+@@ -41,7 +41,7 @@ except FileNotFoundError:
+     version_file.close()
+ 
+ # Build the code generator extension module.
+-code_gen_src = glob.glob(os.path.join('code_generator', '*.c'))
++code_gen_src = sorted(glob.glob(os.path.join('code_generator', '*.c')))
+ code_gen_module = Extension('sipbuild.code_generator', code_gen_src,
+         include_dirs=['code_generator'])
+ 

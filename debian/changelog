@@ -1,0 +1,5 @@
+sip5 (5.1.1+dfsg-1) UNRELEASED; urgency=medium
+
+  * Initial release (closes: #951459).
+
+ -- Dmitry Shachnev <mitya57@debian.org>  Tue, 25 Feb 2020 20:04:13 +0300

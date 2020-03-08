@@ -1,0 +1,117 @@
+.TH sip5 1
+.SH NAME
+sip5 \- generate Python extension modules for C/C++ libraries
+.SH SYNOPSIS
+.nf
+sip5 [options] [specification]
+.fi
+.sp
+\fBspecification\fP is the name of the specification file for the module.  If it
+is omitted then \fBstdin\fP is used.
+.sp
+Command line options can also be placed in a file and passed on the command
+line using the \fB@\fP prefix.
+.SH DESCRIPTION
+\fBsip5\fP is a drop\-in replacement for the \fBsip\fP code generator
+included with SIP v4.
+.SH OPTIONS
+.TP
+.B \-h
+Display a help message.
+.TP
+.B \-V
+Display the SIP version number.
+.TP
+.B \-a FILE
+The name of the QScintilla API file to generate.  This file contains a
+description of the module API in a form that the QScintilla editor
+component can use for auto\-completion and call tips.  (The file may also be
+used by the SciTE editor but must be sorted first.)  By default the file is
+not generated.
+.TP
+.B \-\-abi\-version VERSION
+The version of the ABI implemented by the \fBsip\fP module is \fBVERSION\fP\&.
+By the default the latest version is used.
+.TP
+.B \-B TAG
+The tag is added to the list of \fIbackstops\fP\&.  The option may be given more
+than once if multiple timelines have been defined.
+.TP
+.B \-c DIR
+The name of the directory (which must exist) into which all of the
+generated C or C++ code is placed.  By default no code is generated.
+.TP
+.B \-D
+Code is generated for a debug build of Python.
+.TP
+.B \-e
+Support for C++ exceptions is enabled.  This causes all calls to C++ code
+to be enclosed in \fBtry\fP/\fBcatch\fP blocks and C++ exceptions to be
+converted to Python exceptions.  By default exception support is disabled.
+.TP
+.B \-f
+Warnings are handled as if they were errors and the program terminates.
+.TP
+.B \-g
+The Python GIL is released before making any calls to the C/C++ library
+being wrapped and reacquired afterwards.  See ref\-gil and the
+\fBReleaseGIL\fP and \fBHoldGIL\fP annotations.
+.TP
+.B \-I DIR
+The directory is added to the list of directories searched when looking for
+a specification file given in an \fB%Include\fP or
+\fB%Import\fP directive.  Directory separators must always be \fB/\fP\&.
+This option may be given any number of times.
+.TP
+.B \-j FILES
+The generated code is split into the given number of files.  This makes it
+easier to use the parallel build facility of most modern implementations of
+\fBmake\fP\&.  By default 1 file is generated for each C structure or C++
+class.
+.TP
+.B \-n NAME
+The fully qualified name of the \fBsip\fP module (i.e. including the
+package name).
+.TP
+.B \-o
+Docstrings will be automatically generated that describe the signature of
+all functions, methods and constructors.
+.TP
+.B \-P
+By default SIP generates code to provide access to protected C++ functions
+from Python.  On some platforms (notably Linux, but not Windows) this code
+can be avoided if the \fBprotected\fP keyword is redefined as \fBpublic\fP
+during compilation.  This can result in a significant reduction in the size
+of a generated Python module.  This option disables the generation of the
+extra code.
+.TP
+.B \-r
+Debugging statements that trace the execution of the bindings are
+automatically generated.  By default the statements are not generated.
+.TP
+.B \-s SUFFIX
+The suffix to use for generated C or C++ source files.  By default \fB\&.c\fP
+is used for C and \fB\&.cpp\fP for C++.
+.TP
+.B \-t TAG
+The SIP version tag (declared using a \fB%Timeline\fP directive) or
+the SIP platform tag (declared using the \fB%Platforms\fP directive)
+to generate code for.  This option may be given any number of times so long
+as the tags do not conflict.
+.TP
+.B \-w
+The display of warning messages is enabled.  By default warning messages
+are disabled.
+.TP
+.B \-x FEATURE
+The feature (declared using the \fB%Feature\fP directive) is
+disabled.
+.TP
+.B \-X ID:FILE
+The extract (defined with the \fB%Extract\fP directive) with the
+identifier \fBID\fP is written to the file \fBFILE\fP\&.
+.TP
+.B \-y FILE
+The name of the Python type hints stub file to generate.  This file
+contains a description of the module API that is compliant with PEP 484.
+By default the file is not generated.

@@ -3,7 +3,6 @@ sip5 (5.1.2+dfsg-1) UNRELEASED; urgency=medium
   * New upstream release.
   * Set the earliest year in debian/copyright to 2015.
   * Add manpages for the tools in sip5-tools.
-  * Backport upstream patch to fix negative reference count error.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Sun, 08 Mar 2020 11:42:16 +0300
 

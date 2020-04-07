@@ -1,0 +1,21 @@
+From: Dmitry Shachnev <mitya57@debian.org>
+Date: Tue, 7 Apr 2020 20:07:43 +0300
+Subject: Sort the input files to make the generated .so files reproducible.
+
+---
+ setup.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/setup.py b/setup.py
+index 95ec2ed..a70cef9 100644
+--- a/setup.py
++++ b/setup.py
+@@ -28,7 +28,7 @@ from setuptools import Extension, setup
+ 
+ 
+ # Build the extension module.
+-module_src = glob.glob('*.c')
++module_src = sorted(glob.glob('*.c'))
+ 
+ if sys.platform == 'win32':
+     module_src.append('bool.cpp')

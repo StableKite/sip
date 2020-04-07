@@ -1,0 +1,42 @@
+Source: pyqt5-sip
+Section: python
+Priority: optional
+Maintainer: Debian Python Modules Team <python-modules-team@lists.alioth.debian.org>
+Uploaders: Dmitry Shachnev <mitya57@debian.org>
+Build-Depends: debhelper-compat (= 12),
+               dh-python,
+               python3-all-dbg,
+               python3-all-dev,
+               python3-setuptools (>= 30.3)
+Rules-Requires-Root: no
+Standards-Version: 4.5.0
+Homepage: https://pypi.org/project/PyQt5-sip/
+Vcs-Git: https://salsa.debian.org/python-team/modules/pyqt5-sip.git
+Vcs-Browser: https://salsa.debian.org/python-team/modules/pyqt5-sip
+
+Package: python3-pyqt5.sip
+Architecture: any
+Depends: ${misc:Depends}, ${python3:Depends}, ${shlibs:Depends}
+Description: runtime module for Python extensions using SIP
+ SIP is a collection of tools that makes it very easy to create Python bindings
+ for C and C++ libraries.
+ .
+ PyQt5.sip is a runtime module, it is used by PyQt5 and other Python extension
+ modules built with SIP.
+
+Package: python3-pyqt5.sip-dbg
+Architecture: any
+Section: debug
+Depends: python3-pyqt5.sip (= ${binary:Version}),
+         ${misc:Depends},
+         ${python3:Depends},
+         ${shlibs:Depends}
+Description: runtime module for Python extensions using SIP — debug extension
+ SIP is a collection of tools that makes it very easy to create Python bindings
+ for C and C++ libraries.
+ .
+ PyQt5.sip is a runtime module, it is used by PyQt5 and other Python extension
+ modules built with SIP.
+ .
+ This package contains the extension built for the Python 3 debug interpreter,
+ and the debugging symbols for python3-pyqt5.sip package.

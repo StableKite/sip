@@ -1,4 +1,84 @@
+2020-04-02  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS:
+	Released as v5.1.2.
+	[5bff00fa04bd] [5.1.2] <5.1-maint>
+
+	* NEWS:
+	Updated the NEWS file.
+	[8d80b35aa420] <5.1-maint>
+
+2020-03-23  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/project.py, sipbuild/pyproject.py:
+	Improved the error reporting of invalid pyproject.toml files.
+	[4514127c0108] <5.1-maint>
+
+2020-03-21  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/source/12.7/sip.h.in:
+	Bumped the patch level of the latest ABI version (reflecting the
+	sdist changes rather than any change to the ABI itself).
+	[268177a038f0] <5.1-maint>
+
+	* sipbuild/module/source/12.7/MANIFEST.in:
+	Explicitly include pyproject.toml in case setuptools earlier that
+	v43 is being used.
+	[28dd5f587922] <5.1-maint>
+
+	* sipbuild/module/source/12.7/MANIFEST.in:
+	Explicitly include bool.cpp so that it is included in sdists created
+	on non-Windows platforms.
+	[36cd916ae5a0] <5.1-maint>
+
+2020-03-15  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/bindings.py, sipbuild/buildable.py:
+	Fixed the handling of the limited API in all cases.
+	[c642a557b0ad] <5.1-maint>
+
+2020-03-12  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/metasrc/parser.y, code_generator/parser.c:
+	Fixed the handling of keyword argument names in imported class
+	templates.
+	[12739f9f8cf2] <5.1-maint>
+
+	* doc/c_api.rst:
+	Minor documentation fixes.
+	[b18d01c8d3e1] <5.1-maint>
+
+2020-03-09  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/pybinding.c:
+	Minor code tidy up.
+	[b046b1736113] <5.1-maint>
+
+	* code_generator/pybinding.c:
+	Fixed a reference counting bug.
+	[35391ff6a987] <5.1-maint>
+
+	* sipbuild/project.py:
+	Make sure resources don't leak when reading from a pipe.
+	[e47417e9f884] <5.1-maint>
+
+2020-03-01  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* MANIFEST.in:
+	Include the examples directory in the sdist.
+	[bfc2866c00ad] <5.1-maint>
+
+2020-02-18  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* doc/c_api.rst:
+	Fixed the event handler documentation.
+	[b1c60907f053] <5.1-maint>
+
 2020-01-31  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 5.1.1 for changeset 0e8ba3aa2164
+	[79c230bece9f] <5.1-maint>
 
 	* NEWS:
 	Released as v5.1.1.

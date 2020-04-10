@@ -410,7 +410,8 @@ The full set of command line options is:
 
 .. option:: --api-dir DIR
 
-    A QScintilla :file:`.api` file is created in ``DIR``.
+    A QScintilla :file:`.api` file is created in ``DIR``.  This must be a name
+    relative to the directory where the wheel will be installed.
 
 .. option:: --build-dir DIR
 
@@ -443,6 +444,12 @@ The full set of command line options is:
     should be built are suppressed.  This option may be specified multiple
     times.  It is only available if the project contains multiple sets of
     bindings.
+
+.. option:: --no-manylinux
+
+    Support for ``manylinux`` in the platform tag of a name of a wheel is
+    disabled.  It should only be used if support for older versions of
+    :program:`pip` is required.
 
 .. option:: --name NAME
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Riverbank Computing Limited
+# Copyright (c) 2020, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of SIP is licensed for use under the terms of the SIP License
@@ -148,48 +148,72 @@ class Builder(AbstractBuilder):
                     break
 
         # Create the wheel tag.
+        wheel_tag = []
+
         if all_use_limited_api:
             vtags = ['cp3{}'.format(v)
                     for v in range(FIRST_SUPPORTED_MINOR,
                             LAST_SUPPORTED_MINOR + 1)]
-            wheel_tag = '.'.join(vtags)
+            wheel_tag.append('.'.join(vtags))
 
-            wheel_tag += '-none' if sys.platform == 'win32' else '-abi3'
+            wheel_tag.append('none' if sys.platform == 'win32' else 'abi3')
         else:
             major_minor = '{}{}'.format((sys.hexversion >> 24) & 0xff,
                     (sys.hexversion >> 16) & 0xff)
 
-            wheel_tag = 'cp{}'.format(major_minor)
+            wheel_tag.append('cp{}'.format(major_minor))
 
             try:
-                wheel_tag += '-cp' + major_minor + sys.abiflags
+                wheel_tag.append('cp' + major_minor + sys.abiflags)
             except AttributeError:
-                wheel_tag += '-none'
+                wheel_tag.append('none')
 
         if sys.platform == 'win32':
             import struct
 
-            wheel_tag += '-win32' if struct.calcsize('P') == 4 else '-win_amd64'
+            platform_tag = 'win32' if struct.calcsize('P') == 4 else 'win_amd64'
         elif sys.platform == 'darwin':
-            wheel_tag += '-macosx_10_6_intel'
+            platform_tag = 'macosx_10_6_intel'
         else:
-            if project.minimum_glibc_version > (2, 17):
-                # PEP 600.
-                manylinux = 'manylinux_{}_{}'.format(
-                        project.minimum_glibc_version[0],
-                        project.minimum_glibc_version[1])
-            elif project.minimum_glibc_version > (2, 12):
-                # PEP 599.
-                manylinux = 'manylinux2014'
-            elif project.minimum_glibc_version > (2, 5):
-                # PEP 571.
-                manylinux = 'manylinux2010'
-            else:
-                # PEP 513.
-                manylinux = 'manylinux1'
+            from distutils.util import get_platform
 
-            wheel_tag += '-{}_x86_64'.format(manylinux)
+            platform_tag = get_platform().replace('.', '_').replace('-', '_')
 
+            prefix = 'linux_'
+
+            if platform_tag.startswith(prefix) and project.manylinux:
+                if project.minimum_glibc_version > (2, 17):
+                    # PEP 600.
+                    manylinux = 'manylinux_{}_{}'.format(
+                            project.minimum_glibc_version[0],
+                            project.minimum_glibc_version[1])
+                elif project.minimum_glibc_version > (2, 12):
+                    # PEP 599.
+                    manylinux = 'manylinux2014'
+                elif project.minimum_glibc_version > (2, 5):
+                    # PEP 571.
+                    manylinux = 'manylinux2010'
+                else:
+                    # PEP 513.
+                    manylinux = 'manylinux1'
+
+                platform_tag = manylinux + '_' + platform_tag[len(prefix):]
+
+        wheel_tag.append(platform_tag)
+
+        wheel_tag = '-'.join(wheel_tag)
+
+        # Add any wheel contents defined by the project.
+        for nr, (patt, target_subdir) in enumerate(project.wheel_includes):
+            wheel_includes = glob.glob(os.path.join(project.root_dir, patt))
+            if wheel_includes:
+                installable = Installable(
+                        'wheel_includes_{}'.format(nr) if nr else 'wheel_includes',
+                        target_subdir=target_subdir)
+                installable.files.extend(wheel_includes)
+                project.installables.append(installable)
+
+        # Build the project.
         self.build_project(wheel_build_dir, wheel_tag=wheel_tag)
 
         # Copy the wheel contents.
@@ -297,7 +321,7 @@ class Builder(AbstractBuilder):
             init_f.close()
 
             installable = Installable('init',
-                    target_subdir=os.path.dirname(project.get_bindings_dir()))
+                    target_subdir=project.get_package_dir())
             installable.files.append(init_path)
             project.installables.append(installable)
 
@@ -318,8 +342,7 @@ class Builder(AbstractBuilder):
             api_f.close()
 
             # Add an Installable for the requested API file.
-            installable = Installable('api',
-                    target_subdir=os.path.abspath(project.api_dir))
+            installable = Installable('api', target_subdir=project.api_dir)
             installable.files.append(api_path)
             project.installables.append(installable)
 

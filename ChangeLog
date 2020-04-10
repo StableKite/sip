@@ -1,4 +1,62 @@
+2020-04-10  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS:
+	Released as v5.2.0.
+	[32b952854ba0] [5.2.0]
+
+	* doc/command_line_tools.rst, sipbuild/builder.py,
+	sipbuild/project.py:
+	Check that the --api-dir passed to sip-wheel is relative.
+	[8c983e23971b]
+
+2020-04-09  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/pyproject_toml.rst, sipbuild/builder.py,
+	sipbuild/project.py:
+	Implemented the 'wheel-includes' project option to specify
+	additional files and directories to be included in a wheel.
+	[fa7ba41ab2f9]
+
+	* NEWS:
+	Updated the NEWS file with the manylinux changes.
+	[1091be2b84d6]
+
+	* doc/introduction.rst:
+	Documented the EOL policy for old versions of Python.
+	[8445ebb23475]
+
+	* sipbuild/builder.py:
+	Bug fixes for the manylinux support.
+	[290485613492]
+
+	* doc/command_line_tools.rst, doc/pyproject_toml.rst,
+	sipbuild/builder.py, sipbuild/project.py:
+	The --no-manylinux command line option in sip-wheel and the
+	manylinux option of the project section of the pyproject.toml file
+	now allow the use of manylinux to be disabled. The assumption that a
+	Linux system is Intel based has been removed.
+	[2d59d6ea36f5]
+
+	* Roadmap.rst, sipbuild/module/source/12.7/bool.cpp:
+	Merged the 5.1-maint branch.
+	[ed9febb3846b]
+
+2020-04-08  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* Roadmap.rst:
+	Removed the roadmap.
+	[d0a95944f9c5] <5.1-maint>
+
+	* setup.py, sipbuild/module/source/12.7/setup.py.in:
+	Make sure builds of the code generator and sip module are
+	reproducable.
+	[8fd99799510a] <5.1-maint>
+
 2020-04-02  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 5.1.2 for changeset 5bff00fa04bd
+	[d59d5a722a2e] <5.1-maint>
 
 	* NEWS:
 	Released as v5.1.2.

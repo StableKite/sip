@@ -1,6 +1,7 @@
 sip5 (5.2.0+dfsg-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Drop reproducible_extensions.diff, applied upstream.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Fri, 10 Apr 2020 19:45:44 +0300
 

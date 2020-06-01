@@ -63,9 +63,16 @@ class Project(AbstractProject, Configurable):
         # Set if an __init__.py should be installed.
         Option('dunder_init', option_type=bool, default=False),
 
+        # The list of GUI script entry points.
+        Option('gui_scripts', option_type=list),
+
         # The minimum GLIBC version required by the project.  This is used to
         # determine the correct platform tag to use for Linux wheels.
         Option('minimum_glibc_version'),
+
+        # The minimum macOS version required by the project.  This is used to
+        # determine the correct platform tag to use for macOS wheels.
+        Option('minimum_macos_version'),
 
         # Set if building for a debug version of Python.
         Option('py_debug', option_type=bool),
@@ -149,6 +156,7 @@ class Project(AbstractProject, Configurable):
         self.buildables = []
         self.installables = []
 
+        self._metadata_overrides = None
         self._temp_build_dir = None
 
     def apply_nonuser_defaults(self, tool):
@@ -185,8 +193,8 @@ class Project(AbstractProject, Configurable):
     def apply_user_defaults(self, tool):
         """ Set default values for user options that haven't been set yet. """
 
-        # If we the backend to a 3rd-party frontend (most probably pip) then
-        # let it handle the verbosity of messages.
+        # If we are the backend to a 3rd-party frontend (most probably pip)
+        # then let it handle the verbosity of messages.
         if self.verbose is None and tool == '':
             self.verbose = True
 
@@ -263,6 +271,15 @@ class Project(AbstractProject, Configurable):
         # This default implementation will create an empty file.
         return ''
 
+    def get_metadata_overrides(self):
+        """ Return a mapping of PEP 566 metadata names and values that will
+        override any corresponding values defined in the pyproject.toml file.
+        A typical use is to determine a project's version dynamically.
+        """
+
+        # This default implementation does not override any metadata.
+        return {}
+
     def get_options(self):
         """ Return the list of configurable options. """
 
@@ -311,6 +328,56 @@ class Project(AbstractProject, Configurable):
 
         return ['{} (>={}, <{})'.format(sip_project_name, self.abi_version,
                 next_abi_major)]
+
+    def get_sip_distinfo_command_line(self, sip_distinfo, inventory,
+            generator=None, wheel_tag=None):
+        """ Return a sequence of command line arguments to invoke sip-distinfo.
+        """
+
+        args = [
+            sip_distinfo,
+
+            '--inventory',
+            inventory,
+
+            '--project-root',
+            self.root_dir,
+
+            '--prefix',
+            '\\"$(INSTALL_ROOT)\\"',
+        ]
+
+        if generator is not None:
+            args.append('--generator')
+            args.append(generator)
+
+        if wheel_tag is not None:
+            args.append('--wheel-tag')
+            args.append(wheel_tag)
+
+        for ep in self.console_scripts:
+            args.append('--console-script')
+            args.append(ep.replace(' ', ''))
+
+        for ep in self.gui_scripts:
+            args.append('--gui-script')
+            args.append(ep.replace(' ', ''))
+
+        for rd in self.get_requires_dists():
+            args.append('--requires-dist')
+            args.append('\\"{}\\"'.format(rd))
+
+        for metadata, value in self._metadata_overrides.items():
+            if value:
+                metadata += '=' + value
+
+            if ' ' in metadata:
+                metadata = '\\"' + metadata + '\\"'
+
+            args.append('--metadata')
+            args.append(metadata)
+
+        return args
 
     def install(self):
         """ Install the project. """
@@ -471,13 +538,9 @@ class Project(AbstractProject, Configurable):
         # Make sure any minimum GLIBC version is valid and convert it to a
         # 2-tuple.
         if self.minimum_glibc_version:
-            parts = self.minimum_glibc_version.split('.')
-
             try:
-                if len(parts) != 2:
-                    raise ValueError()
-
-                self.minimum_glibc_version = (int(parts[0]), int(parts[1]))
+                self.minimum_glibc_version = self._convert_major_minor(
+                        self.minimum_glibc_version)
             except ValueError:
                 raise PyProjectOptionException('minimum-glibc-version',
                         "'{0}' is an invalid GLIBC version number".format(
@@ -485,6 +548,18 @@ class Project(AbstractProject, Configurable):
                         section_name='tool.sip.project')
         else:
             self.minimum_glibc_version = (2, 5)
+
+        # Make sure any minimum macOS version is valid and convert it to a
+        # 2-tuple.
+        if self.minimum_macos_version:
+            try:
+                self.minimum_macos_version = self._convert_major_minor(
+                        self.minimum_macos_version)
+            except ValueError:
+                raise PyProjectOptionException('minimum-macos-version',
+                        "'{0}' is an invalid macOS version number".format(
+                                self.minimum_macos_version),
+                        section_name='tool.sip.project')
 
         # Make sure relevent paths are absolute and use native separators.
         self.sip_files_dir = self.project_path(self.sip_files_dir)
@@ -583,6 +658,18 @@ class Project(AbstractProject, Configurable):
                     setattr(configurable, option.name,
                             getattr(args, option.dest))
 
+    @staticmethod
+    def _convert_major_minor(value):
+        """ Convert a 'major.minor' version number to a 2-tuple of integers.
+        Raise a ValueError exception if it is invalid.
+        """
+
+        parts = value.split('.')
+        if len(parts) != 2:
+            raise ValueError()
+
+        return int(parts[0]), int(parts[1])
+
     def _enable_disable_bindings(self):
         """ Check the enabled bindings are valid and remove any disabled ones.
         """
@@ -623,6 +710,8 @@ class Project(AbstractProject, Configurable):
 
         # Get the metadata and extract the version.
         self.metadata = pyproject.get_metadata()
+        self._metadata_overrides = self.get_metadata_overrides()
+        self.metadata.update(self._metadata_overrides)
         self.version_str = self.metadata['version']
 
         # Convert the version as a string to number.

@@ -1,4 +1,129 @@
+2020-05-30  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS:
+	Released as v5.3.0.
+	[6169324910f8] [5.3.0]
+
+	* code_generator/gencode.c, code_generator/sip.h,
+	code_generator/transform.c:
+	The code generator now distinguishes between the copy/assignment
+	helper and the array helper when determining which helpers can be
+	generated.
+	[536c209b282b]
+
+	* sipbuild/distutils_builder.py:
+	The distutils builder undefines NDEBUG when building a debug
+	extension.
+	[6a373c6990a2]
+
+2020-05-29  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS:
+	Updated the NEWS file.
+	[41526be0a9fc]
+
+2020-05-27  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/source/12.8/siplib.c:
+	Eliminate a compiler warning message from the sip module.
+	[1e5f098bad27]
+
+2020-05-22  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixed the wrapping of methods that return a Py_Ssize_t.
+	[ccf21caaafd5]
+
+2020-05-08  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/pyproject_toml.rst, sipbuild/builder.py,
+	sipbuild/project.py:
+	Added support for the minimum-macos-version project option.
+	[83b7fa6c624f]
+
+	* NEWS, doc/command_line_tools.rst, doc/sipbuild_api.rst,
+	sipbuild/distinfo/distinfo.py, sipbuild/distinfo/main.py,
+	sipbuild/project.py:
+	Added the ability for a project.py to dynamically override any
+	values in the metadata section of the pyproject.toml file.
+	[fa104bfeb756]
+
+2020-05-07  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/command_line_tools.rst, doc/pyproject_toml.rst,
+	sipbuild/builder.py, sipbuild/distinfo/distinfo.py,
+	sipbuild/distinfo/main.py, sipbuild/distutils_builder.py,
+	sipbuild/project.py:
+	Implemented support for GUI entry points.
+	[e4f7387f390d]
+
+	* doc/riverbank/static/logo_tn.ico, sipbuild/docs/extract_xml.py,
+	sipbuild/docs/sip.rst.in:
+	Merged the 5.2-maint branch.
+	[ebac74e95d15]
+
+2020-05-06  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* doc/riverbank/static/logo_tn.ico, doc/riverbank/static/logo_tn.png:
+	Fixed the logo thumbnail.
+	[b11a9186f972] <5.2-maint>
+
+2020-04-28  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* doc/introduction.rst:
+	Fixed a typo in the docs.
+	[9354b060c0d2] <5.2-maint>
+
+2020-04-25  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c,
+	sipbuild/module/source/12.8/MANIFEST.in,
+	sipbuild/module/source/12.8/README.in,
+	sipbuild/module/source/12.8/apiversions.c,
+	sipbuild/module/source/12.8/array.c,
+	sipbuild/module/source/12.8/array.h,
+	sipbuild/module/source/12.8/bool.cpp,
+	sipbuild/module/source/12.8/descriptors.c,
+	sipbuild/module/source/12.8/int_convertors.c,
+	sipbuild/module/source/12.8/objmap.c,
+	sipbuild/module/source/12.8/pyproject.toml,
+	sipbuild/module/source/12.8/qtlib.c,
+	sipbuild/module/source/12.8/setup.cfg.in,
+	sipbuild/module/source/12.8/setup.py.in,
+	sipbuild/module/source/12.8/sip.h.in,
+	sipbuild/module/source/12.8/sip.pyi,
+	sipbuild/module/source/12.8/sip.rst.in,
+	sipbuild/module/source/12.8/sipint.h,
+	sipbuild/module/source/12.8/siplib.c,
+	sipbuild/module/source/12.8/threads.c,
+	sipbuild/module/source/12.8/voidptr.c:
+	Implemented v12.8.0 of the module API. This adds
+	sip_api_is_py_method_12_8() to the private API. This is required to
+	fix a race condition.
+	[18ccf3088f98] <5.2-maint>
+
+	* sipbuild/docs/extract_xml.py, sipbuild/docs/sip.rst.in:
+	Removed the unused docs stuff.
+	[b80569e35e69] <5.2-maint>
+
+2020-04-24  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Ensure an exception is raised if the _C_API object is missing.
+	[fb88edaf0787] <5.2-maint>
+
+2020-04-22  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixed a race condition when calling the PyQt5-specific meta-call
+	helper.
+	[32dcbf1b2cb7] <5.2-maint>
+
 2020-04-10  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 5.2.0 for changeset 32b952854ba0
+	[c3190dc398f3]
 
 	* NEWS:
 	Released as v5.2.0.

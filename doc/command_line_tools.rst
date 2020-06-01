@@ -146,11 +146,22 @@ The full set of command line options is:
     directory.  Otherwise ``NAME`` is written to the :file:`INSTALLER` file.
     By default ``sip-distinfo`` is written.
 
+.. option:: --gui-script ENTRY-POINT
+
+    The GUI entry point ``ENTRY-POINT`` is added to the wheel.  It is
+    ignored if the :option:`--wheel-tag` option is not specified.  This option
+    may be specified multiple times.
+
 .. option:: --inventory FILE
 
     ``FILE`` contains a list of the relative names of the files, one per line, 
     that comprise the installation or wheel contents.  This option must be
     specified.
+
+.. option:: --metadata NAME[=VALUE]
+
+    ``VALUE`` is used instead of any value specified for ``NAME`` in the
+    ``[tool.sip.metadata]`` section of the :file:`pyproject.toml` file.
 
 .. option:: --prefix DIR
 

@@ -1,4 +1,4 @@
-sip5 (5.2.0+dfsg-1) UNRELEASED; urgency=medium
+sip5 (5.3.0+dfsg-1) UNRELEASED; urgency=medium
 
   * New upstream release.
   * Drop reproducible_extensions.diff, applied upstream.

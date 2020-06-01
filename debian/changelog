@@ -3,6 +3,7 @@ sip5 (5.3.0+dfsg-1) UNRELEASED; urgency=medium
   * New upstream release.
   * Drop reproducible_extensions.diff, applied upstream.
   * Update manpages based on command_line_tools.rst changes.
+  * Update to debhelper compat level 13.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Fri, 10 Apr 2020 19:45:44 +0300
 

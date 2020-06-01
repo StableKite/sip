@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Debian Python Modules Team <python-modules-team@lists.alioth.debian.org>
 Uploaders: Dmitry Shachnev <mitya57@debian.org>
 Build-Depends: bison,
-               debhelper-compat (= 12),
+               debhelper-compat (= 13),
                dh-python,
                flex,
                python3-all-dbg,

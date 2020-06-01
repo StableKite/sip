@@ -31,10 +31,19 @@ as the \fBGenerator\fP in the \fBWHEEL\fP file in the \fB\&.dist\-info\fP
 directory.  Otherwise \fBNAME\fP is written to the \fBINSTALLER\fP file.
 By default \fBsip\-distinfo\fP is written.
 .TP
+.B \-\-gui\-script ENTRY\-POINT
+The GUI entry point \fBENTRY-POINT\fP is added to the wheel.  It is
+ignored if the \fI\%\-\-wheel\-tag\fP option is not specified.  This option
+may be specified multiple times.
+.TP
 .B \-\-inventory FILE
 \fBFILE\fP contains a list of the relative names of the files, one per line,
 that comprise the installation or wheel contents.  This option must be
 specified.
+.TP
+.B \-\-metadata NAME[=VALUE]
+\fBVALUE\fP is used instead of any value specified for \fBNAME\fP in the
+\fB[tool.sip.metadata]\fP section of the \fBpyproject.toml\fP file.
 .TP
 .B \-\-prefix DIR
 This option is provided as an aid to Linux package builders.  \fBDIR\fP is

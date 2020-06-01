@@ -23,7 +23,8 @@ All progress messages are disabled.
 Verbose progress messages are enabled.
 .TP
 .B \-\-api\-dir DIR
-A QScintilla \fB\&.api\fP file is created in \fBDIR\fP\&.
+A QScintilla \fB\&.api\fP file is created in \fBDIR\fP\&.  This must be a name
+relative to the directory where the wheel will be installed.
 .TP
 .B \-\-build\-dir DIR
 \fBDIR\fP is created as a build directory in which all generated files will
@@ -51,6 +52,11 @@ configuration tests that would normally be run to determine if the bindings
 should be built are suppressed.  This option may be specified multiple
 times.  It is only available if the project contains multiple sets of
 bindings.
+.TP
+.B \-\-no\-manylinux
+Support for \fBmanylinux\fP in the platform tag of a name of a wheel is
+disabled.  It should only be used if support for older versions of
+\fBpip\fP is required.
 .TP
 .B \-\-name NAME
 \fBNAME\fP is used instead of the PyPI project name in the

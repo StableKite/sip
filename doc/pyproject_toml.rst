@@ -132,6 +132,10 @@ list options may contain environment markers as defined in `PEP 508
     installed in the top level package directory.  By default it is not
     installed and the value is ignored for standalone projects.
 
+**gui-scripts**
+    The value is a list of entry points that defines one or more GUI scripts to
+    be installed as part of the project.
+
 **manylinux**
     The boolean value specifies if support for ``manylinux`` in the platform
     tag of a name of a wheel is enabled.  By default ``manylinux`` support is
@@ -144,7 +148,12 @@ list options may contain environment markers as defined in `PEP 508
     platform tag to use for Linux wheels.  The default version of GLIBC is v2.5
     which corresponds to ``manylinux1``.  It is ignored if the ``manylinux``
     option is False.
-    ZZZ
+
+**minimum-macos-version**
+    The minimum macOS version required by the project specified as a 2-tuple of
+    the major and minor version numbers.  This is used to determine the correct
+    platform tag to use for macOS wheels.  The default version is that required
+    by the Python interpreter.
 
 **name**
     The value is used instead of the value of the ``name`` key in the

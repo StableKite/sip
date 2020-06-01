@@ -22,6 +22,7 @@
 
 
 from abc import abstractmethod
+from distutils.util import get_platform
 import glob
 import os
 import shutil
@@ -168,37 +169,40 @@ class Builder(AbstractBuilder):
             except AttributeError:
                 wheel_tag.append('none')
 
-        if sys.platform == 'win32':
-            import struct
+        platform_tag = get_platform()
 
-            platform_tag = 'win32' if struct.calcsize('P') == 4 else 'win_amd64'
-        elif sys.platform == 'darwin':
-            platform_tag = 'macosx_10_6_intel'
-        else:
-            from distutils.util import get_platform
+        if sys.platform == 'darwin' and project.minimum_macos_version:
+            # We expect a three part tag so leave anything else unchanged.
+            parts = platform_tag.split('-')
+            if len(parts) == 3:
+                parts[1] = '{}.{}'.format(project.minimum_macos_version[0],
+                        project.minimum_macos_version[1])
 
-            platform_tag = get_platform().replace('.', '_').replace('-', '_')
+                platform_tag = '-'.join(parts)
 
-            prefix = 'linux_'
-
-            if platform_tag.startswith(prefix) and project.manylinux:
+        elif sys.platform == 'linux' and project.manylinux:
+            # We expect a two part tag so leave anything else unchanged.
+            parts = platform_tag.split('-')
+            if len(parts) == 2:
                 if project.minimum_glibc_version > (2, 17):
                     # PEP 600.
-                    manylinux = 'manylinux_{}_{}'.format(
-                            project.minimum_glibc_version[0],
-                            project.minimum_glibc_version[1])
+                    parts[0] = 'manylinux'
+                    parts.insert(1,
+                            '{}.{}'.format(project.minimum_glibc_version[0],
+                                    project.minimum_glibc_version[1]))
                 elif project.minimum_glibc_version > (2, 12):
                     # PEP 599.
-                    manylinux = 'manylinux2014'
+                    parts[0] = 'manylinux2014'
                 elif project.minimum_glibc_version > (2, 5):
                     # PEP 571.
-                    manylinux = 'manylinux2010'
+                    parts[0] = 'manylinux2010'
                 else:
                     # PEP 513.
-                    manylinux = 'manylinux1'
+                    parts[0] = 'manylinux1'
 
-                platform_tag = manylinux + '_' + platform_tag[len(prefix):]
+                platform_tag = '-'.join(parts)
 
+        platform_tag = platform_tag.replace('.', '_').replace('-', '_')
         wheel_tag.append(platform_tag)
 
         wheel_tag = '-'.join(wheel_tag)
@@ -352,21 +356,21 @@ class Builder(AbstractBuilder):
         project = self.project
 
         # Handle the trivial case.
-        console_scripts = project.console_scripts
-        if not console_scripts:
+        scripts = project.console_scripts + project.gui_scripts
+        if not scripts:
             return
 
         # Create an installable for the scripts.
         installable = Installable('scripts',
                 target_subdir=os.path.dirname(sys.executable))
 
-        for ep in console_scripts:
+        for ep in scripts:
             # Parse the entry point.
             ep_parts = ep.replace(' ', '').split('=')
 
             if len(ep_parts) != 2:
                 raise UserException(
-                        "'{0}' is an invalid console script specification".format(ep))
+                        "'{0}' is an invalid script specification".format(ep))
 
             script, module = ep_parts
 

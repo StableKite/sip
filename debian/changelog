@@ -1,10 +1,11 @@
-pyqt5-sip (12.8.0-1) UNRELEASED; urgency=medium
+pyqt5-sip (12.8.0-1) unstable; urgency=medium
 
   * New upstream release.
   * Drop reproducible_extensions.diff, applied upstream.
   * Update to debhelper compat level 13.
+  * Upload to unstable.
 
- -- Dmitry Shachnev <mitya57@debian.org>  Wed, 03 Jun 2020 13:31:55 +0300
+ -- Dmitry Shachnev <mitya57@debian.org>  Wed, 03 Jun 2020 20:49:32 +0300
 
 pyqt5-sip (12.7.2-1) experimental; urgency=medium
 

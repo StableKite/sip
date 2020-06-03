@@ -28,7 +28,7 @@ from setuptools import Extension, setup
 
 
 # Build the extension module.
-module_src = glob.glob('*.c')
+module_src = sorted(glob.glob('*.c'))
 
 if sys.platform == 'win32':
     module_src.append('bool.cpp')
@@ -38,7 +38,7 @@ module = Extension('PyQt5.sip', module_src)
 # Do the setup.
 setup(
         name='PyQt5_sip',
-        version='12.7.2',
+        version='12.8.0',
         license='SIP',
         python_requires='>=3.5',
         ext_modules=[module]

@@ -35,25 +35,24 @@ extern "C" {
 
 
 /* The patch version of this implementation of the ABI. */
-#define SIP_MODULE_PATCH_VERSION    2
+#define SIP_MODULE_PATCH_VERSION    0
 
 
 /*
  * The changes to this version of the ABI.
  *
- * Added sip_api_visit_wrappers() to the public API.
- * Added sip_api_register_exit_notifier() to the public API.
- * sip_api_is_owned_by_python() is now part of the public API.
+ * Added sip_api_is_py_method_12_8() to the private API.
+ * Deprecated sip_api_is_py_method() .
  */
 
 
 /* The ABI version implemented. */
 #define SIP_ABI_MAJOR_VERSION       12
-#define SIP_ABI_MINOR_VERSION       7
+#define SIP_ABI_MINOR_VERSION       8
 
 /* The version of the code generator. */
-#define SIP_VERSION                 0x50102
-#define SIP_VERSION_STR             "5.1.2"
+#define SIP_VERSION                 0x50300
+#define SIP_VERSION_STR             "5.3.0"
 
 /* These are all dependent on the user-specified name of the sip module. */
 #define _SIP_MODULE_FQ_NAME         "PyQt5.sip"
@@ -1639,6 +1638,12 @@ typedef struct _sipAPIDef {
     size_t (*api_long_as_size_t)(PyObject *o);
     void (*api_visit_wrappers)(sipWrapperVisitorFunc visitor, void *closure);
     int (*api_register_exit_notifier)(PyMethodDef *md);
+
+    /*
+     * The following are not part of the public API.
+     */
+    PyObject *(*api_is_py_method_12_8)(sip_gilstate_t *gil, char *pymc,
+            sipSimpleWrapper **sipSelfp, const char *cname, const char *mname);
 } sipAPIDef;
 
 const sipAPIDef *sip_init_library(PyObject *mod_dict);

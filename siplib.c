@@ -313,6 +313,8 @@ static void sip_api_bad_class(const char *classname);
 static void *sip_api_get_complex_cpp_ptr(sipSimpleWrapper *sw);
 static PyObject *sip_api_is_py_method(sip_gilstate_t *gil, char *pymc,
         sipSimpleWrapper *sipSelf, const char *cname, const char *mname);
+static PyObject *sip_api_is_py_method_12_8(sip_gilstate_t *gil, char *pymc,
+        sipSimpleWrapper **sipSelfp, const char *cname, const char *mname);
 static void sip_api_call_hook(const char *hookname);
 static void sip_api_raise_unknown_exception(void);
 static void sip_api_raise_type_exception(const sipTypeDef *td, void *ptr);
@@ -608,6 +610,10 @@ static const sipAPIDef sip_api = {
     sip_api_long_as_size_t,
     sip_api_visit_wrappers,
     sip_api_register_exit_notifier,
+    /*
+     * The following are not part of the public API.
+     */
+    sip_api_is_py_method_12_8,
 };
 
 
@@ -6016,7 +6022,8 @@ static void callPyDtor(sipSimpleWrapper *self)
     char pymc = 0;
     PyObject *meth;
 
-    meth = sip_api_is_py_method(&sipGILState, &pymc, self, NULL, "__dtor__");
+    meth = sip_api_is_py_method_12_8(&sipGILState, &pymc, &self, NULL,
+            "__dtor__");
 
     if (meth != NULL)
     {
@@ -8362,11 +8369,24 @@ static PyObject *getDictFromObject(PyObject *obj)
 
 /*
  * Return a Python reimplementation corresponding to a C/C++ virtual function,
- * if any.  If one was found then the GIL is acquired.
+ * if any.  If one was found then the GIL is acquired.  This is deprecated, use
+ * sip_api_is_python_method_12_8() instead.
  */
 static PyObject *sip_api_is_py_method(sip_gilstate_t *gil, char *pymc,
         sipSimpleWrapper *sipSelf, const char *cname, const char *mname)
 {
+    return sip_api_is_py_method_12_8(gil, pymc, &sipSelf, cname, mname);
+}
+
+
+/*
+ * Return a Python reimplementation corresponding to a C/C++ virtual function,
+ * if any.  If one was found then the GIL is acquired.
+ */
+static PyObject *sip_api_is_py_method_12_8(sip_gilstate_t *gil, char *pymc,
+        sipSimpleWrapper **sipSelfp, const char *cname, const char *mname)
+{
+    sipSimpleWrapper *sipSelf;
     PyObject *mname_obj, *reimp, *mro, *cls;
     Py_ssize_t i;
 
@@ -8384,6 +8404,9 @@ static PyObject *sip_api_is_py_method(sip_gilstate_t *gil, char *pymc,
 #ifdef WITH_THREAD
     *gil = PyGILState_Ensure();
 #endif
+
+    /* Only read this when we have the GIL. */
+    sipSelf = *sipSelfp;
 
     /*
      * It's possible that the Python object has been deleted but the underlying

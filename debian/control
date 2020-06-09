@@ -49,7 +49,10 @@ Description: Python bindings generator for C/C++ libraries — debug extension
 
 Package: sip5-tools
 Architecture: all
-Depends: python3-sipbuild, ${misc:Depends}, ${python3:Depends}
+Depends: python3-pkg-resources,
+         python3-sipbuild,
+         ${misc:Depends},
+         ${python3:Depends}
 Description: Python bindings generator for C/C++ libraries — command line tools
  SIP is a collection of tools that makes it very easy to create Python bindings
  for C and C++ libraries.

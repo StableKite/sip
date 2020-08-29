@@ -1,3 +1,9 @@
+sip5 (5.4.0+dfsg-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+
+ -- Dmitry Shachnev <mitya57@debian.org>  Sat, 29 Aug 2020 20:56:32 +0300
+
 sip5 (5.3.0+dfsg-2) unstable; urgency=medium
 
   * Add missing python3-pkg-resources dependency to sip5-tools.

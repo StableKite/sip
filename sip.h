@@ -35,14 +35,13 @@ extern "C" {
 
 
 /* The patch version of this implementation of the ABI. */
-#define SIP_MODULE_PATCH_VERSION    0
+#define SIP_MODULE_PATCH_VERSION    1
 
 
 /*
  * The changes to this version of the ABI.
  *
- * Added sip_api_is_py_method_12_8() to the private API.
- * Deprecated sip_api_is_py_method() .
+ * Preserve any current exception in the wrapper tp_dealloc functions.
  */
 
 
@@ -51,8 +50,8 @@ extern "C" {
 #define SIP_ABI_MINOR_VERSION       8
 
 /* The version of the code generator. */
-#define SIP_VERSION                 0x50300
-#define SIP_VERSION_STR             "5.3.0"
+#define SIP_VERSION                 0x50400
+#define SIP_VERSION_STR             "5.4.0"
 
 /* These are all dependent on the user-specified name of the sip module. */
 #define _SIP_MODULE_FQ_NAME         "PyQt5.sip"

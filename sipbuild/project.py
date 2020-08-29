@@ -124,6 +124,8 @@ class Project(AbstractProject, Configurable):
         Option('build_dir', help="the build directory", metavar="DIR"),
         Option('build_tag', help="the build tag to be used in the wheel name",
                 metavar="TAG", tools=['wheel']),
+        Option('distinfo', option_type=bool, inverted=True,
+                help="don't create a .dist-info directory", tools=['install']),
         Option('manylinux', option_type=bool, inverted=True,
                 help="disable the use of manylinux in the platform tag used "
                         "in the wheel name",
@@ -681,7 +683,7 @@ class Project(AbstractProject, Configurable):
             for enabled in self.enable:
                 if enabled not in names:
                     raise UserException(
-                            "unknown enabled bindings '{0}'".format(enabled))
+                            "Unknown enabled bindings '{0}'".format(enabled))
 
             # Only include explicitly enabled bindings.
             for b in list(self.bindings.values()):
@@ -693,7 +695,7 @@ class Project(AbstractProject, Configurable):
             for disabled in self.disable:
                 if disabled not in names:
                     raise UserException(
-                            "unknown disabled bindings '{0}'".format(disabled))
+                            "Unknown disabled bindings '{0}'".format(disabled))
 
             # Remove any explicitly disabled bindings.
             for b in list(self.bindings.values()):

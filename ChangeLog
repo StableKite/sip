@@ -1,4 +1,148 @@
+2020-08-29  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS:
+	Released as v5.4.0.
+	[8d2e8033d480] [5.4.0]
+
+	* NEWS:
+	Updated the NEWS file.
+	[6d1dfe8ad675]
+
+2020-08-26  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/command_line_tools.rst, doc/pyproject_toml.rst,
+	sipbuild/distutils_builder.py, sipbuild/project.py:
+	Implemented the 'distinfo' project option and the corresponding
+	'--no-distinfo' command line option to sip-install.
+	[ec66f6f117e3]
+
+2020-08-25  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* doc/examples.rst:
+	Fixed a typo.
+	[5450ad7113fd]
+
+2020-08-23  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Always cache the instance created by %InstanceCode.
+	[ccded01b60ee]
+
+	* code_generator/gencode.c:
+	Fix a memory leak when using %InstanceCode.
+	[5d7dbd0e6789]
+
+	* code_generator/gencode.c, code_generator/lexer.c,
+	code_generator/metasrc/lexer.l, code_generator/metasrc/parser.y,
+	code_generator/parser.c, code_generator/parser.h,
+	code_generator/sip.h, doc/annotations.rst, doc/directives.rst,
+	doc/specification_files.rst:
+	Backed out changeset d91afeaf61d4 The use of %InstanceOnStackCode
+	doesn't really help in practice.
+	[ea0cb8eb8259]
+
+2020-08-22  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c, code_generator/lexer.c,
+	code_generator/metasrc/lexer.l, code_generator/metasrc/parser.y,
+	code_generator/parser.c, code_generator/parser.h,
+	code_generator/sip.h, doc/annotations.rst, doc/directives.rst,
+	doc/specification_files.rst:
+	Implemented %InstanceOnHeapCode and deprecated %InstanceCode as a
+	synonym.
+	[d91afeaf61d4]
+
+	* sipbuild/project.py:
+	Fixed some error messages.
+	[19939e9dd869]
+
+	* NEWS, doc/sipbuild_api.rst, sipbuild/__init__.py:
+	Added SIP_VERSION and SIP_VERSION_STR to the public API.
+	[d48960abf941]
+
+	* Merged the 5.3-maint branch.
+	[04b37e3e0ab3]
+
+2020-08-13  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/source/12.7/sip.h.in:
+	Bumped the patch number of the v12.7 module.
+	[0a03e675981d] <5.3-maint>
+
+	* sipbuild/module/source/12.7/qtlib.c,
+	sipbuild/module/source/12.7/siplib.c,
+	sipbuild/module/source/12.8/qtlib.c,
+	sipbuild/module/source/12.8/siplib.c:
+	Removed the use of calls deprecated in Python v3.9.
+	[de8b71919101] <5.3-maint>
+
+	* NEWS, sipbuild/py_versions.py:
+	Added support for Python v3.9.
+	[998146d601c8] <5.3-maint>
+
+2020-08-08  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/bindings.py:
+	Fix the handling of 'headers' in the bindings section.
+	[0907d1ee4fd3] <5.3-maint>
+
+2020-08-07  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixed a regression in the virtual handler code.
+	[ecee0c78b692] <5.3-maint>
+
+	* code_generator/gencode.c:
+	Any %InstanceCode is now used to create the default result of a
+	virtual handler returning a class or mapped type by value.
+	[59244b9e38fd] <5.3-maint>
+
+2020-07-10  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* doc/c_api.rst, doc/sipbuild_api.rst:
+	Eliminated most Sphinx warnings.
+	[d15b72c7732c] <5.3-maint>
+
+	* NEWS, doc/c_api.rst, sipbuild/module/source/12.7/siplib.c,
+	sipbuild/module/source/12.8/siplib.c:
+	sipGetFrame() will always return NULL on PyPy.
+	[c4be7a068f6d] <5.3-maint>
+
+2020-06-05  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/source/12.7/sip.h.in,
+	sipbuild/module/source/12.7/siplib.c,
+	sipbuild/module/source/12.8/sip.h.in,
+	sipbuild/module/source/12.8/siplib.c:
+	Preserve any current exception in the implementation of the wrapper
+	dealloc functions.
+	[2e916f0a1971] <5.3-maint>
+
+2020-06-04  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Check there is a public copy ctor when we can't using an assigment
+	operator as a workaround.
+	[ba341c676185] <5.3-maint>
+
+2020-06-02  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/distinfo/distinfo.py:
+	Fixed the handling of the --metadata option to sip-distinfo.
+	[d3bdeb6b323c] <5.3-maint>
+
+2020-06-01  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixed the code generation when making a copy of C++ object on the
+	stack to the heap when the class has no suitable ctor.
+	[046ee950675b] <5.3-maint>
+
 2020-05-30  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 5.3.0 for changeset 6169324910f8
+	[0f95709e589e]
 
 	* NEWS:
 	Released as v5.3.0.

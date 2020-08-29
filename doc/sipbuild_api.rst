@@ -14,6 +14,17 @@ build systems.
     Unless they are documented here they are **not** part of the public API and
     may be changed in any future release.
 
+.. py:data:: SIP_VERSION
+    :type: int
+
+    The major.minor.patch version number encoded as an integer.  For example
+    v5.4.0 would be encoded as 0x050400.
+
+.. py:data:: SIP_VERSION_STR
+    :type: str
+
+    The version number as it should be displayed to the user.
+
 
 :py:class:`~sipbuild.AbstractBuilder`
 -------------------------------------
@@ -616,20 +627,21 @@ build systems.
     .. py:method:: get_sip_distinfo_command_line(sip_distinfo, inventory, generator=None, wheel_tag=None)
 
         Get a sequence of command line arguments to invoke
-        :program:`sip-distinfo`.  The :option:`--console-script`,
-        :option:`--gui-script`, :option:`--metadata`, :option:`--prefix`,
-        :option:`--project-root` and :option:`--requires-dist` command line
-        options are handled automatically.  The arguments do not contain the
-        name of the :file:``.dist-info`` directory to create.
+        :program:`sip-distinfo`.  The :option:`sip-distinfo --console-script`,
+        :option:`sip-distinfo --gui-script`, :option:`sip-distinfo --metadata`,
+        :option:`sip-distinfo --prefix`, :option:`sip-distinfo --project-root`
+        and :option:`sip-distinfo --requires-dist` command line options are
+        handled automatically.  The arguments do not contain the name of the
+        :file:``.dist-info`` directory to create.
 
         :param str sip_distinfo: is the name of the :program:`sip-distinfo`
             executable.
-        :param str inventory: is the value of the :option:`--inventory` command
-            line option.
-        :param str generator: is the value of the :option:`--generator` command
-            line option.
-        :param str wheel_tag: is the value of the :option:`--wheel-tag` command
-            line option.
+        :param str inventory: is the value of the
+            :option:`sip-distinfo --inventory` command line option.
+        :param str generator: is the value of the
+            :option:`sip-distinfo --generator` command line option.
+        :param str wheel_tag: is the value of the
+            :option:`sip-distinfo --wheel-tag` command line option.
         :return: the sequence of command line arguments.
 
     .. py:attribute:: installables

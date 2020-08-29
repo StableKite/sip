@@ -76,7 +76,7 @@ doc/html/_static/classic.css
 doc/html/_static/doctools.js
 doc/html/_static/documentation_options.js
 doc/html/_static/file.png
-doc/html/_static/jquery-3.4.1.js
+doc/html/_static/jquery-3.5.1.js
 doc/html/_static/jquery.js
 doc/html/_static/language_data.js
 doc/html/_static/logo.png

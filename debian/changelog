@@ -1,4 +1,4 @@
-sip5 (5.4.0+dfsg-1) UNRELEASED; urgency=medium
+sip5 (5.4.0+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
   * Update sip-install manpage based on command_line_tools.rst change.

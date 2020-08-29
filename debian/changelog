@@ -1,3 +1,9 @@
+pyqt5-sip (12.8.1-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+
+ -- Dmitry Shachnev <mitya57@debian.org>  Sat, 29 Aug 2020 21:20:23 +0300
+
 pyqt5-sip (12.8.0-1) unstable; urgency=medium
 
   * New upstream release.

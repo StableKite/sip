@@ -1,6 +1,7 @@
 sip5 (5.4.0+dfsg-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Update sip-install manpage based on command_line_tools.rst change.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Sat, 29 Aug 2020 20:56:32 +0300
 

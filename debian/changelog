@@ -1,4 +1,4 @@
-sip5 (5.5.0+dfsg-1) UNRELEASED; urgency=medium
+sip5 (5.5.0+dfsg-1) unstable; urgency=medium
 
   [ Ondřej Nový ]
   * d/control: Update Maintainer field with new Debian Python Team
@@ -11,7 +11,7 @@ sip5 (5.5.0+dfsg-1) UNRELEASED; urgency=medium
   * Update SIP License text in debian/copyright.
   * Update sip-module manpage based on command_line_tools.rst change.
 
- -- Ondřej Nový <onovy@debian.org>  Thu, 24 Sep 2020 08:42:39 +0200
+ -- Dmitry Shachnev <mitya57@debian.org>  Fri, 27 Nov 2020 18:24:17 +0300
 
 sip5 (5.4.0+dfsg-1) unstable; urgency=medium
 

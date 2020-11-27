@@ -1,3 +1,65 @@
+2020-11-23  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS:
+	Released as v5.5.0.
+	[3e406eb8e1b5] [5.5.0] <default-5>
+
+	* NEWS:
+	Updated the NEWS file.
+	[10648b969d88] <default-5>
+
+2020-11-22  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* LICENSE:
+	Minor updates to the license as it can alos be applied to other
+	products.
+	[023513b879aa] <default-5>
+
+2020-10-28  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/pyproject_toml.rst, sipbuild/bindings.py,
+	sipbuild/buildable.py, sipbuild/distutils_builder.py:
+	Added the 'extra-compile-args', 'extra-link-args' and 'extra-
+	objects' bindings options.
+	[5dc25b1a9cf8] <default-5>
+
+2020-10-04  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/metasrc/parser.y, code_generator/parser.c,
+	code_generator/pybinding.c, code_generator/sip.h,
+	sipbuild/bindings.py, sipbuild/legacy/sip5.py:
+	Fixed a bug where details from an imported .toml file weren't being
+	passed to the code generator.
+	[c8d547c33a5f] <default-5>
+
+2020-09-28  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/pyproject.py:
+	Fixed the handling of lists of strings in tool.sip.metadata section.
+	[291701b2f338] <default-5>
+
+2020-09-18  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/project.py:
+	Only verify the name of the sip module if it is going to be needed.
+	[69fe2ef41232] <default-5>
+
+2020-09-17  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/command_line_tools.rst, doc/pyproject_toml.rst,
+	sipbuild/module/abi_version.py, sipbuild/module/main.py:
+	When the ABI version is specified the minor version is now optional.
+	[94a7bcc9d5ad] <default-5>
+
+	* sipbuild/abstract_project.py:
+	Import importlib.util explicitly.
+	[d84c448a9a60] <default-5>
+
+	* NEWS, doc/sipbuild_api.rst, sipbuild/bindings.py,
+	sipbuild/buildable.py:
+	Added the Buildable.exceptions attribute.
+	[2db4f291a75a] <default-5>
+
 2020-08-29  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* NEWS:

@@ -8,6 +8,7 @@ sip5 (5.5.0+dfsg-1) UNRELEASED; urgency=medium
 
   [ Dmitry Shachnev ]
   * New upstream release.
+  * Update SIP License text in debian/copyright.
 
  -- Ondřej Nový <onovy@debian.org>  Thu, 24 Sep 2020 08:42:39 +0200
 

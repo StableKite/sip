@@ -19,9 +19,11 @@ Display a help message.
 .B \-V, \-\-version
 Display the SIP version number.
 .TP
-.B \-\-abi\-version VERSION
-The version of the ABI implemented by the \fBsip\fP module is \fBVERSION\fP\&.
-By the default the latest version is used.
+.B \-\-abi\-version MAJOR[.MINOR]
+The version number of the ABI implemented by the \fBsip\fP module is
+\fBMAJOR.MINOR\fP\&.  If only the major version number is specified then the
+latest minor version with that major version is used.  By the default the
+very latest version is used.
 .TP
 .B \-\-project NAME
 The name of the project as it would appear on PyPI is \fBNAME\fP\&.  By default

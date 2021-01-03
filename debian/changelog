@@ -1,3 +1,12 @@
+sip5 (5.5.0+dfsg-2) UNRELEASED; urgency=medium
+
+  * Backport upstream fix for handling of sip.pyi.
+  * Partially backport upstream SIP v6 change to create a PEP 561 py.typed
+    file if dunder-init is specified and at least one set of bindings has
+    pep484-pyi specified (see #978586).
+
+ -- Dmitry Shachnev <mitya57@debian.org>  Sun, 03 Jan 2021 21:20:26 +0300
+
 sip5 (5.5.0+dfsg-1) unstable; urgency=medium
 
   [ Ondřej Nový ]

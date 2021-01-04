@@ -1,4 +1,4 @@
-sip5 (5.5.0+dfsg-2) UNRELEASED; urgency=medium
+sip5 (5.5.0+dfsg-2) unstable; urgency=medium
 
   * Backport upstream fix for handling of sip.pyi.
   * Partially backport upstream SIP v6 change to create a PEP 561 py.typed
@@ -6,7 +6,7 @@ sip5 (5.5.0+dfsg-2) UNRELEASED; urgency=medium
     pep484-pyi specified (see #978586).
   * Bump Standards-Version to 4.5.1, no changes needed.
 
- -- Dmitry Shachnev <mitya57@debian.org>  Sun, 03 Jan 2021 21:20:26 +0300
+ -- Dmitry Shachnev <mitya57@debian.org>  Mon, 04 Jan 2021 20:30:34 +0300
 
 sip5 (5.5.0+dfsg-1) unstable; urgency=medium
 

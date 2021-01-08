@@ -64,6 +64,7 @@ file.
             *opaque-class* |
             *operator* |
             *struct* |
+            *union* |
             *typedef* |
             *exception*]
 
@@ -208,6 +209,8 @@ file.
 
     *struct* ::= **struct** *name* **{** {*class-line*} **};**
 
+    *union* ::= **union** *name* **{** {*class-line*} **};**
+
     *typedef* ::= **typedef** [*typed-name* | *function-pointer*]
             *typedef-annotations* **;**
 
@@ -311,7 +314,9 @@ file.
 
     *type-list* ::= *type* [**,** *type-list*]
 
-    *base-type* ::= [*scoped-name* | *template* | **struct** *scoped-name* |
+    *base-type* ::= [*scoped-name* | *template* |
+            **struct** *scoped-name* |
+            **union** *scoped-name* |
             **char** | **signed char** | **unsigned char** | **wchar_t** |
             **int** | **unsigned** | **unsigned int** | **size_t** |
             **short** | **unsigned short** |
@@ -320,11 +325,13 @@ file.
             **float** | **double** |
             **bool** |
             **void** |
+            **Py_hash_t** |
             **Py_ssize_t** |
             **PyObject** |
             :stype:`SIP_PYBUFFER` |
             :stype:`SIP_PYCALLABLE` |
             :stype:`SIP_PYDICT` |
+            :stype:`SIP_PYENUM` |
             :stype:`SIP_PYLIST` |
             :stype:`SIP_PYOBJECT` |
             :stype:`SIP_PYSLICE` |
@@ -376,6 +383,11 @@ This is a ``PyObject *`` that is a Python callable object.
 .. sip-type:: SIP_PYDICT
 
 This is a ``PyObject *`` that is a Python dictionary object.
+
+
+.. sip-type:: SIP_PYENUM
+
+This is a ``PyObject *`` that is a Python enum object.
 
 
 .. sip-type:: SIP_PYLIST

@@ -74,7 +74,6 @@ static void fatallex(char *);
 
 %%
 
-^[ \t]*%API                 {BEGIN directive_start; return TK_API;}
 ^[ \t]*%AutoPyName          {BEGIN directive_start; return TK_AUTOPYNAME;}
 ^[ \t]*%CompositeModule     {BEGIN directive_start; return TK_COMPOMODULE;}
 ^[ \t]*%DefaultDocstringFormat  {BEGIN directive_start; return TK_DEFDOCSTRFMT;}
@@ -100,6 +99,7 @@ static void fatallex(char *);
 
 class                       {return TK_CLASS;}
 struct                      {return TK_STRUCT;}
+union                       {return TK_UNION;}
 public                      {return TK_PUBLIC;}
 protected                   {return TK_PROTECTED;}
 private                     {return TK_PRIVATE;}
@@ -137,6 +137,7 @@ final                       {return TK_FINAL;}
 size_t                      {return TK_SIZET;}
 ::                          {return TK_SCOPE;}
 \|\|                        {return TK_LOGICAL_OR;}
+\.\.\.                      {return TK_ELLIPSIS;}
 SIP_PYOBJECT                {return TK_PYOBJECT;}
 SIP_PYTUPLE                 {return TK_PYTUPLE;}
 SIP_PYLIST                  {return TK_PYLIST;}
@@ -145,12 +146,17 @@ SIP_PYCALLABLE              {return TK_PYCALLABLE;}
 SIP_PYSLICE                 {return TK_PYSLICE;}
 SIP_PYTYPE                  {return TK_PYTYPE;}
 SIP_PYBUFFER                {return TK_PYBUFFER;}
+SIP_PYENUM                  {return TK_PYENUM;}
+Py_hash_t                   {return TK_PYHASHT;}
 Py_ssize_t                  {return TK_PYSSIZET;}
-SIP_SSIZE_T                 {
-    /* Remove in v5.1. */
+
+SIP_SSIZE_T {
+    /*
+     * Remove in v7.0.  It should have been removed in v6.0 but we accidentally
+     * left some occurences in PyQt5.
+     */
     return TK_PYSSIZET;
 }
-\.\.\.                      {return TK_ELLIPSIS;}
 
 <directive>format           {return TK_FORMAT;}
 <directive>get              {return TK_GET;}
@@ -290,6 +296,14 @@ SIP_SSIZE_T                 {
 }
 
 
+\'\\x[0-9a-fA-F]+\' {
+    /* A single-quoted hex encoded character. */
+    yylval.qchar = strtol(&yytext[3], NULL, 16);
+
+    return TK_QCHAR_VALUE;
+}
+
+
 \'[^'\n]*['\n] {
     /* A single-quoted character. */
     if (strlen(yytext) != 3)
@@ -316,6 +330,42 @@ SIP_SSIZE_T                 {
 }
 
 
+%{
+/*
+ * Remove these in SIP v7.  They are retained (but ignored) so that PyQt5 can
+ * be built with SIP v6.
+ */
+%}
+
+^[ \t]*%BIGetReadBufferCode {
+    /* The start of a read buffer code block. */
+    codeIdx = 0;
+    return TK_READBUFFERCODE;
+}
+
+^[ \t]*%BIGetWriteBufferCode {
+    /* The start of a write buffer code block. */
+    codeIdx = 0;
+    return TK_WRITEBUFFERCODE;
+}
+
+^[ \t]*%BIGetSegCountCode {
+    /* The start of a segment count code block. */
+    codeIdx = 0;
+    return TK_SEGCOUNTCODE;
+}
+
+^[ \t]*%BIGetCharBufferCode {
+    /* The start of a char buffer code block. */
+    codeIdx = 0;
+    return TK_CHARBUFFERCODE;
+}
+
+%{
+/* End of deprecated directives. */
+%}
+
+
 ^[ \t]*%Copying {
     /* The software license. */
     codeIdx = 0;
@@ -332,6 +382,12 @@ SIP_SSIZE_T                 {
     /* The start of a to-type code block. */
     codeIdx = 0;
     return TK_TOTYPE;
+}
+
+^[ \t]*%ReleaseCode {
+    /* The start of a release code block. */
+    codeIdx = 0;
+    return TK_RELEASE;
 }
 
 ^[ \t]*%ConvertToSubClassCode {
@@ -461,30 +517,6 @@ SIP_SSIZE_T                 {
     /* The start of a release buffer code block. */
     codeIdx = 0;
     return TK_RELEASEBUFFERCODE;
-}
-
-^[ \t]*%BIGetReadBufferCode {
-    /* The start of a read buffer code block. */
-    codeIdx = 0;
-    return TK_READBUFFERCODE;
-}
-
-^[ \t]*%BIGetWriteBufferCode {
-    /* The start of a write buffer code block. */
-    codeIdx = 0;
-    return TK_WRITEBUFFERCODE;
-}
-
-^[ \t]*%BIGetSegCountCode {
-    /* The start of a segment count code block. */
-    codeIdx = 0;
-    return TK_SEGCOUNTCODE;
-}
-
-^[ \t]*%BIGetCharBufferCode {
-    /* The start of a char buffer code block. */
-    codeIdx = 0;
-    return TK_CHARBUFFERCODE;
 }
 
 ^[ \t]*%InstanceCode {

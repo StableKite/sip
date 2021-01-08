@@ -65,18 +65,18 @@ static int parsingCSignature;           /* An explicit C/C++ signature is being 
 static const char *getPythonName(moduleDef *mod, optFlags *optflgs,
         const char *cname);
 static classDef *findClass(sipSpec *pt, ifaceFileType iftype,
-        apiVersionRangeDef *api_range, scopedNameDef *fqname, int tmpl_arg);
+        scopedNameDef *fqname, int tmpl_arg);
 static classDef *findClassWithInterface(sipSpec *pt, ifaceFileDef *iff,
         int tmpl_arg);
 static classDef *newClass(sipSpec *pt, ifaceFileType iftype,
-        apiVersionRangeDef *api_range, scopedNameDef *snd,
-        const char *virt_error_handler, typeHintDef *typehint_in,
-        typeHintDef *typehint_out, const char *typehint_value);
+        scopedNameDef *snd, const char *virt_error_handler,
+        typeHintDef *typehint_in, typeHintDef *typehint_out,
+        const char *typehint_value);
 static void finishClass(sipSpec *, moduleDef *, classDef *, optFlags *);
 static exceptionDef *findException(sipSpec *pt, scopedNameDef *fqname, int new);
 static mappedTypeDef *newMappedType(sipSpec *,argDef *, optFlags *);
 static enumDef *newEnum(sipSpec *pt, moduleDef *mod, mappedTypeDef *mt_scope,
-        char *name, optFlags *of, int flags, int isscoped);
+        char *name, optFlags *optflgs, int flags, int isscoped);
 static void instantiateClassTemplate(sipSpec *pt, moduleDef *mod,
         classDef *scope, scopedNameDef *fqname, classTmplDef *tcd,
         templateDef *td, const char *pyname, int use_template_name,
@@ -170,9 +170,6 @@ static void applyTypeFlags(moduleDef *mod, argDef *ad, optFlags *flags);
 static Format convertFormat(const char *format);
 static Signature convertSignature(const char *signature);
 static argType convertEncoding(const char *encoding);
-static apiVersionRangeDef *getAPIRange(optFlags *optflgs);
-static apiVersionRangeDef *convertAPIRange(moduleDef *mod, nameDef *name,
-        int from, int to);
 static char *convertFeaturedString(char *fs);
 static KwArgs keywordArgs(moduleDef *mod, optFlags *optflgs, signatureDef *sd,
         int need_name);
@@ -191,11 +188,14 @@ static KwArgs convertKwArgs(const char *kwargs);
 static void checkAnnos(optFlags *annos, const char *valid[]);
 static void appendCodeBlock(codeBlockList **headp, codeBlock *cb);
 static void handleKeepReference(optFlags *optflgs, argDef *ad, moduleDef *mod);
-static void mappedTypeAnnos(mappedTypeDef *mtd, optFlags *optflgs);
+static void mappedTypeAnnos(sipSpec *pt, mappedTypeDef *mtd,
+        optFlags *optflgs);
 static void add_new_deref(argDef *new, argDef *orig, int isconst);
 static void add_derefs(argDef *dst, argDef *src);
 static int isBackstop(qualDef *qd);
 static void checkEllipsis(signatureDef *sd);
+static int checkUserState(codeBlockList *convtocode,
+        codeBlockList *releasecode);
 static scopedNameDef *fullyQualifiedName(scopedNameDef *snd);
 %}
 
@@ -219,7 +219,6 @@ static scopedNameDef *fullyQualifiedName(scopedNameDef *snd);
     int             boolean;
     exceptionDef    exceptionbase;
     classDef        *klass;
-    apiCfg          api;
     autoPyNameCfg   autopyname;
     compModuleCfg   compmodule;
     defDocstringFmtCfg  defdocstringfmt;
@@ -243,7 +242,17 @@ static scopedNameDef *fullyQualifiedName(scopedNameDef *snd);
     int             token;
 }
 
-%token          TK_API
+
+/*
+ * Remove these in SIP v7.  They are retained (but ignored) so that PyQt5 can
+ * be built with SIP v6.
+ */
+%token          TK_READBUFFERCODE
+%token          TK_WRITEBUFFERCODE
+%token          TK_SEGCOUNTCODE
+%token          TK_CHARBUFFERCODE
+
+
 %token          TK_AUTOPYNAME
 %token          TK_DEFDOCSTRFMT
 %token          TK_DEFDOCSTRSIG
@@ -278,10 +287,6 @@ static scopedNameDef *fullyQualifiedName(scopedNameDef *snd);
 %token          TK_CLEARCODE
 %token          TK_GETBUFFERCODE
 %token          TK_RELEASEBUFFERCODE
-%token          TK_READBUFFERCODE
-%token          TK_WRITEBUFFERCODE
-%token          TK_SEGCOUNTCODE
-%token          TK_CHARBUFFERCODE
 %token          TK_PICKLECODE
 %token          TK_VIRTUALCALLCODE
 %token          TK_METHODCODE
@@ -289,6 +294,7 @@ static scopedNameDef *fullyQualifiedName(scopedNameDef *snd);
 %token          TK_INSTANCECODE
 %token          TK_FROMTYPE
 %token          TK_TOTYPE
+%token          TK_RELEASE
 %token          TK_TOSUBCLASS
 %token          TK_INCLUDE
 %token          TK_IMPORT
@@ -299,6 +305,7 @@ static scopedNameDef *fullyQualifiedName(scopedNameDef *snd);
 %token          TK_COMPOMODULE
 %token          TK_CLASS
 %token          TK_STRUCT
+%token          TK_UNION
 %token          TK_PUBLIC
 %token          TK_PROTECTED
 %token          TK_PRIVATE
@@ -323,6 +330,7 @@ static scopedNameDef *fullyQualifiedName(scopedNameDef *snd);
 %token          TK_PYSLICE
 %token          TK_PYTYPE
 %token          TK_PYBUFFER
+%token          TK_PYENUM
 %token          TK_VIRTUAL
 %token          TK_ENUM
 %token          TK_SIGNED
@@ -331,6 +339,7 @@ static scopedNameDef *fullyQualifiedName(scopedNameDef *snd);
 %token          TK_LOGICAL_OR
 %token          TK_CONST
 %token          TK_STATIC
+%token          TK_PYHASHT
 %token          TK_PYSSIZET
 %token          TK_SIZET
 %token <number> TK_NUMBER_VALUE
@@ -397,7 +406,6 @@ static scopedNameDef *fullyQualifiedName(scopedNameDef *snd);
 %type <number>          optconst
 %type <number>          optfinal
 %type <number>          optabstract
-%type <number>          optnumber
 %type <value>           simplevalue
 %type <valp>            value
 %type <valp>            expr
@@ -407,10 +415,6 @@ static scopedNameDef *fullyQualifiedName(scopedNameDef *snd);
 %type <codeb>           clearcode
 %type <codeb>           getbufcode
 %type <codeb>           releasebufcode
-%type <codeb>           readbufcode
-%type <codeb>           writebufcode
-%type <codeb>           segcountcode
-%type <codeb>           charbufcode
 %type <codeb>           picklecode
 %type <codeb>           finalcode
 %type <codeb>           classtypehintcode
@@ -448,9 +452,6 @@ static scopedNameDef *fullyQualifiedName(scopedNameDef *snd);
 %type <exceptionbase>   baseexception
 %type <klass>           class
 %type <token>           class_access
-
-%type <api>             api_arg_list
-%type <api>             api_arg
 
 %type <autopyname>      autopyname_args
 %type <autopyname>      autopyname_arg_list
@@ -567,7 +568,6 @@ statement:  {
     ;
 
 modstatement:   plugin
-    |   api
     |   compmodule
     |   copying
     |   defdocstringfmt
@@ -731,8 +731,8 @@ defencoding_arg:    TK_NAME '=' TK_STRING_VALUE {
 
 plugin:     TK_PLUGIN plugin_args {
             /*
-             * Note that %Plugin is internal in SIP v4.  The current thinking
-             * is that it won't be needed for SIP v5.
+             * Note that %Plugin is PyQt-specific.  It should be removed in SIP
+             * v7.
              */
 
             if (notSkipping())
@@ -822,60 +822,6 @@ veh_arg: TK_NAME '=' TK_NAME_VALUE {
             $$.token = TK_NAME;
 
             $$.name = $3;
-        }
-    ;
-
-api:    TK_API '(' api_arg_list ')' {
-            deprecated("The %API directive is deprecated and will be removed in v6");
-
-            if (notSkipping())
-            {
-                apiVersionRangeDef *avd;
-
-                if (findAPI(currentSpec, $3.name) != NULL)
-                    yyerror("The API name in the %API directive has already been defined");
-
-                if ($3.version < 1)
-                    yyerror("The version number in the %API directive must be greater than or equal to 1");
-
-                avd = sipMalloc(sizeof (apiVersionRangeDef));
-
-                avd->api_name = cacheName(currentSpec, $3.name);
-                avd->from = $3.version;
-                avd->to = -1;
-
-                avd->next = currentModule->api_versions;
-                currentModule->api_versions = avd;
-
-                if (inMainModule())
-                    setIsUsedName(avd->api_name);
-            }
-        }
-    ;
-
-api_arg_list:   api_arg
-    |   api_arg_list ',' api_arg {
-            $$ = $1;
-
-            switch ($3.token)
-            {
-            case TK_NAME: $$.name = $3.name; break;
-            case TK_VERSION: $$.version = $3.version; break;
-            }
-        }
-    ;
-
-api_arg:    TK_NAME '=' name_or_string {
-            $$.token = TK_NAME;
-
-            $$.name = $3;
-            $$.version = 0;
-        }
-    |   TK_VERSION '=' TK_NUMBER_VALUE {
-            $$.token = TK_VERSION;
-
-            $$.name = NULL;
-            $$.version = $3;
         }
     ;
 
@@ -1100,9 +1046,9 @@ mappedtype: TK_MAPPEDTYPE basetype optflags {
             {
                 static const char *annos[] = {
                     "AllowNone",
-                    "API",
                     "NoRelease",
                     "PyName",
+                    "PyQtFlags",
                     "TypeHint",
                     "TypeHintIn",
                     "TypeHintOut",
@@ -1123,6 +1069,7 @@ mappedtypetmpl: template TK_MAPPEDTYPE basetype optflags {
                 static const char *annos[] = {
                     "AllowNone",
                     "NoRelease",
+                    "PyQtFlags",
                     "TypeHint",
                     "TypeHintIn",
                     "TypeHintOut",
@@ -1168,7 +1115,7 @@ mappedtypetmpl: template TK_MAPPEDTYPE basetype optflags {
 
                 mtt->sig = $1;
                 mtt->mt = allocMappedType(currentSpec, &$3);
-                mappedTypeAnnos(mtt->mt, &$4);
+                mappedTypeAnnos(currentSpec, mtt->mt, &$4);
                 mtt->next = currentSpec->mappedtypetemplates;
 
                 currentSpec->mappedtypetemplates = mtt;
@@ -1186,11 +1133,19 @@ mappedtypetmpl: template TK_MAPPEDTYPE basetype optflags {
 mtdefinition:   '{' mtbody '}' ';' {
             if (notSkipping())
             {
-                if (currentMappedType->convfromcode == NULL)
-                    yyerror("%MappedType must have a %ConvertFromTypeCode directive");
+                if (abiVersion >= ABI_13_0)
+                {
+                    if (checkUserState(currentMappedType->convtocode, currentMappedType->releasecode))
+                        setNeedsUserState(currentMappedType);
+                }
+                else
+                {
+                    if (currentMappedType->convtocode == NULL)
+                        yyerror("%MappedType must have a %ConvertToTypeCode directive");
 
-                if (currentMappedType->convtocode == NULL)
-                    yyerror("%MappedType must have a %ConvertToTypeCode directive");
+                    if (currentMappedType->convfromcode == NULL)
+                        yyerror("%MappedType must have a %ConvertFromTypeCode directive");
+                }
 
                 currentMappedType = NULL;
             }
@@ -1227,6 +1182,15 @@ mtline: ifstart
                     yyerror("%MappedType has more than one %ConvertToTypeCode directive");
 
                 appendCodeBlock(&currentMappedType->convtocode, $2);
+            }
+        }
+    |   TK_RELEASE codeblock {
+            if (notSkipping())
+            {
+                if (currentMappedType->releasecode != NULL)
+                    yyerror("%MappedType has more than one %ReleaseCode directive");
+
+                appendCodeBlock(&currentMappedType->releasecode, $2);
             }
         }
     |   instancecode {
@@ -1271,7 +1235,7 @@ namespace:  TK_NAMESPACE TK_NAME_VALUE {
                 else
                     scope = NULL;
 
-                ns = newClass(currentSpec, namespace_iface, NULL,
+                ns = newClass(currentSpec, namespace_iface,
                         text2scopedName(scope, $2), NULL, NULL, NULL, NULL);
 
                 pushScope(ns);
@@ -1624,7 +1588,7 @@ hiddenns:   TK_HIDE_NS hiddenns_args {
             {
                 classDef *ns;
 
-                ns = newClass(currentSpec, namespace_iface, NULL,
+                ns = newClass(currentSpec, namespace_iface,
                         fullyQualifiedName($2.name), NULL, NULL, NULL, NULL);
                 setHiddenNamespace(ns);
             }
@@ -1955,12 +1919,6 @@ dottedname: TK_NAME_VALUE
         }
     ;
 
-optnumber:  {
-            $$ = -1;
-        }
-    |   TK_NUMBER_VALUE
-    ;
-
 include:    TK_INCLUDE include_args {
             if ($2.name == NULL)
                 yyerror("%Include must have a 'name' argument");
@@ -2080,26 +2038,6 @@ getbufcode: TK_GETBUFFERCODE codeblock {
     ;
 
 releasebufcode: TK_RELEASEBUFFERCODE codeblock {
-            $$ = $2;
-        }
-    ;
-
-readbufcode:    TK_READBUFFERCODE codeblock {
-            $$ = $2;
-        }
-    ;
-
-writebufcode:   TK_WRITEBUFFERCODE codeblock {
-            $$ = $2;
-        }
-    ;
-
-segcountcode:   TK_SEGCOUNTCODE codeblock {
-            $$ = $2;
-        }
-    ;
-
-charbufcode:    TK_CHARBUFFERCODE codeblock {
             $$ = $2;
         }
     ;
@@ -2404,6 +2342,7 @@ enum:       TK_ENUM optenumkey optname optflags {
             if (notSkipping())
             {
                 const char *annos[] = {
+                    "BaseType",
                     "NoScope",
                     "NoTypeHint",
                     "PyName",
@@ -2431,6 +2370,9 @@ optenumkey: {
             $$ = TRUE;
         }
     |   TK_STRUCT {
+            $$ = TRUE;
+        }
+    |   TK_UNION {
             $$ = TRUE;
         }
     ;
@@ -2765,6 +2707,47 @@ typedef:    TK_TYPEDEF cpptype TK_NAME_VALUE optflags ';' optdocstring {
         }
     ;
 
+union:      TK_UNION scopedname {
+            if (currentSpec -> genc && $2->next != NULL)
+                yyerror("Namespaces not allowed in a C module");
+        } optflags {
+            if (notSkipping())
+            {
+                const char *annos[] = {
+                    "AllowNone",
+                    "DelayDtor",
+                    "Deprecated",
+                    "ExportDerived",
+                    "External",
+                    "FileExtension",
+                    "Metatype",
+                    "Mixin",
+                    "NoDefaultCtors",
+                    "NoTypeHint",
+                    "PyName",
+                    "PyQtFlags",
+                    "PyQtFlagsEnums",
+                    "PyQtInterface",
+                    "PyQtNoQMetaObject",
+                    "Supertype",
+                    "TypeHint",
+                    "TypeHintIn",
+                    "TypeHintOut",
+                    "TypeHintValue",
+                    NULL
+                };
+
+                checkAnnos(&$4, annos);
+                defineClass($2, currentSupers, &$4);
+                setUnion(currentScope());
+                sectionFlags = SECT_IS_PUBLIC;
+            }
+        } optclassbody ';' {
+            if (notSkipping())
+                completeClass($2, &$4, $6);
+        }
+    ;
+
 struct:     TK_STRUCT scopedname {
             if (currentSpec -> genc && $2->next != NULL)
                 yyerror("Namespaces not allowed in a C module");
@@ -2777,7 +2760,6 @@ struct:     TK_STRUCT scopedname {
                 const char *annos[] = {
                     "Abstract",
                     "AllowNone",
-                    "API",
                     "DelayDtor",
                     "Deprecated",
                     "ExportDerived",
@@ -2858,7 +2840,6 @@ class:  TK_CLASS scopedname {
                 const char *annos[] = {
                     "Abstract",
                     "AllowNone",
-                    "API",
                     "DelayDtor",
                     "Deprecated",
                     "ExportDerived",
@@ -2945,7 +2926,7 @@ superclass: class_access scopedname {
                  * should pass the API of the sub-class being defined,
                  * otherwise we cannot create sub-classes of versioned classes.
                  */
-                super = findClass(currentSpec, class_iface, NULL, snd,
+                super = findClass(currentSpec, class_iface, snd,
                         currentIsTemplate);
                 appendToClassList(&currentSupers, super);
             }
@@ -2982,6 +2963,7 @@ classbody:
 classline:  ifstart
     |   ifend
     |   namespace
+    |   union
     |   struct
     |   class
     |   classtmpl
@@ -3052,18 +3034,16 @@ classline:  ifstart
                 appendCodeBlock(&scope->releasebufcode, $1);
             }
         }
-    |   readbufcode {
-            /* Remove in v6. */
-        }
-    |   writebufcode {
-            /* Remove in v6. */
-        }
-    |   segcountcode {
-            /* Remove in v6. */
-        }
-    |   charbufcode {
-            /* Remove in v6. */
-        }
+
+    /*
+     * Remove these in SIP v7.  They are retained (but ignored) so that PyQt5
+     * can be built with SIP v6.
+     */
+    | TK_READBUFFERCODE codeblock {}
+    | TK_WRITEBUFFERCODE codeblock {}
+    | TK_SEGCOUNTCODE codeblock {}
+    | TK_CHARBUFFERCODE codeblock {}
+
     |   instancecode {
             if (notSkipping())
             {
@@ -3309,6 +3289,8 @@ dtor_decl:  '~' TK_NAME_VALUE '(' ')' optexceptions optabstract optflags ';' pre
                 if (currentSpec -> genc && $9 == NULL)
                     yyerror("Destructor in C modules must include %MethodCode");
 
+                if (currentIsVirt && isUnion(cd))
+                    yyerror("A union cannot have a virtual destructor");
 
                 appendCodeBlock(&cd->dealloccode, $9);  /* premethodcode */
                 appendCodeBlock(&cd->dealloccode, $10); /* methodcode */
@@ -3361,7 +3343,6 @@ simplector: TK_NAME_VALUE '(' arglist ')' optexceptions optflags optctorsig ';' 
             if (notSkipping())
             {
                 const char *annos[] = {
-                    "API",
                     "Default",
                     "Deprecated",
                     "HoldGIL",
@@ -3686,29 +3667,6 @@ flag:   TK_NAME_VALUE {
 flagvalue:  dottedname {
             $$.ftype = (strchr($1, '.') != NULL) ? dotted_name_flag : name_flag;
             $$.fvalue.sval = $1;
-        }
-    |   TK_NAME_VALUE ':' optnumber '-' optnumber {
-            apiVersionRangeDef *avd;
-            int from, to;
-
-            $$.ftype = api_range_flag;
-
-            /* Check that the API is known. */
-            if ((avd = findAPI(currentSpec, $1)) == NULL)
-                yyerror("unknown API name in API annotation");
-
-            if (inMainModule())
-                setIsUsedName(avd->api_name);
-
-            /* Unbounded values are represented by 0. */
-            if ((from = $3) < 0)
-                from = 0;
-
-            if ((to = $5) < 0)
-                to = 0;
-
-            $$.fvalue.aval = convertAPIRange(currentModule, avd->api_name,
-                    from, to);
         }
     |   TK_STRING_VALUE {
             $$.ftype = string_flag;
@@ -4120,6 +4078,21 @@ basetype:   scopedname {
                 $$.u.sname = $2;
             }
         }
+    |   TK_UNION scopedname {
+            memset(&$$, 0, sizeof (argDef));
+
+            /* In a C module all unions must be defined. */
+            if (currentSpec->genc)
+            {
+                $$.atype = defined_type;
+                $$.u.snd = $2;
+            }
+            else
+            {
+                $$.atype = union_type;
+                $$.u.sname = $2;
+            }
+        }
     |   TK_UNSIGNED TK_SHORT {
             memset(&$$, 0, sizeof (argDef));
             $$.atype = ushort_type;
@@ -4219,6 +4192,17 @@ basetype:   scopedname {
     |   TK_PYBUFFER {
             memset(&$$, 0, sizeof (argDef));
             $$.atype = pybuffer_type;
+        }
+    |   TK_PYENUM {
+            if (abiVersion < ABI_13_0)
+                yyerror("SIP_PYENUM is only supported for ABI v13 and later");
+
+            memset(&$$, 0, sizeof (argDef));
+            $$.atype = pyenum_type;
+        }
+    |   TK_PYHASHT {
+            memset(&$$, 0, sizeof (argDef));
+            $$.atype = hash_type;
         }
     |   TK_PYSSIZET {
             memset(&$$, 0, sizeof (argDef));
@@ -4486,9 +4470,9 @@ static void parseFile(FILE *fp, const char *name, moduleDef *prevmod,
  * Find an interface file, or create a new one.
  */
 ifaceFileDef *findIfaceFile(sipSpec *pt, moduleDef *mod, scopedNameDef *fqname,
-        ifaceFileType iftype, apiVersionRangeDef *api_range, argDef *ad)
+        ifaceFileType iftype, argDef *ad)
 {
-    ifaceFileDef *iff, *first_alt = NULL;
+    ifaceFileDef *iff;
 
     /* See if the name is already used. */
 
@@ -4496,19 +4480,6 @@ ifaceFileDef *findIfaceFile(sipSpec *pt, moduleDef *mod, scopedNameDef *fqname,
     {
         if (compareScopedNames(iff->fqcname, fqname) != 0)
             continue;
-
-        /*
-         * If they are both versioned then assume the user knows what they are
-         * doing.
-         */
-        if (iff->api_range != NULL && api_range != NULL && iff->module == mod)
-        {
-            /* Remember the first of the alternate APIs. */
-            if ((first_alt = iff->first_alt) == NULL)
-                first_alt = iff;
-
-            break;
-        }
 
         /*
          * They must be the same type except that we allow a class if we want
@@ -4581,20 +4552,6 @@ ifaceFileDef *findIfaceFile(sipSpec *pt, moduleDef *mod, scopedNameDef *fqname,
     iff = sipMalloc(sizeof (ifaceFileDef));
 
     iff->name = cacheName(pt, scopedNameToString(fqname));
-    iff->api_range = api_range;
-
-    if (first_alt != NULL)
-    {
-        iff->first_alt = first_alt;
-        iff->next_alt = first_alt->next_alt;
-
-        first_alt->next_alt = iff;
-    }
-    else
-    {
-        /* This is the first alternate so point to itself. */
-        iff->first_alt = iff;
-    }
 
     /*
      * Note that we assume that the type (ie. class vs. mapped type vs.
@@ -4621,11 +4578,10 @@ ifaceFileDef *findIfaceFile(sipSpec *pt, moduleDef *mod, scopedNameDef *fqname,
  * Find a class definition in a parse tree.
  */
 static classDef *findClass(sipSpec *pt, ifaceFileType iftype,
-        apiVersionRangeDef *api_range, scopedNameDef *fqname, int tmpl_arg)
+        scopedNameDef *fqname, int tmpl_arg)
 {
     return findClassWithInterface(pt,
-            findIfaceFile(pt, currentModule, fqname, iftype, api_range, NULL),
-            tmpl_arg);
+            findIfaceFile(pt, currentModule, fqname, iftype, NULL), tmpl_arg);
 }
 
 
@@ -4700,7 +4656,7 @@ static exceptionDef *findException(sipSpec *pt, scopedNameDef *fqname, int new)
     ifaceFileDef *iff;
     classDef *cd;
 
-    iff = findIfaceFile(pt, currentModule, fqname, exception_iface, NULL, NULL);
+    iff = findIfaceFile(pt, currentModule, fqname, exception_iface, NULL);
 
     /* See if it is an existing one. */
     for (xd = pt->exceptions; xd != NULL; xd = xd->next)
@@ -4756,9 +4712,9 @@ static exceptionDef *findException(sipSpec *pt, scopedNameDef *fqname, int new)
  * Find an undefined (or create a new) class definition in a parse tree.
  */
 static classDef *newClass(sipSpec *pt, ifaceFileType iftype,
-        apiVersionRangeDef *api_range, scopedNameDef *fqname,
-        const char *virt_error_handler, typeHintDef *typehint_in,
-        typeHintDef *typehint_out, const char *typehint_value)
+        scopedNameDef *fqname, const char *virt_error_handler,
+        typeHintDef *typehint_in, typeHintDef *typehint_out,
+        const char *typehint_value)
 {
     int flags;
     classDef *cd, *scope;
@@ -4794,11 +4750,11 @@ static classDef *newClass(sipSpec *pt, ifaceFileType iftype,
         scope = NULL;
     }
 
-    cd = findClass(pt, iftype, api_range, fqname, FALSE);
+    cd = findClass(pt, iftype, fqname, FALSE);
 
     /* Check it hasn't already been defined. */
     if (iftype != namespace_iface && cd->iff->module != NULL)
-        yyerror("The struct/class has already been defined");
+        yyerror("The struct/class/union has already been defined");
 
     /* Complete the initialisation. */
     cd->classflags |= flags;
@@ -4833,7 +4789,7 @@ static classDef *newClass(sipSpec *pt, ifaceFileType iftype,
             cd->real = ns;
 
             if (inMainModule())
-                ns->iff->first_alt->needed = TRUE;
+                ns->iff->needed = TRUE;
 
             break;
         }
@@ -4877,13 +4833,21 @@ static void finishClass(sipSpec *pt, moduleDef *mod, classDef *cd,
 
     if ((flg = getOptFlag(of, "PyQtFlagsEnums", string_list_flag)) != NULL)
     {
+        if (!pluginPyQt5(pt))
+            yyerror("/PyQtFlagsEnums/ is only supported for PyQt5");
+
         cd->pyqt_flags_enums = flg->fvalue.slval;
         cd->pyqt_flags = 1;
     }
 
-    /* This is deprecated and only used by versions before v5.12. */
     if ((flg = getOptFlag(of, "PyQtFlags", integer_flag)) != NULL)
+    {
+        /* This is only used by versions before v5.12. */
+        if (!pluginPyQt5(pt))
+            yyerror("/PyQtFlags/ is only supported for PyQt5");
+
         cd->pyqt_flags = flg->fvalue.ival;
+    }
 
     if (getOptFlag(of, "PyQtNoQMetaObject", bool_flag) != NULL)
         setPyQtNoQMetaObject(cd);
@@ -4952,6 +4916,7 @@ static void finishClass(sipSpec *pt, moduleDef *mod, classDef *cd,
             setClassHandlesNone(cd);
 
         if (getOptFlag(of,"Abstract",bool_flag) != NULL)
+
         {
             setIsAbstractClass(cd);
             setIsIncomplete(cd);
@@ -5146,8 +5111,7 @@ static mappedTypeDef *newMappedType(sipSpec *pt, argDef *ad, optFlags *of)
         yyerror("Invalid type for %MappedType");
     }
 
-    iff = findIfaceFile(pt, currentModule, snd, mappedtype_iface,
-            getAPIRange(of), ad);
+    iff = findIfaceFile(pt, currentModule, snd, mappedtype_iface, ad);
 
     /* Check it hasn't already been defined. */
     for (mtd = pt->mappedtypes; mtd != NULL; mtd = mtd->next)
@@ -5170,7 +5134,7 @@ static mappedTypeDef *newMappedType(sipSpec *pt, argDef *ad, optFlags *of)
     if (cname != NULL)
         mtd->pyname = cacheName(pt, getPythonName(currentModule, of, cname));
 
-    mappedTypeAnnos(mtd, of);
+    mappedTypeAnnos(pt, mtd, of);
 
     mtd->iff = iff;
     mtd->next = pt->mappedtypes;
@@ -5215,11 +5179,12 @@ mappedTypeDef *allocMappedType(sipSpec *pt, argDef *type)
  * Create a new enum.
  */
 static enumDef *newEnum(sipSpec *pt, moduleDef *mod, mappedTypeDef *mt_scope,
-        char *name, optFlags *of, int flags, int isscoped)
+        char *name, optFlags *optflgs, int flags, int isscoped)
 {
-    enumDef *ed, *first_alt, *next_alt;
+    enumDef *ed;
     classDef *c_scope;
     ifaceFileDef *scope;
+    optFlag *of;
 
     if (mt_scope != NULL)
     {
@@ -5236,13 +5201,9 @@ static enumDef *newEnum(sipSpec *pt, moduleDef *mod, mappedTypeDef *mt_scope,
 
     ed = sipMalloc(sizeof (enumDef));
 
-    /* Assume the enum isn't versioned. */
-    first_alt = ed;
-    next_alt = NULL;
-
     if (name != NULL)
     {
-        ed->pyname = cacheName(pt, getPythonName(mod, of, name));
+        ed->pyname = cacheName(pt, getPythonName(mod, optflgs, name));
         checkAttributes(pt, mod, c_scope, mt_scope, ed->pyname->text, FALSE);
 
         ed->fqcname = text2scopedName(scope, name);
@@ -5252,27 +5213,6 @@ static enumDef *newEnum(sipSpec *pt, moduleDef *mod, mappedTypeDef *mt_scope,
         {
             setIsUsedName(ed->pyname);
             setIsUsedName(ed->cname);
-        }
-
-        /* If the scope is versioned then look for any alternate. */
-        if (scope != NULL && scope->api_range != NULL)
-        {
-            enumDef *alt;
-
-            for (alt = pt->enums; alt != NULL; alt = alt->next)
-            {
-                if (alt->module != mod || alt->fqcname == NULL)
-                    continue;
-
-                if (compareScopedNames(alt->fqcname, ed->fqcname) == 0)
-                {
-                    first_alt = alt->first_alt;
-                    next_alt = first_alt->next_alt;
-                    first_alt->next_alt = ed;
-
-                    break;
-                }
-            }
         }
     }
     else
@@ -5296,12 +5236,10 @@ static enumDef *newEnum(sipSpec *pt, moduleDef *mod, mappedTypeDef *mt_scope,
     }
 
     ed->enumflags = flags;
-    ed->no_typehint = getNoTypeHint(of);
+    ed->no_typehint = getNoTypeHint(optflgs);
     ed->enumnr = -1;
     ed->ecd = c_scope;
     ed->emtd = mt_scope;
-    ed->first_alt = first_alt;
-    ed->next_alt = next_alt;
     ed->module = mod;
     ed->members = NULL;
     ed->slots = NULL;
@@ -5311,11 +5249,32 @@ static enumDef *newEnum(sipSpec *pt, moduleDef *mod, mappedTypeDef *mt_scope,
 
     pt->enums = ed;
 
-    if (getOptFlag(of, "NoScope", bool_flag) != NULL)
+    if (getOptFlag(optflgs, "NoScope", bool_flag) != NULL)
         setIsNoScope(ed);
 
     if (isscoped)
         setIsScopedEnum(ed);
+
+    if ((of = getOptFlag(optflgs, "BaseType", name_flag)) != NULL)
+    {
+        const char *base_type;
+
+        if (abiVersion < ABI_13_0)
+            yyerror("/BaseType/ is only supported for ABI v13 and later");
+
+        base_type = of->fvalue.sval;
+
+        if (strcmp(base_type, "Enum") == 0)
+            setIsEnumEnum(ed);
+        else if (strcmp(base_type, "Flag") == 0)
+            setIsEnumFlag(ed);
+        else if (strcmp(base_type, "IntEnum") == 0)
+            setIsEnumIntEnum(ed);
+        else if (strcmp(base_type, "IntFlag") == 0)
+            setIsEnumIntFlag(ed);
+        else
+            yyerror("Invalid /BaseType/");
+    }
 
     return ed;
 }
@@ -5544,8 +5503,16 @@ static char *type2string(argDef *ad)
             s = "void *";
             break;
 
+        case ssize_type:
+            s = "Py_ssize_t";
+            break;
+
         case size_type:
             s = "size_t";
+            break;
+
+        case hash_type:
+            s = "Py_hash_t";
             break;
 
         default:
@@ -5679,8 +5646,7 @@ static void instantiateClassTemplate(sipSpec *pt, moduleDef *mod,
         setUseTemplateName(cd);
 
     /* Handle the interface file. */
-    cd->iff = findIfaceFile(pt, mod, fqname, class_iface,
-            (scope != NULL ? scope->iff->api_range : NULL), NULL);
+    cd->iff = findIfaceFile(pt, mod, fqname, class_iface, NULL);
     cd->iff->module = mod;
 
     appendCodeBlockList(&cd->iff->hdrcode, tcd->cd->iff->hdrcode);
@@ -5747,7 +5713,7 @@ static void instantiateClassTemplate(sipSpec *pt, moduleDef *mod,
                 classDef *icd;
 
                 if (tad->atype == defined_type)
-                    icd = findClass(pt, class_iface, NULL, tad->u.snd, FALSE);
+                    icd = findClass(pt, class_iface, tad->u.snd, FALSE);
                 else if (tad->atype == class_type)
                     icd = tad->u.cd;
                 else
@@ -5965,7 +5931,6 @@ static void instantiateTemplateEnums(sipSpec *pt, classTmplDef *tcd,
             }
 
             ed->ecd = cd;
-            ed->first_alt = ed;
             ed->module = mod;
             ed->members = NULL;
 
@@ -6747,7 +6712,6 @@ static void newCtor(moduleDef *mod, char *name, int sectFlags,
     ct->docstring = docstring;
     ct->ctorflags = sectFlags;
     ct->no_typehint = getNoTypeHint(optflgs);
-    ct->api_range = getAPIRange(optflgs);
     ct->pysig = *args;
     ct->cppsig = (cppsig != NULL ? cppsig : &ct->pysig);
     ct->exceptions = exceptions;
@@ -6839,7 +6803,6 @@ static void newFunction(sipSpec *pt, moduleDef *mod, classDef *c_scope,
         "__matmul__",
         "AbortOnException",
         "AllowNone",
-        "API",
         "AutoGen",
         "Deprecated",
         "DisallowNone",
@@ -6898,6 +6861,17 @@ static void newFunction(sipSpec *pt, moduleDef *mod, classDef *c_scope,
             if (vad->atype == void_type && vad->nrderefs == 0)
                 sig->nrArgs = 0;
         }
+    }
+
+    /* Extra checks for a union. */
+    if (c_scope != NULL && isUnion(c_scope))
+    {
+        if (isvirt)
+            yyerror("A union cannot have a virtual functions");
+
+        /* We can't sub-class a union so we can't handle protected functions. */
+        if (sflags & SECT_IS_PROT)
+            yyerror("Protected functions are not supported for unions");
     }
 
     if (mt_scope != NULL)
@@ -7143,11 +7117,6 @@ static void newFunction(sipSpec *pt, moduleDef *mod, classDef *c_scope,
 
     od->docstring = docstring;
 
-    od->api_range = getAPIRange(optflgs);
-
-    if (od->api_range == NULL)
-        setNotVersioned(od->common);
-
     if (getOptFlag(optflgs, "Numeric", bool_flag) != NULL)
     {
         if (isSequence(od->common))
@@ -7327,7 +7296,15 @@ static void newFunction(sipSpec *pt, moduleDef *mod, classDef *c_scope,
 static const char *getPythonName(moduleDef *mod, optFlags *optflgs,
         const char *cname)
 {
-    const char *pname;
+    static const char *keywords[] = {
+        "False", "None", "True", "and", "as", "assert", "async", "await",
+        "break", "class", "continue", "def", "del", "elif", "else", "except",
+        "finally", "for", "from", "global", "if", "import", "in", "is",
+        "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
+        "while", "with", "yield", NULL
+    };
+
+    const char *pname, **kw;
     optFlag *of;
     autoPyNameDef *apnd;
 
@@ -7345,6 +7322,11 @@ static const char *getPythonName(moduleDef *mod, optFlags *optflgs,
         if (strncmp(pname, apnd->remove_leading, len) == 0)
             pname += len;
     }
+
+    /* Fix any Python keywords. */
+    for (kw = keywords; *kw != NULL; ++kw)
+        if (strcmp(pname, *kw) == 0)
+            return concat(pname, "_", NULL);
 
     return pname;
 }
@@ -7967,26 +7949,6 @@ static const char *getInt(const char *cp, int *ip)
 
 
 /*
- * Find an existing API.
- */
-apiVersionRangeDef *findAPI(sipSpec *pt, const char *name)
-{
-    moduleDef *mod;
-
-    for (mod = pt->modules; mod != NULL; mod = mod->next)
-    {
-        apiVersionRangeDef *avd;
-
-        for (avd = mod->api_versions; avd != NULL; avd = avd->next)
-            if (strcmp(avd->api_name->text, name) == 0)
-                return avd;
-    }
-
-    return NULL;
-}
-
-
-/*
  * Return a copy of a scoped name.
  */
 scopedNameDef *copyScopedName(scopedNameDef *snd)
@@ -8602,6 +8564,15 @@ int pluginPyQt5(sipSpec *pt)
 
 
 /*
+ * Return TRUE if the PyQt6 plugin was specified.
+ */
+int pluginPyQt6(sipSpec *pt)
+{
+    return stringFind(pt->plugins, "PyQt6");
+}
+
+
+/*
  * Return TRUE if a list of strings contains a given entry.
  */
 static int stringFind(stringList *sl, const char *s)
@@ -8645,9 +8616,8 @@ static void defineClass(scopedNameDef *snd, classList *supers, optFlags *of)
 
     getTypeHints(of, &in, &out);
 
-    cd = newClass(currentSpec, class_iface, getAPIRange(of),
-            fullyQualifiedName(snd), getVirtErrorHandler(of), in, out,
-            getTypeHintValue(of));
+    cd = newClass(currentSpec, class_iface, fullyQualifiedName(snd),
+            getVirtErrorHandler(of), in, out, getTypeHintValue(of));
     cd->supers = supers;
 
     pushScope(cd);
@@ -8676,7 +8646,7 @@ static classDef *completeClass(scopedNameDef *snd, optFlags *of, int has_def)
     if (has_def)
     {
         if (snd->next != NULL)
-            yyerror("A scoped name cannot be given in a class/struct definition");
+            yyerror("A scoped name cannot be given in a class/struct/union definition");
 
     }
     else if (cd->supers != NULL)
@@ -8691,7 +8661,7 @@ static classDef *completeClass(scopedNameDef *snd, optFlags *of, int has_def)
      * Check that external classes have only been declared at the global scope.
      */
     if (isExternal(cd) && currentScope() != NULL)
-        yyerror("External classes/structs can only be declared in the global scope");
+        yyerror("External classes/structs/unions can only be declared in the global scope");
 
     return cd;
 }
@@ -8821,59 +8791,6 @@ static argType convertEncoding(const char *encoding)
         return string_type;
 
     return no_type;
-}
-
-
-/*
- * Get the /API/ option flag.
- */
-static apiVersionRangeDef *getAPIRange(optFlags *optflgs)
-{
-    optFlag *of;
-
-    if ((of = getOptFlag(optflgs, "API", api_range_flag)) == NULL)
-        return NULL;
-
-    deprecated("The /API/ annotation is deprecated and will be removed in v6");
-
-    return of->fvalue.aval;
-}
-
-
-/*
- * Return the API range structure and version number corresponding to the
- * given API range.
- */
-static apiVersionRangeDef *convertAPIRange(moduleDef *mod, nameDef *name,
-        int from, int to)
-{
-    int index;
-    apiVersionRangeDef *avd, **avdp;
-
-    /* Handle the trivial case. */
-    if (from == 0 && to == 0)
-        return NULL;
-
-    for (index = 0, avdp = &mod->api_ranges; (*avdp) != NULL; avdp = &(*avdp)->next, ++index)
-    {
-        avd = *avdp;
-
-        if (avd->api_name == name && avd->from == from && avd->to == to)
-            return avd;
-    }
-
-    /* The new one must be appended so that version numbers remain valid. */
-    avd = sipMalloc(sizeof (apiVersionRangeDef));
-
-    avd->api_name = name;
-    avd->from = from;
-    avd->to = to;
-    avd->index = index;
-
-    avd->next = NULL;
-    *avdp = avd;
-
-    return avd;
 }
 
 
@@ -9149,8 +9066,10 @@ static void handleKeepReference(optFlags *optflgs, argDef *ad, moduleDef *mod)
  * Configure the mapped type annotations that are also valid with mapped type
  * templates.
  */
-static void mappedTypeAnnos(mappedTypeDef *mtd, optFlags *optflgs)
+static void mappedTypeAnnos(sipSpec *pt, mappedTypeDef *mtd, optFlags *optflgs)
 {
+    optFlag *of;
+
     if (getOptFlag(optflgs, "NoRelease", bool_flag) != NULL)
         setNoRelease(mtd);
 
@@ -9159,6 +9078,14 @@ static void mappedTypeAnnos(mappedTypeDef *mtd, optFlags *optflgs)
 
     getTypeHints(optflgs, &mtd->typehint_in, &mtd->typehint_out);
     mtd->typehint_value = getTypeHintValue(optflgs);
+
+    if ((of = getOptFlag(optflgs, "PyQtFlags", integer_flag)) != NULL)
+    {
+        if (!pluginPyQt6(pt))
+            yyerror("/PyQtFlags/ is only supported for PyQt6");
+
+        mtd->pyqt_flags = of->fvalue.ival;
+    }
 }
 
 
@@ -9228,4 +9155,22 @@ static void checkEllipsis(signatureDef *sd)
     for (a = 0; a < sd->nrArgs; ++a)
         if (sd->args[a].atype == ellipsis_type && a < sd->nrArgs - 1)
             yyerror("An ellipsis must be at the end of the argument list if /NoArgParser/ is not specified");
+}
+
+
+/*
+ * Check the usage of user state and return TRUE if it is used.
+ */
+static int checkUserState(codeBlockList *convtocode,
+        codeBlockList *releasecode)
+{
+    int convto_us, release_us;
+
+    convto_us = usedInCode(convtocode, "sipUserState");
+    release_us = usedInCode(releasecode, "sipUserState");
+
+    if (convto_us != release_us)
+        yyerror("Both %%ConvertToTypeCode and %%ReleaseCode must use user state or neither must");
+
+    return convto_us;
 }

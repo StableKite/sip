@@ -24,6 +24,13 @@
 #include <sys/types.h>
 
 
+/* Use symbolic names for ABI versions. */
+
+#define ABI_13_0    0x0d00
+#define ABI_12_8    0x0c08
+#define ABI_12_7    0x0c07
+
+
 #ifdef TRUE
 #undef TRUE
 #endif
@@ -216,6 +223,7 @@
 #define CLASS2_USE_TMPL_NAME    0x10    /* Use the template name. */
 #define CLASS2_NEEDS_SHADOW 0x20        /* The class needs a shadow class. */
 #define CLASS2_COPY_HELPER  0x40        /* Generate a copy helper. */
+#define CLASS2_UNION        0x80        /* The class is a union. */
 
 #define isTemplateArg(cd)   ((cd)->classflags2 & CLASS2_TMPL_ARG)
 #define setTemplateArg(cd)  ((cd)->classflags2 |= CLASS2_TMPL_ARG)
@@ -232,6 +240,8 @@
 #define setNeedsShadow(cd)   ((cd)->classflags2 |= CLASS2_NEEDS_SHADOW)
 #define copyHelper(cd)      ((cd)->classflags2 & CLASS2_COPY_HELPER)
 #define setCopyHelper(cd)   ((cd)->classflags2 |= CLASS2_COPY_HELPER)
+#define isUnion(cd)         ((cd)->classflags2 & CLASS2_UNION)
+#define setUnion(cd)        ((cd)->classflags2 |= CLASS2_UNION)
 
 
 /* Handle ctor flags.  These are combined with the section flags. */
@@ -271,9 +281,8 @@
 #define MEMBR_NUMERIC       0x0001      /* It is a numeric slot. */
 #define MEMBR_SEQUENCE      0x0002      /* It is a sequnce slot. */
 #define MEMBR_NO_ARG_PARSER 0x0004      /* Don't generate an argument parser. */
-#define MEMBR_NOT_VERSIONED 0x0008      /* There is an unversioned overload. */
-#define MEMBR_KEYWORD_ARGS  0x0010      /* It allows keyword arguments. */
-#define MEMBR_HAS_PROTECTED 0x0020      /* It has a protected overload. */
+#define MEMBR_KEYWORD_ARGS  0x0008      /* It allows keyword arguments. */
+#define MEMBR_HAS_PROTECTED 0x0010      /* It has a protected overload. */
 
 #define isNumeric(m)        ((m)->memberflags & MEMBR_NUMERIC)
 #define setIsNumeric(m)     ((m)->memberflags |= MEMBR_NUMERIC)
@@ -281,8 +290,6 @@
 #define setIsSequence(m)    ((m)->memberflags |= MEMBR_SEQUENCE)
 #define noArgParser(m)      ((m)->memberflags & MEMBR_NO_ARG_PARSER)
 #define setNoArgParser(m)   ((m)->memberflags |= MEMBR_NO_ARG_PARSER)
-#define notVersioned(m)     ((m)->memberflags & MEMBR_NOT_VERSIONED)
-#define setNotVersioned(m)  ((m)->memberflags |= MEMBR_NOT_VERSIONED)
 #define useKeywordArgs(m)   ((m)->memberflags & MEMBR_KEYWORD_ARGS)
 #define setUseKeywordArgs(m)    ((m)->memberflags |= MEMBR_KEYWORD_ARGS)
 #define hasProtected(m)     ((m)->memberflags & MEMBR_HAS_PROTECTED)
@@ -295,6 +302,11 @@
 #define ENUM_NO_SCOPE       0x00000200  /* Omit the member scopes. */
 #define ENUM_NEEDS_ENUM     0x00000400  /* The module needs it. */
 #define ENUM_SCOPED         0x00000800  /* A C++0x11 scoped enum. */
+#define ENUM_MASK           0x00003000  /* The enum base type mask. */
+#define ENUM_ENUM           0x00000000  /* The base type is Enum. */
+#define ENUM_FLAG           0x00001000  /* The base type is Flag. */
+#define ENUM_INT_ENUM       0x00002000  /* The base type is IntEnum. */
+#define ENUM_INT_FLAG       0x00003000  /* The base type is IntFlag. */
 
 #define isProtectedEnum(e)  ((e)->enumflags & SECT_IS_PROT)
 #define setIsProtectedEnum(e)   ((e)->enumflags |= SECT_IS_PROT)
@@ -309,6 +321,15 @@
 #define setNeedsEnum(e)     ((e)->enumflags |= ENUM_NEEDS_ENUM)
 #define isScopedEnum(e)     ((e)->enumflags & ENUM_SCOPED)
 #define setIsScopedEnum(e)  ((e)->enumflags |= ENUM_SCOPED)
+
+#define isEnumEnum(e)       (((e)->enumflags & ENUM_MASK) == ENUM_ENUM)
+#define setIsEnumEnum(e)    ((e)->enumflags |= ENUM_ENUM)
+#define isEnumFlag(e)       (((e)->enumflags & ENUM_MASK) == ENUM_FLAG)
+#define setIsEnumFlag(e)    ((e)->enumflags |= ENUM_FLAG)
+#define isEnumIntEnum(e)    (((e)->enumflags & ENUM_MASK) == ENUM_INT_ENUM)
+#define setIsEnumIntEnum(e) ((e)->enumflags |= ENUM_INT_ENUM)
+#define isEnumIntFlag(e)    (((e)->enumflags & ENUM_MASK) == ENUM_INT_FLAG)
+#define setIsEnumIntFlag(e) ((e)->enumflags |= ENUM_INT_FLAG)
 
 
 /* Handle hierarchy flags. */
@@ -515,11 +536,14 @@
 
 #define MT_NO_RELEASE       0x01    /* Do not generate a release function. */
 #define MT_ALLOW_NONE       0x02    /* The mapped type will handle None. */
+#define MT_USER_STATE       0x04    /* The convertors need user state. */
 
 #define noRelease(mt)       ((mt)->mtflags & MT_NO_RELEASE)
 #define setNoRelease(mt)    ((mt)->mtflags |= MT_NO_RELEASE)
 #define handlesNone(mt)     ((mt)->mtflags & MT_ALLOW_NONE)
 #define setHandlesNone(mt)  ((mt)->mtflags |= MT_ALLOW_NONE)
+#define needsUserState(mt)  ((mt)->mtflags & MT_USER_STATE)
+#define setNeedsUserState(mt)   ((mt)->mtflags |= MT_USER_STATE)
 
 
 /* Handle typedef flags. */
@@ -686,7 +710,10 @@ typedef enum {
     ubyte_type,
     capsule_type,
     pybuffer_type,
-    size_type
+    size_type,
+    pyenum_type,
+    union_type,
+    hash_type
 } argType;
 
 
@@ -884,16 +911,6 @@ typedef struct _fcallDef {
 } fcallDef;
 
 
-/* An API version range definition. */
-typedef struct _apiVersionRangeDef {
-    nameDef *api_name;                  /* The API name. */
-    int from;                           /* The lower bound. */
-    int to;                             /* The upper bound. */
-    int index;                          /* The range index. */
-    struct _apiVersionRangeDef *next;   /* The next in the list. */
-} apiVersionRangeDef;
-
-
 /* A virtual error handler. */
 typedef struct _virtErrorHandler {
     const char *name;                   /* The name of the handler. */
@@ -937,8 +954,6 @@ typedef struct _moduleDef {
     nameDef *fullname;                  /* The full module name. */
     const char *name;                   /* The module base name. */
     docstringDef *docstring;            /* The docstring. */
-    apiVersionRangeDef *api_versions;   /* The defined APIs. */
-    apiVersionRangeDef *api_ranges;     /* The list of API version ranges. */
     int modflags;                       /* The module flags. */
     KwArgs kwargs;                      /* The style of keyword argument support. */
     struct _memberDef *othfuncs;        /* List of other functions. */
@@ -991,9 +1006,6 @@ typedef struct _moduleListDef {
 typedef struct _ifaceFileDef {
     nameDef *name;                      /* The name. */
     int needed;                         /* The main module needs it. */
-    apiVersionRangeDef *api_range;      /* The optional API version range. */
-    struct _ifaceFileDef *first_alt;    /* The first alternate API. */
-    struct _ifaceFileDef *next_alt;     /* The next alternate API. */
     ifaceFileType type;                 /* Interface file type. */
     int ifacenr;                        /* The index into the types table. */
     scopedNameDef *fqcname;             /* The fully qualified C++ name. */
@@ -1023,6 +1035,7 @@ typedef struct _mappedTypeDef {
     typeHintDef *typehint_in;           /* The PEP 484 input type hint. */
     typeHintDef *typehint_out;          /* The PEP 484 output type hint. */
     const char *typehint_value;         /* The type hint value. */
+    int pyqt_flags;                     /* The PyQt specific flags. */
     ifaceFileDef *iff;                  /* The interface file. */
     struct _memberDef *members;         /* The static member functions. */
     struct _overDef *overs;             /* The static overloads. */
@@ -1030,6 +1043,7 @@ typedef struct _mappedTypeDef {
     codeBlockList *typecode;            /* Type code. */
     codeBlockList *convfromcode;        /* Convert from C++ code. */
     codeBlockList *convtocode;          /* Convert to C++ code. */
+    codeBlockList *releasecode;         /* Release code. */
     struct _mappedTypeDef *real;        /* The original definition. */
     struct _mappedTypeDef *next;        /* Next in the list. */
 } mappedTypeDef;
@@ -1119,7 +1133,6 @@ typedef struct _overDef {
     int pyqt_signal_hack;               /* The PyQt signal hack. */
     KwArgs kwargs;                      /* The keyword argument support. */
     struct _memberDef *common;          /* Common parts. */
-    apiVersionRangeDef *api_range;      /* The optional API version range. */
     signatureDef pysig;                 /* The Python signature. */
     signatureDef *cppsig;               /* The C++ signature. */
     throwArgs *exceptions;              /* The exceptions. */
@@ -1141,7 +1154,6 @@ typedef struct _ctorDef {
     int ctorflags;                      /* The ctor flags. */
     int no_typehint;                    /* The type hint will be suppressed. */
     KwArgs kwargs;                      /* The keyword argument support. */
-    apiVersionRangeDef *api_range;      /* The optional API version range. */
     signatureDef pysig;                 /* The Python signature. */
     signatureDef *cppsig;               /* The C++ signature, NULL if /NoDerived/. */
     throwArgs *exceptions;              /* The exceptions. */
@@ -1172,8 +1184,6 @@ typedef struct _enumDef {
     nameDef *cname;                     /* The C/C++ name (may be NULL). */
     nameDef *pyname;                    /* The Python name (may be NULL). */
     int no_typehint;                    /* The type hint will be suppressed. */
-    struct _enumDef *first_alt;         /* The first alternate API. */
-    struct _enumDef *next_alt;          /* The next alternate API. */
     int enumnr;                         /* The enum number. */
     int enum_idx;                       /* The enum index within the module. */
     struct _classDef *ecd;              /* The enclosing class, if any. */
@@ -1364,8 +1374,8 @@ typedef struct _parserContext {
 
 extern unsigned sipVersion;             /* The version of SIP. */
 extern const char *sipVersionStr;       /* The version of SIP as a string. */
-extern unsigned abiMajor;               /* The ABI major version number. */
-extern unsigned abiMinor;               /* The ABI minor version number. */
+extern char *sipName;                   /* The name of the sip module. */
+extern unsigned abiVersion;             /* The encoded ABI version number. */
 extern stringList *includeDirList;      /* The include directory list for SIP files. */
 
 
@@ -1376,7 +1386,7 @@ void get_bindings_configuration(const char *sip_file, stringList **tags,
 void parserEOF(const char *,parserContext *);
 void transform(sipSpec *, int);
 stringList *generateCode(sipSpec *, char *, const char *, int, int, int, int,
-        stringList *needed_qualifiers, stringList *, int, int, const char *,
+        stringList *needed_qualifiers, stringList *, int, int,
         const char **api_header);
 void generateExtracts(sipSpec *pt, const stringList *extracts);
 void addExtractPart(sipSpec *pt, const char *id, int order, codeBlock *part);
@@ -1421,7 +1431,7 @@ void searchTypedefs(sipSpec *pt, scopedNameDef *snd, argDef *ad);
 int isZeroArgSlot(memberDef *md);
 int isIntReturnSlot(memberDef *md);
 int isSSizeReturnSlot(memberDef *md);
-int isLongReturnSlot(memberDef *md);
+int isHashReturnSlot(memberDef *md);
 int isVoidReturnSlot(memberDef *md);
 int isNumberSlot(memberDef *md);
 int isInplaceNumberSlot(memberDef *md);
@@ -1432,23 +1442,19 @@ void appendTypeStrings(scopedNameDef *ename, signatureDef *patt, signatureDef *s
 codeBlockList *templateCode(sipSpec *pt, ifaceFileList **used,
         codeBlockList *ocbl, scopedNameDef *names, scopedNameDef *values);
 ifaceFileDef *findIfaceFile(sipSpec *pt, moduleDef *mod,
-        scopedNameDef *fqname, ifaceFileType iftype,
-        apiVersionRangeDef *api_range, argDef *ad);
+        scopedNameDef *fqname, ifaceFileType iftype, argDef *ad);
 int pluginPyQt5(sipSpec *pt);
+int pluginPyQt6(sipSpec *pt);
 SIP_NORETURN void yyerror(char *);
 void yywarning(char *);
 int yylex(void);
 nameDef *cacheName(sipSpec *pt, const char *name);
 scopedNameDef *encodedTemplateName(templateDef *td);
-apiVersionRangeDef *findAPI(sipSpec *pt, const char *name);
 memberDef *findMethod(classDef *cd, const char *name);
 typeHintDef *newTypeHint(char *raw_hint);
 int isPyKeyword(const char *word);
-void getDefaultImplementation(sipSpec *pt, argType atype, classDef **cdp,
-        mappedTypeDef **mtdp);
 char *templateString(const char *src, scopedNameDef *names,
         scopedNameDef *values);
-int inDefaultAPI(sipSpec *pt, apiVersionRangeDef *range);
 void dsCtor(sipSpec *pt, classDef *cd, ctorDef *ct, FILE *fp);
 void dsOverload(sipSpec *pt, overDef *od, int is_method, FILE *fp);
 scopedNameDef *getFQCNameOfType(argDef *ad);
@@ -1462,6 +1468,7 @@ void generateBaseType(ifaceFileDef *scope, argDef *ad, int use_typename,
 void normaliseArgs(signatureDef *sd);
 void restoreArgs(signatureDef *sd);
 void initialiseLexer(void);
+int usedInCode(codeBlockList *cbl, const char *str);
 
 
 /* These are only here because bison publically references them. */
@@ -1479,7 +1486,6 @@ typedef enum {
     dotted_name_flag,
     integer_flag,
     opt_integer_flag,
-    api_range_flag
 } flagType;
 
 typedef struct {
@@ -1489,7 +1495,6 @@ typedef struct {
         char *sval;                     /* A string value. */
         struct _stringList *slval;      /* A string list value. */
         long ival;                      /* An integer value. */
-        apiVersionRangeDef *aval;       /* An API range value. */
     } fvalue;
 } optFlag;
 
@@ -1500,13 +1505,6 @@ typedef struct {
 
 
 /* These represent the configuration of different directives. */
-
-/* %API */
-typedef struct _apiCfg {
-    int token;
-    const char *name;
-    int version;
-} apiCfg;
 
 /* %AutoPyName */
 typedef struct _autoPyNameCfg {

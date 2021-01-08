@@ -31,8 +31,8 @@
 /* Globals - see sip.h for their meanings. */
 unsigned sipVersion;
 const char *sipVersionStr;
-unsigned abiMajor;
-unsigned abiMinor;
+unsigned abiVersion;
+char *sipName;
 stringList *includeDirList;
 
 /* Support for fatal error handling. */
@@ -99,14 +99,22 @@ PyMODINIT_FUNC PyInit_code_generator(void)
  */
 static PyObject *py_set_globals(PyObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "IsIIOO&",
+    unsigned abi_major, abi_minor;
+
+    if (!PyArg_ParseTuple(args, "IsIIzOO&",
             &sipVersion,
             &sipVersionStr,
-            &abiMajor,
-            &abiMinor,
+            &abi_major,
+            &abi_minor,
+            &sipName,
             &exception_type,
             stringList_convertor, &includeDirList))
         return NULL;
+
+    abiVersion = (abi_major << 8) | abi_minor;
+
+    if (sipName != NULL && sipName[0] == '\0')
+        sipName = NULL;
 
     Py_INCREF(exception_type);
 
@@ -174,12 +182,12 @@ static PyObject *py_parse(PyObject *self, PyObject *args)
 static PyObject *py_generateCode(PyObject *self, PyObject *args)
 {
     sipSpec *pt;
-    char *codeDir, *srcSuffix, *sipName;
+    char *codeDir, *srcSuffix;
     const char *api_header;
     int exceptions, tracing, releaseGIL, parts, docs, py_debug, action;
     stringList *versions, *xfeatures, *sources;
 
-    if (!PyArg_ParseTuple(args, "O&O&O&pppiO&O&ppz",
+    if (!PyArg_ParseTuple(args, "O&O&O&pppiO&O&pp",
             sipSpec_convertor, &pt,
             fs_convertor, &codeDir,
             fs_convertor, &srcSuffix,
@@ -190,8 +198,7 @@ static PyObject *py_generateCode(PyObject *self, PyObject *args)
             stringList_convertor, &versions,
             stringList_convertor, &xfeatures,
             &docs,
-            &py_debug,
-            &sipName))
+            &py_debug))
         return NULL;
 
     if ((action = setjmp(on_fatal_error)) != NO_EXCEPTION)
@@ -200,11 +207,8 @@ static PyObject *py_generateCode(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (sipName != NULL && sipName[0] == '\0')
-        sipName = NULL;
-
     sources = generateCode(pt, codeDir, srcSuffix, exceptions, tracing,
-            releaseGIL, parts, versions, xfeatures, docs, py_debug, sipName,
+            releaseGIL, parts, versions, xfeatures, docs, py_debug,
             &api_header);
 
     return Py_BuildValue("(sN)", api_header, stringList_convert_from(sources));
@@ -553,8 +557,9 @@ void get_bindings_configuration(const char *sip_file, stringList **tags,
     }
 
     /* Call the helper. */
-    res = PyObject_CallFunction(get_bindings_configuration, "IIsN", abiMajor,
-            abiMinor, sip_file, stringList_convert_from(includeDirList));
+    res = PyObject_CallFunction(get_bindings_configuration, "IsN",
+            abiVersion >> 8, sip_file,
+            stringList_convert_from(includeDirList));
 
     if (res == NULL)
         exception_set();

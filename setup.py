@@ -50,7 +50,7 @@ setup(
         name='sip',
         version=version,
         license='SIP',
-        python_requires='>=3.5.1',
+        python_requires='>=3.6',
         install_requires=['packaging', 'toml'],
         packages=find_packages(),
         package_data={
@@ -64,7 +64,6 @@ setup(
                 'sip-build = sipbuild.tools.build:main',
                 'sip-install = sipbuild.tools.install:main',
                 'sip-sdist = sipbuild.tools.sdist:main',
-                'sip-wheel = sipbuild.tools.wheel:main',
-                'sip5 = sipbuild.legacy.sip5:main']
+                'sip-wheel = sipbuild.tools.wheel:main']
         }
      )

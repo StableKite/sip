@@ -6,6 +6,7 @@ sip6 (6.0.0+dfsg-1) UNRELEASED; urgency=medium
     - Make sip-tools break/replace old sip5-tools.
   * Update sip-module manpage based on command_line_tools.rst change.
   * Bump years in debian/copyright.
+  * Drop sip_pyi_typo.diff and py_typed.diff, included in the new release.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Fri, 08 Jan 2021 20:31:57 +0300
 

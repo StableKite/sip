@@ -15,13 +15,13 @@ override_dh_auto_configure: code_generator/lexer.c code_generator/parser.c
 	dh_auto_configure
 
 execute_after_dh_auto_install:
-	mkdir -p debian/sip5-tools/usr
-	mv debian/python3-sipbuild/usr/bin debian/sip5-tools/usr/bin
+	mkdir -p debian/sip-tools/usr
+	mv debian/python3-sipbuild/usr/bin debian/sip-tools/usr/bin
 	rm -rfv debian/python3-sipbuild-dbg/usr/bin
 	rm -rfv debian/python3-sipbuild-dbg/usr/lib/python3.*/dist-packages/sipbuild/module
 
 override_dh_install-indep:
-	python3 -m sphinx doc debian/sip5-doc/usr/share/doc/sip5-doc/html
+	python3 -m sphinx doc debian/sip6-doc/usr/share/doc/sip6-doc/html
 
 override_dh_strip:
 	dh_strip --dbg-package=python3-sipbuild-dbg

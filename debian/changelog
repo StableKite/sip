@@ -1,3 +1,12 @@
+sip6 (6.0.0+dfsg-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+  * Rename source package to sip6.
+  * Rename binary packages: sip5-tools to sip-tools, sip5-doc to sip6-doc.
+    - Make sip-tools break/replace old sip5-tools.
+
+ -- Dmitry Shachnev <mitya57@debian.org>  Fri, 08 Jan 2021 20:31:57 +0300
+
 sip5 (5.5.0+dfsg-2) unstable; urgency=medium
 
   * Backport upstream fix for handling of sip.pyi.

@@ -5,6 +5,7 @@ sip6 (6.0.0+dfsg-1) UNRELEASED; urgency=medium
   * Rename binary packages: sip5-tools to sip-tools, sip5-doc to sip6-doc.
     - Make sip-tools break/replace old sip5-tools.
   * Update sip-module manpage based on command_line_tools.rst change.
+  * Bump years in debian/copyright.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Fri, 08 Jan 2021 20:31:57 +0300
 

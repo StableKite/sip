@@ -1,19 +1,303 @@
-2020-11-23  Phil Thompson  <phil@riverbankcomputing.com>
+2021-01-04  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* NEWS:
-	Released as v5.5.0.
-	[3e406eb8e1b5] [5.5.0] <default-5>
+	Released as v6.0.0.
+	[02dc4506071b] [6.0.0]
 
 	* NEWS:
 	Updated the NEWS file.
-	[10648b969d88] <default-5>
+	[09bf908e62a3]
+
+2021-01-03  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/type_hints.c:
+	Fixes for parsing a Callable with no arguments.
+	[079bfb5a21f9]
+
+	* sipbuild/module/source/12.8/sip.pyi,
+	sipbuild/module/source/13.0/sip.pyi:
+	sip.array is now defined as a Generic.
+	[ab85330e99a9]
+
+	* sipbuild/module/source/12.8/sip.pyi,
+	sipbuild/module/source/13.0/array.c,
+	sipbuild/module/source/13.0/sip.pyi,
+	sipbuild/module/source/13.0/siplib.c,
+	sipbuild/module/source/13.0/voidptr.c:
+	Updated sip.py for the latest v12 and v13 ABIs. Fixed the fully
+	qualified names of sip.arry and sip.voidptr for ABI v13.
+	[41f0d76c1d2c]
+
+2021-01-02  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/type_hints.c:
+	Fixed anonymous enums within a class scope.
+	[be2022d8897e]
+
+	* code_generator/type_hints.c:
+	Fixed references to sip.Buffer.
+	[28f5338407d2]
+
+	* code_generator/type_hints.c, sipbuild/module/source/13.0/sip.pyi:
+	str does not implement the buffer protocol.
+	[4ce3048ef4f5]
+
+	* code_generator/type_hints.c:
+	Explicit type hints must be written using C/C++ (rather than Python)
+	names.
+	[83ed4a713221]
+
+	* code_generator/type_hints.c:
+	Fixed the annotated type of an enum member.
+	[ac74e9b3b819]
+
+	* doc/pyproject_toml.rst, sipbuild/builder.py,
+	sipbuild/module/__init__.py, sipbuild/module/module.py:
+	sip.pyi and py.typed are installed if dunder-init is specified and
+	at least one set of bindings has pep484-pyi specified.
+	[f4975184730a]
+
+2021-01-01  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* doc/command_line_tools.rst,
+	sipbuild/module/source/13.0/setup.cfg.in:
+	sip-module documentation tweaks.
+	[02aedf4371b3]
+
+2020-12-28  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/module.py:
+	Fixed the handling of sip.pyi with a bespoke setup.py.
+	[647860b45944]
+
+2020-12-24  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Don't call qMetaTypeId() for protected enums.
+	[f979e6d2ac19]
+
+	* NEWS, code_generator/export.c, code_generator/gencode.c,
+	code_generator/lexer.c, code_generator/metasrc/lexer.l,
+	code_generator/metasrc/parser.y, code_generator/parser.c,
+	code_generator/parser.h, code_generator/sip.h,
+	code_generator/transform.c, code_generator/type_hints.c,
+	doc/specification_files.rst:
+	Added support for Py_hash_t and require that __hash__() returns it
+	(ABI v13).
+	[3a90049a9739]
+
+2020-12-21  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS:
+	Updated the NEWS file.
+	[bbbb73d52897]
+
+	* doc/specification_files.rst:
+	Updated the documentation.
+	[ba19420435bb]
+
+	* code_generator/export.c, code_generator/gencode.c,
+	code_generator/lexer.c, code_generator/metasrc/lexer.l,
+	code_generator/metasrc/parser.y, code_generator/parser.c,
+	code_generator/parser.h, code_generator/sip.h,
+	code_generator/transform.c, doc/specification_files.rst:
+	Added support for unions.
+	[4f46ffe3cae2]
+
+	* sipbuild/module/source/13.0/siplib.c:
+	Fixed some const warnings.
+	[94e42a8b7348]
+
+	* code_generator/gencode.c, code_generator/transform.c:
+	For PyQt6 generate calls to qMetaTypeId() for all enums.
+	[e78a7db5c7f4]
+
+2020-12-19  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/source/13.0/siplib.c:
+	In ABI v13, flag-based enums are implicitly unsigned.
+	[321395c9f284]
+
+2020-12-09  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/source/13.0/siplib.c:
+	Make sure lazy enum objects have been created before they are
+	needed.
+	[cf513b28ab5a]
+
+	* code_generator/transform.c:
+	Fix type comparisons for ABI 13 enums.
+	[d0ddc56a213b]
+
+2020-12-05  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/type_hints.c:
+	Fix the handling of the sip module in a .pyi file.
+	[908ce64273e0]
+
+	* code_generator/type_hints.c:
+	Improvements to the enum type hints.
+	[b01329a761d8]
+
+2020-12-04  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/export.c, code_generator/gencode.c,
+	code_generator/pybinding.c, code_generator/sip.h,
+	code_generator/type_hints.c, sipbuild/bindings.py,
+	sipbuild/builder.py:
+	Fixed the .pyi and .api files generation for ABI 13 enums.
+	[a16b972e11a1]
+
+2020-12-03  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	/ExportDerived/ classes are no wexported to all modules.
+	[879385124242]
+
+2020-12-01  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/transform.c, sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Fixed the fully qualified names of the sip builtin types.
+	[dd8890f9c5d4]
+
+	* sipbuild/module/source/13.0/siplib.c:
+	Fixed an ABI v13 bug when calling the methods of a simple wrapped
+	type.
+	[d293f405ff6b]
+
+2020-11-27  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixed the code generator when wrapping C structs.
+	[0be39a49c1be]
 
 2020-11-22  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* LICENSE:
 	Minor updates to the license as it can alos be applied to other
 	products.
-	[023513b879aa] <default-5>
+	[e0a63c5e1c95]
+
+2020-11-21  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixed a regression in the formatting of copyright text.
+	[3455f242ae88]
+
+2020-11-18  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c, sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Enums can now have dunder methods in ABI v13.
+	[e20eb1bd6911]
+
+2020-11-13  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Bug fix.
+	[efaf6b130dfe]
+
+2020-11-11  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixed mapped type converters that need user state.
+	[f8644759234c]
+
+	* doc/abi_13.rst, sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Added the 'bi_readonly' to the buffer definition for ABI v13.
+	[271e8f372358]
+
+	* code_generator/gencode.c:
+	Properly handle non-printable character values.
+	[a96d24fe28bb]
+
+	* code_generator/gencode.c:
+	Bug fixes.
+	[9fb08a289ef4]
+
+	* code_generator/gencode.c:
+	Fixed extraneous comma.
+	[ea88983d4626]
+
+2020-11-10  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/lexer.c, code_generator/metasrc/lexer.l:
+	The lexer can now handle '\xNN' characters.
+	[da24f14374a2]
+
+2020-11-01  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* doc/abi_12.rst, doc/abi_13.rst, doc/index.rst:
+	Added the ABI v12 docs.
+	[e9967c92b59c]
+
+	* doc/abi_13.rst, doc/c_api.rst, doc/index.rst:
+	Separated out the version-specific ABI docs to its old section.
+	[692b4b967230]
+
+	* doc/c_api.rst, doc/directives.rst:
+	Documented %ReleaseCode and SIP_USER.
+	[59ca850376ff]
+
+	* sipbuild/module/source/13.0/sip.h.in:
+	Added SIP_USER to be used by mapped type convertors.
+	[bee43981cfef]
+
+	* sipbuild/module/source/13.0/sip.h.in:
+	Add reserved fields to the type and wrapper structure to allow for
+	some future expansion without needing to define a new major ABI
+	version.
+	[9d561c266054]
+
+	* code_generator/gencode.c, code_generator/lexer.c,
+	code_generator/metasrc/lexer.l, code_generator/metasrc/parser.y,
+	code_generator/parser.c, code_generator/parser.h,
+	code_generator/sip.h, code_generator/transform.c,
+	sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Removed the support for user state in class convertors. Added the
+	%ReleaseCode mapped type directive.
+	[d662f0a68da2]
+
+2020-10-31  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* doc/c_api.rst, doc/directives.rst:
+	Documented the ABI changes to support user states in type
+	convertors.
+	[6c4c211ce6a9]
+
+	* code_generator/gencode.c, code_generator/metasrc/parser.y,
+	code_generator/parser.c, code_generator/sip.h,
+	sipbuild/module/source/13.0/array.c,
+	sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/sipint.h,
+	sipbuild/module/source/13.0/siplib.c:
+	Added support for a user state to be used by class and mapped type
+	convertors for conversions that have to maintain complex state
+	information in order not to leak memory. Added sipConvertToTypeUS(),
+	sipForceConvertToTypeUS() and sipReleaseTypeUS() to the v13 ABI.
+	[a238d4801c11]
+
+2020-10-29  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* doc/directives.rst, sipbuild/module/source/13.0/siplib.c:
+	Some clarifications to the %ConvertToTypeCode documentation.
+	[43c1a55a7078]
+
+	* sipbuild/module/source/13.0/siplib.c:
+	Raise an exception if a mapped type seems to need
+	%ConvertToTypeCode.
+	[5041fb0eec73]
+
+	* code_generator/gencode.c, code_generator/metasrc/parser.y,
+	code_generator/parser.c, code_generator/transform.c,
+	sipbuild/module/source/13.0/siplib.c:
+	%ConvertFromTypeCode and %ConvertToTypeCode are now optional for
+	mapped types. An exception will be raised at runtime if they are
+	required.
+	[0a61fc6eb36a]
 
 2020-10-28  Phil Thompson  <phil@riverbankcomputing.com>
 
@@ -21,30 +305,142 @@
 	sipbuild/buildable.py, sipbuild/distutils_builder.py:
 	Added the 'extra-compile-args', 'extra-link-args' and 'extra-
 	objects' bindings options.
-	[5dc25b1a9cf8] <default-5>
+	[4b10f553a9b5]
+
+2020-10-20  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* doc/pyproject_toml.rst:
+	Improved the description of user options.
+	[67db9d334dfd]
+
+2020-10-10  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c, doc/directives.rst,
+	sipbuild/module/source/13.0/descriptors.c,
+	sipbuild/module/source/13.0/siplib.c:
+	For ABI v13, any %MethodCode of a static class method will be passed
+	the corresponding Python class object in sipSelf.
+	[835825ce853d]
 
 2020-10-04  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* code_generator/metasrc/parser.y, code_generator/parser.c,
 	code_generator/pybinding.c, code_generator/sip.h,
-	sipbuild/bindings.py, sipbuild/legacy/sip5.py:
+	sipbuild/bindings.py:
 	Fixed a bug where details from an imported .toml file weren't being
 	passed to the code generator.
-	[c8d547c33a5f] <default-5>
+	[cfbc93cb5b41]
+
+2020-10-03  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/export.c, code_generator/gencode.c,
+	code_generator/lexer.c, code_generator/metasrc/lexer.l,
+	code_generator/metasrc/parser.y, code_generator/parser.c,
+	code_generator/parser.h, code_generator/sip.h,
+	code_generator/transform.c, code_generator/type_hints.c,
+	doc/c_api.rst, sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Implemented SIP_PYENUM and sipIsEnumFlag().
+	[db87f3d9d4cc]
+
+	* code_generator/gencode.c, doc/c_api.rst,
+	sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Removed the sipSetNewUserTypeHandler() hook for ABI v13.
+	[8878279d4163]
+
+	* sipbuild/module/source/13.0/sip.pyi:
+	Updated sip.pyi for ABI v13.
+	[a7cd289aa324]
+
+	* code_generator/gencode.c, doc/c_api.rst,
+	sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Removed sipGetFrame() from ABI v13.
+	[119a6ee2e85b]
+
+2020-10-01  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixes for the new enum data structures.
+	[f3fb956779ab]
+
+2020-09-29  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/source/13.0/siplib.c:
+	Fixed the handling of enums in nested imports.
+	[4843fc4cca0b]
+
+	* sipbuild/module/source/13.0/siplib.c:
+	All static attributes are now lazy.
+	[a37a7b4a1fc1]
+
+	* sipbuild/module/source/13.0/siplib.c:
+	Tidied up the import of types from the enum module.
+	[1d4d54f11b0f]
+
+	* code_generator/gencode.c, sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Refactored the data structures defining enums.
+	[5ae26eaadcf3]
 
 2020-09-28  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* sipbuild/pyproject.py:
 	Fixed the handling of lists of strings in tool.sip.metadata section.
-	[291701b2f338] <default-5>
+	[ddc4e65acd29]
+
+2020-09-27  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* test/enums/enums.sip, test/enums/test_enums.py:
+	Updated the enum unit tests.
+	[a153a59b0b1a]
+
+2020-09-25  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* test/utils/sip_test_case.py:
+	The ABI version can now be specified for unit tests.
+	[c135cfb50514]
+
+2020-09-24  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/metasrc/parser.y, code_generator/parser.c,
+	doc/annotations.rst:
+	Python names automatically have a '_' appended if they are Python
+	keywords.
+	[893f482b37c7]
+
+	* code_generator/gencode.c, code_generator/metasrc/parser.y,
+	code_generator/parser.c, code_generator/parser.h,
+	code_generator/sip.h, sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Added the /BaseType/ enum annotation.
+	[67153019c542]
+
+2020-09-22  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c, code_generator/metasrc/parser.y,
+	code_generator/parser.c, code_generator/sip.h, doc/annotations.rst,
+	sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Implemented the /BaseType/ enum annotation.
+	[3f4089bf53a8]
+
+	* sipbuild/module/source/13.0/siplib.c:
+	Fixes for enums.
+	[20782a384af7]
 
 2020-09-18  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* sipbuild/project.py:
 	Only verify the name of the sip module if it is going to be needed.
-	[69fe2ef41232] <default-5>
+	[b8f357f9309e]
 
 2020-09-17  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/abi_version.py:
+	Merged the current default-5 branch.
+	[141d1f830574]
 
 	* NEWS, doc/command_line_tools.rst, doc/pyproject_toml.rst,
 	sipbuild/module/abi_version.py, sipbuild/module/main.py:
@@ -60,7 +456,219 @@
 	Added the Buildable.exceptions attribute.
 	[2db4f291a75a] <default-5>
 
+2020-09-14  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/source/13.0/siplib.c:
+	Fixed the pickle support in ABI v13.0.
+	[e083f78fc3ac]
+
+2020-09-10  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c, code_generator/metasrc/parser.y,
+	code_generator/parser.c, code_generator/sip.h,
+	sipbuild/module/source/13.0/sip.h.in:
+	Implemented the PyQt6 %Plugin.
+	[e2046f4b04d3]
+
+	* code_generator/gencode.c, sipbuild/module/source/13.0/sip.rst.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Removed sipSetDestroyOnExit() in ABI v13.
+	[dd80c441fb39]
+
+2020-09-08  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* rb-product:
+	The next major release will be v6.
+	[f5d21e0b7acb]
+
+2020-09-03  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixed some ABI v12 code generator regressions.
+	[43e160cdc8c1]
+
+	* code_generator/lexer.c, code_generator/metasrc/lexer.l,
+	code_generator/metasrc/parser.y, code_generator/parser.c,
+	code_generator/parser.h:
+	Restored the parsing of the Python v2 buffer interface directives so
+	that PyQt5 can still build with SIP v6.
+	[7e822b1967f0]
+
+	* sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Removed more deprecated parts of the v13 ABI.
+	[3bf4247a67ce]
+
+	* sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Fix a typo.
+	[1356de353c1e]
+
+	* sipbuild/module/source/13.0/siplib.c:
+	Tidied up the enum support in ABI v13.
+	[0988a95682e4]
+
+	* test/enums/enums.sip, test/enums/test_enums.py,
+	test/int_convertors/test_int_convertors.py,
+	test/utils/sip_test_case.py:
+	Refined the enum support tests.
+	[36e01687844b]
+
+2020-09-02  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c, sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	In ABI v13 scoped enums are implemented using Enum, named enums
+	using IntEnum.
+	[16db072a29eb]
+
+	* test/enums/enums.sip, test/enums/test_enums.py,
+	test/int_convertors/__init__.py,
+	test/int_convertors/int_convertors.sip, test/int_convertors/mk.sh,
+	test/int_convertors/run_test.py, test/int_convertors/test.h,
+	test/int_convertors/test.sip,
+	test/int_convertors/test_int_convertors.py,
+	test/utils/sip_test_case.py:
+	Refactored the int_convertor tests.
+	[b812bfd830a6]
+
+2020-09-01  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* test/enums/enums.sip, test/enums/test_enums.py:
+	Completed the implementation of the enum tests for ABI v13.
+	[db1f31dd0ecc]
+
+	* test/enums/__init__.py, test/enums/enums.sip,
+	test/enums/test_enums.py, test/utils/__init__.py,
+	test/utils/sip_test_case.py:
+	Added the stubs of the test framework.
+	[951870ffe8f6]
+
+	* code_generator/gencode.c, code_generator/lexer.c,
+	code_generator/parser.c, code_generator/parser.h,
+	sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	All enums are scoped when using ABI v13.
+	[e65e288ab296]
+
+2020-08-31  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c, code_generator/sip.h:
+	Use symbolic names for ABI versions.
+	[f3e85f184f8f]
+
+	* code_generator/metasrc/lexer.l, code_generator/metasrc/parser.y,
+	doc/directives.rst:
+	Removed ramaining deprecated directives.
+	[eef470e0a810]
+
+	* doc/annotations.rst, doc/directives.rst, doc/other_topics.rst:
+	Updated the docs to remove references to alternate APIs.
+	[87f1b5a7b0b0]
+
+	* code_generator/export.c, code_generator/gencode.c,
+	code_generator/lexer.c, code_generator/metasrc/lexer.l,
+	code_generator/metasrc/parser.y, code_generator/parser.c,
+	code_generator/parser.h, code_generator/sip.h,
+	code_generator/transform.c, code_generator/type_hints.c:
+	Removed the code generator support for API versions.
+	[0b6eb95b003a]
+
+2020-08-30  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c, doc/c_api.rst,
+	sipbuild/module/source/13.0/apiversions.c,
+	sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/sipint.h,
+	sipbuild/module/source/13.0/siplib.c:
+	Removed the module support for API versions.
+	[490813cffcae]
+
+	* sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Removed the legacy enum implementation.
+	[8bbc5f7cdebd]
+
+	* code_generator/gencode.c, sipbuild/module/source/13.0/qtlib.c,
+	sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/sipint.h,
+	sipbuild/module/source/13.0/siplib.c:
+	Removed the legacy Qt support for the v13 ABI.
+	[a2a02ede6655]
+
+	* code_generator/gencode.c,
+	sipbuild/module/source/13.0/int_convertors.c,
+	sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/sip.rst.in,
+	sipbuild/module/source/13.0/sipint.h,
+	sipbuild/module/source/13.0/siplib.c:
+	The v13 ABI int convertors now always check for overflow.
+	[d42234faac3d]
+
+	* sipbuild/module/source/13.0/siplib.c:
+	Remove PY_LONG_LONG from the v13 ABI module.
+	[c965c36dba2c]
+
+	* sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Removed the deprecated functions from the v13 ABI.
+	[8165308f7013]
+
+	* doc/annotations.rst, doc/c_api.rst, doc/index.rst,
+	doc/introduction.rst, doc/legacy_command_line_tools.rst, setup.py,
+	sipbuild/legacy/__init__.py, sipbuild/legacy/sip5.py:
+	Removed sip5.
+	[5c76c3af2534]
+
+	* code_generator/gencode.c, doc/c_api.rst,
+	sipbuild/module/source/13.0/sip.h.in:
+	Removed all references to PY_LONG_LONG.
+	[7e07874d8288]
+
+	* code_generator/gencode.c:
+	ABI version dependent code is now selected at code generation time
+	rather than compile time.
+	[d272db570301]
+
+	* code_generator/pybinding.c, code_generator/sip.h,
+	sipbuild/helpers.py, sipbuild/module/abi_version.py:
+	The ABI version used by the code generator is now encoded. Only the
+	ABI major version is checked for compatibility when importing
+	modules.
+	[0e19b1b0d40a]
+
 2020-08-29  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* setup.py, sipbuild/py_versions.py:
+	Python v3.6 is the minimum supported version.
+	[be98cab3eb2c]
+
+	* sipbuild/module/source/13.0/MANIFEST.in,
+	sipbuild/module/source/13.0/README.in,
+	sipbuild/module/source/13.0/apiversions.c,
+	sipbuild/module/source/13.0/array.c,
+	sipbuild/module/source/13.0/array.h,
+	sipbuild/module/source/13.0/bool.cpp,
+	sipbuild/module/source/13.0/descriptors.c,
+	sipbuild/module/source/13.0/int_convertors.c,
+	sipbuild/module/source/13.0/objmap.c,
+	sipbuild/module/source/13.0/pyproject.toml,
+	sipbuild/module/source/13.0/qtlib.c,
+	sipbuild/module/source/13.0/setup.cfg.in,
+	sipbuild/module/source/13.0/setup.py.in,
+	sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/sip.pyi,
+	sipbuild/module/source/13.0/sip.rst.in,
+	sipbuild/module/source/13.0/sipint.h,
+	sipbuild/module/source/13.0/siplib.c,
+	sipbuild/module/source/13.0/threads.c,
+	sipbuild/module/source/13.0/voidptr.c:
+	Add the initial v13.0.0 module implementation.
+	[646d1d0e0c8d]
+
+	* .hgtags:
+	Added tag 5.4.0 for changeset 8d2e8033d480
+	[b736b5d06f8e]
 
 	* NEWS:
 	Released as v5.4.0.

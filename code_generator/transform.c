@@ -1,7 +1,7 @@
 /*
  * The parse tree transformation module for SIP.
  *
- * Copyright (c) 2019 Riverbank Computing Limited <info@riverbankcomputing.com>
+ * Copyright (c) 2020 Riverbank Computing Limited <info@riverbankcomputing.com>
  *
  * This file is part of SIP.
  *
@@ -86,9 +86,9 @@ static mroDef *newMRO(classDef *cd);
 static void moveMainModuleCastsSlots(sipSpec *pt, moduleDef *mod);
 static void moveClassCasts(sipSpec *pt, moduleDef *mod, classDef *cd);
 static void moveGlobalSlot(sipSpec *pt, moduleDef *mod, memberDef *gmd);
-static classDef *findAltClassImplementation(sipSpec *pt, mappedTypeDef *mtd);
 static ifaceFileDef *getIfaceFile(argDef *ad);
 static ifaceFileDef *getIfaceFileForEnum(enumDef *ed);
+static void enumIfaceFileIsUsed(enumDef *ed, moduleDef *mod);
 static void instantiateMappedTypeTemplate(sipSpec *pt, moduleDef *mod,
         mappedTypeTmplDef *mtt, argDef *type);
 static classDef *getProxy(moduleDef *mod, classDef *cd);
@@ -329,6 +329,16 @@ void transform(sipSpec *pt, int strict)
 
         if (xd_mod == pt->module || xd->needed)
             xd->exceptionnr = xd_mod->nrexceptions++;
+    }
+
+    /* For PyQt6 mark all enum interface files as being used. */
+    if (pluginPyQt6(pt))
+    {
+        enumDef *ed;
+
+        for (ed = pt->enums; ed != NULL; ed = ed->next)
+            if (ed->module == pt->module)
+                enumIfaceFileIsUsed(ed, pt->module);
     }
 
     setStringPoolOffsets(pt);
@@ -578,16 +588,11 @@ static void checkHelpers(sipSpec *pt, classDef *cd)
         else if (ct->cppsig->nrArgs == 1)
         {
             argDef *ad = &ct->cppsig->args[0];
-            classDef *arg_cd;
 
-            if (ad->atype == class_type)
-                arg_cd = ad->u.cd;
-            else if (ad->atype == mapped_type)
-                arg_cd = findAltClassImplementation(pt, ad->u.mtd);
-            else
-                arg_cd = NULL;
+            if (ad->atype != class_type)
+                continue;
 
-            if (arg_cd == cd && isReference(ad) && isConstArg(ad) &&
+            if (ad->u.cd == cd && isReference(ad) && isConstArg(ad) &&
                 ad->nrderefs == 0 && ad->defval == NULL)
                 pub_copy_ctor = TRUE;
         }
@@ -701,12 +706,6 @@ static void moveClassCasts(sipSpec *pt, moduleDef *mod, classDef *cd)
         ctorDef *ct, **ctp;
         argDef *ad;
 
-        if (al->arg.atype == class_type)
-            dcd = al->arg.u.cd;
-        else
-            /* Previous error checking means this will always work. */
-            dcd = findAltClassImplementation(pt, al->arg.u.mtd);
-
         /* Create the new ctor. */
         ct = sipMalloc(sizeof (ctorDef));
 
@@ -799,17 +798,6 @@ static void moveGlobalSlot(sipSpec *pt, moduleDef *mod, memberDef *gmd)
             odhead = &arg0->u.cd->overs;
             mod = arg0->u.cd->iff->module;
         }
-        else if (arg0->atype == mapped_type)
-        {
-            classDef *cd = findAltClassImplementation(pt, arg0->u.mtd);
-
-            if (cd != NULL)
-            {
-                mdhead = &cd->members;
-                odhead = &cd->overs;
-                mod = cd->iff->module;
-            }
-        }
         else if (arg0->atype == enum_type)
         {
             mdhead = &arg0->u.ed->slots;
@@ -823,18 +811,6 @@ static void moveGlobalSlot(sipSpec *pt, moduleDef *mod, memberDef *gmd)
             odhead = &arg1->u.cd->overs;
             mod = arg1->u.cd->iff->module;
             second = TRUE;
-        }
-        else if (arg1->atype == mapped_type)
-        {
-            classDef *cd = findAltClassImplementation(pt, arg1->u.mtd);
-
-            if (cd != NULL)
-            {
-                mdhead = &cd->members;
-                odhead = &cd->overs;
-                mod = cd->iff->module;
-                second = TRUE;
-            }
         }
         else if (arg1->atype == enum_type)
         {
@@ -933,12 +909,7 @@ static void moveGlobalSlot(sipSpec *pt, moduleDef *mod, memberDef *gmd)
 
         if (ed != NULL)
         {
-            ifaceFileDef *enum_iff = getIfaceFileForEnum(ed);
-
-            /* The slot code is generated at the module level. */
-            if (enum_iff != NULL)
-                appendToIfaceFileList(&mod->used, enum_iff);
-
+            enumIfaceFileIsUsed(ed, mod);
             setIsUsedName(ed->pyname);
         }
 
@@ -991,33 +962,6 @@ static void moveGlobalSlot(sipSpec *pt, moduleDef *mod, memberDef *gmd)
         if (isZeroArgSlot(md))
             od->pysig.nrArgs = 0;
     }
-}
-
-
-/*
- * Return an alternative class implementation of a mapped type if there is
- * one.  Note that we cheat as we assume there is one going to be one (as
- * there will be in PyQt at the moment).
- */
-static classDef *findAltClassImplementation(sipSpec *pt, mappedTypeDef *mtd)
-{
-    ifaceFileDef *iff = mtd->iff->first_alt;
-
-    while (iff != NULL)
-    {
-        if (iff->type == class_iface)
-        {
-            classDef *cd;
-
-            for (cd = pt->classes; cd != NULL; cd = cd->next)
-                if (cd->iff == iff)
-                    return cd;
-        }
-
-        iff = iff->next_alt;
-    }
-
-    return NULL;
 }
 
 
@@ -1151,6 +1095,13 @@ static void setHierarchy(sipSpec *pt, classDef *base, classDef *cd,
                 fatal("\n");
             }
 
+            /* Unions cannot be super-classes. */
+            if (isUnion(cl->cd))
+            {
+                fatalScopedName(classFQCName(cl->cd));
+                fatal(" cannot be a super-class as it is a union\n");
+            }
+
             /* Make sure the super-class's hierarchy has been done. */
             setHierarchy(pt, base, cl->cd, head);
 
@@ -1178,7 +1129,7 @@ static void setHierarchy(sipSpec *pt, classDef *base, classDef *cd,
                 }
 
                 if (generatingCodeForModule(pt, cd->iff->module))
-                    mro->cd->iff->first_alt->needed = TRUE;
+                    mro->cd->iff->needed = TRUE;
 
                 if (isDeprecatedClass(mro->cd))
                     setIsDeprecatedClass(cd);
@@ -1232,8 +1183,18 @@ static void setHierarchy(sipSpec *pt, classDef *base, classDef *cd,
         if (cd->supertype == NULL && cd->supers == NULL)
             cd->supertype = cd->iff->module->defsupertype;
 
-        if (cd->supertype != NULL && strcmp(cd->supertype->text, "sip.wrapper") == 0)
-            cd->supertype = NULL;
+        if (cd->supertype != NULL)
+        {
+            /*
+             * If the super-type ends with 'sip.wrapper' then assume it is the
+             * default.
+             */
+
+            const char *tail = strstr(cd->supertype->text, "sip.wrapper");
+
+            if (tail != NULL && strcmp(tail, "sip.wrapper") == 0)
+                cd->supertype = NULL;
+        }
 
         if (cd->supertype != NULL && generatingCodeForModule(pt, cd->iff->module))
             setIsUsedName(cd->supertype);
@@ -1379,18 +1340,9 @@ static void transformCasts(sipSpec *pt, classDef *cd)
 
     for (al = cd->casts; al != NULL; al = al->next)
     {
-        classDef *dcd;
-
         resolveType(pt, cd->iff->module, cd, &al->arg, FALSE);
 
-        if (al->arg.atype == class_type)
-            dcd = al->arg.u.cd;
-        else if (al->arg.atype == mapped_type)
-            dcd = findAltClassImplementation(pt, al->arg.u.mtd);
-        else
-            dcd = NULL;
-
-        if (dcd == NULL)
+        if (al->arg.atype != class_type)
         {
             fatalScopedName(classFQCName(cd));
             fatal(" operator cast must be to a class\n");
@@ -1418,24 +1370,8 @@ static void addDefaultCopyCtor(classDef *cd)
  
             /* See if is a copy ctor. */
             if (ct->pysig.nrArgs == 1 && ad->nrderefs == 0 && isReference(ad))
-            {
-                ifaceFileDef *iff;
-
-                /* To check the type we have to look at all versions. */
-                if (ad->atype == class_type)
-                    iff = ad->u.cd->iff;
-                else if (ad->atype == mapped_type)
-                    iff = ad->u.mtd->iff;
-                else
-                    continue;
-
-                for (iff = iff->first_alt; iff != NULL; iff = iff->next_alt)
-                    if (mro->cd->iff == iff)
-                        break;
-
-                if (iff != NULL)
+                if (ad->atype == class_type && ad->u.cd->iff == mro->cd->iff)
                     break;
-            }
         }
 
         if (ct != NULL)
@@ -1513,10 +1449,6 @@ static void transformScopeOverloads(sipSpec *pt, int strict, classDef *c_scope,
                     continue;
 
                 if (prev->methodcode != NULL)
-                    continue;
-
-                /* They can only conflict if one is unversioned. */
-                if (prev->api_range != NULL && od->api_range != NULL)
                     continue;
 
                 if (samePythonSignature(&prev->pysig, &od->pysig))
@@ -1630,10 +1562,6 @@ static void getVisiblePyMembers(sipSpec *pt, classDef *cd)
                             need_types = TRUE;
 
                             setIsUsedName(md->pyname);
-
-                            /* Make sure we have any API name. */
-                            if (od->api_range != NULL)
-                                setIsUsedName(od->api_range->api_name);
                         }
 
                         ifaceFilesAreUsedByOverload(&cd->iff->used, od,
@@ -2011,10 +1939,19 @@ static void resolveFuncTypes(sipSpec *pt, moduleDef *mod, classDef *c_scope,
 
     /* These slots must return Py_ssize_t. */
     if (isSSizeReturnSlot(od->common))
-        if ((res->atype != ssize_type && res->atype != int_type) || res->nrderefs != 0 ||
-            isReference(res) || isConstArg(res))
+    {
+        int bad_type;
+
+        if (abiVersion >= ABI_13_0)
+            bad_type = (res->atype != ssize_type);
+        else
+            bad_type = (res->atype != ssize_type && res->atype != int_type);
+
+        if (bad_type || res->nrderefs != 0 || isReference(res) ||
+                isConstArg(res))
             fatal("%s:%d: %s slots must return Py_ssize_t\n", od->sloc.name,
                     od->sloc.linenr, od->common->pyname->text);
+    }
 
     /* These slots must return int. */
     if (isIntReturnSlot(od->common))
@@ -2030,12 +1967,28 @@ static void resolveFuncTypes(sipSpec *pt, moduleDef *mod, classDef *c_scope,
             fatal("%s:%d: %s slots must return void\n", od->sloc.name,
                     od->sloc.linenr, od->common->pyname->text);
 
-    /* These slots must return long. */
-    if (isLongReturnSlot(od->common))
-        if (res->atype != long_type || res->nrderefs != 0 ||
-            isReference(res) || isConstArg(res))
-            fatal("%s:%d: %s slots must return long\n", od->sloc.name,
-                    od->sloc.linenr, od->common->pyname->text);
+    /* These slots must return Py_hash_t. */
+    if (isHashReturnSlot(od->common))
+    {
+        const char *required_type;
+        int bad_type;
+
+        if (abiVersion >= ABI_13_0)
+        {
+            bad_type = (res->atype != hash_type);
+            required_type = "Py_hash_t";
+        }
+        else
+        {
+            bad_type = (res->atype != long_type);
+            required_type = "long";
+        }
+
+        if (bad_type || res->nrderefs != 0 || isReference(res) ||
+                isConstArg(res))
+            fatal("%s:%d: %s slots must return %s\n", od->sloc.name,
+                    od->sloc.linenr, od->common->pyname->text, required_type);
+    }
 }
 
 
@@ -2190,6 +2143,7 @@ static void resolveVariableType(sipSpec *pt, varDef *vd)
     case long_type:
     case ulonglong_type:
     case longlong_type:
+    case hash_type:
     case ssize_type:
     case size_type:
     case pyobject_type:
@@ -2200,6 +2154,7 @@ static void resolveVariableType(sipSpec *pt, varDef *vd)
     case pyslice_type:
     case pytype_type:
     case pybuffer_type:
+    case pyenum_type:
     case capsule_type:
         /* These are supported without pointers or references. */
 
@@ -2208,6 +2163,7 @@ static void resolveVariableType(sipSpec *pt, varDef *vd)
         break;
 
     case struct_type:
+    case union_type:
     case void_type:
         /* A simple pointer is supported. */
 
@@ -2319,6 +2275,7 @@ static int supportedType(classDef *cd,overDef *od,argDef *ad,int outputs)
     case long_type:
     case ulonglong_type:
     case longlong_type:
+    case hash_type:
     case ssize_type:
     case size_type:
     case pyobject_type:
@@ -2329,6 +2286,7 @@ static int supportedType(classDef *cd,overDef *od,argDef *ad,int outputs)
     case pyslice_type:
     case pytype_type:
     case pybuffer_type:
+    case pyenum_type:
     case capsule_type:
         if (isReference(ad))
         {
@@ -2395,6 +2353,7 @@ static int supportedType(classDef *cd,overDef *od,argDef *ad,int outputs)
         break;
 
     case struct_type:
+    case union_type:
     case void_type:
         if (isReference(ad))
         {
@@ -2498,10 +2457,6 @@ void fatalScopedName(scopedNameDef *snd)
  */
 static int sameCppOverload(overDef *od1, overDef *od2)
 {
-    /* They must both be enabled for the same API. */
-    if (od1->api_range != od2->api_range)
-        return FALSE;
-
     /* They must both be const, or both not. */
     if (isConst(od1) != isConst(od2))
         return FALSE;
@@ -2572,10 +2527,11 @@ int sameSignature(signatureDef *sd1, signatureDef *sd2, int strict)
             (t) == latin1_string_type || (t) == utf8_string_type)
 #define pyAsFloat(t)    ((t) == cfloat_type || (t) == float_type || \
             (t) == cdouble_type || (t) == double_type)
-#define pyAsInt(t)  ((t) == bool_type || (t) == ssize_type || \
-            (t) == size_type || (t) == byte_type || (t) == sbyte_type || \
-            (t) == ubyte_type || (t) == short_type || (t) == ushort_type || \
-            (t) == cint_type || (t) == int_type || (t) == uint_type)
+#define pyAsInt(t)  ((t) == bool_type || (t) == hash_type || \
+            (t) == ssize_type || (t) == size_type || (t) == byte_type || \
+            (t) == sbyte_type || (t) == ubyte_type || (t) == short_type || \
+            (t) == ushort_type || (t) == cint_type || (t) == int_type || \
+            (t) == uint_type)
 #define pyAsLong(t) ((t) == long_type || (t) == longlong_type)
 #define pyAsULong(t)    ((t) == ulong_type || (t) == ulonglong_type)
 #define pyAsAuto(t) ((t) == bool_type || \
@@ -2609,10 +2565,20 @@ static int sameArgType(argDef *a1, argDef *a2, int strict)
     if (pyIsConstrained(a1->atype) && pyIsConstrained(a2->atype))
         return (a1->atype == a2->atype);
 
-    /* An unconstrained enum also acts as a (very) constrained int. */
-    if ((pyAsInt(a1->atype) && a2->atype == enum_type && !isConstrained(a2)) ||
-        (a1->atype == enum_type && !isConstrained(a1) && pyAsInt(a2->atype)))
-        return TRUE;
+    if (abiVersion >= ABI_13_0)
+    {
+        /* Anonymous enums are ints. */
+        if ((pyAsInt(a1->atype) && a2->atype == enum_type && a2->u.ed->fqcname == NULL) ||
+            (a1->atype == enum_type && a1->u.ed->fqcname == NULL && pyAsInt(a2->atype)))
+            return TRUE;
+    }
+    else
+    {
+        /* An unconstrained enum also acts as a (very) constrained int. */
+        if ((pyAsInt(a1->atype) && a2->atype == enum_type && !isConstrained(a2)) ||
+            (a1->atype == enum_type && !isConstrained(a1) && pyAsInt(a2->atype)))
+            return TRUE;
+    }
 
     /* Python will see all these as strings. */
     if (pyAsString(a1->atype) && pyAsString(a2->atype))
@@ -2719,6 +2685,7 @@ int sameBaseType(argDef *a1, argDef *a2)
         }
 
     case struct_type:
+    case union_type:
         if (compareScopedNames(a1->u.sname, a2->u.sname) != 0)
             return FALSE;
 
@@ -2977,7 +2944,7 @@ static void resolveType(sipSpec *pt, moduleDef *mod, classDef *c_scope,
     resolveInstantiatedClassTemplate(pt, type);
 
     /* Replace the base type if it has been mapped. */
-    if (type->atype == struct_type || type->atype == template_type)
+    if (type->atype == struct_type || type->atype == union_type || type->atype == template_type)
     {
         searchMappedTypes(pt, mod, NULL, type);
 
@@ -3015,15 +2982,15 @@ static void setNeededType(argDef *ad)
     switch (ad->atype)
     {
     case class_type:
-        ad->u.cd->iff->first_alt->needed = TRUE;
+        ad->u.cd->iff->needed = TRUE;
         break;
 
     case mapped_type:
-        ad->u.mtd->real->iff->first_alt->needed = TRUE;
+        ad->u.mtd->real->iff->needed = TRUE;
         break;
 
     case enum_type:
-        setNeedsEnum(ad->u.ed->first_alt);
+        setNeedsEnum(ad->u.ed);
         break;
 
     default:
@@ -3054,7 +3021,7 @@ static void setNeededExceptions(sipSpec *pt, moduleDef *mod,
 static void setNeedsException(exceptionDef *xd)
 {
     if (xd->cd != NULL)
-        xd->cd->iff->first_alt->needed = TRUE;
+        xd->cd->iff->needed = TRUE;
     else
         xd->needed = TRUE;
 }
@@ -3111,7 +3078,7 @@ static void instantiateMappedTypeTemplate(sipSpec *pt, moduleDef *mod,
         setIsUsedName(mtd->cname);
 
     mtd->iff = findIfaceFile(pt, mod, encodedTemplateName(type->u.td),
-            mappedtype_iface, NULL, type);
+            mappedtype_iface, type);
     mtd->iff->module = mod;
 
     mtd->mtflags = mtt->mt->mtflags;
@@ -3132,10 +3099,17 @@ static void instantiateMappedTypeTemplate(sipSpec *pt, moduleDef *mod,
             templateCode(pt, &mtd->iff->used, mtt->mt->iff->hdrcode,
                     type_names, type_values));
 
-    mtd->convfromcode = templateCode(pt, &mtd->iff->used,
-            mtt->mt->convfromcode, type_names, type_values);
-    mtd->convtocode = templateCode(pt, &mtd->iff->used, mtt->mt->convtocode,
-            type_names, type_values);
+    if (mtt->mt->convfromcode != NULL)
+        mtd->convfromcode = templateCode(pt, &mtd->iff->used,
+                mtt->mt->convfromcode, type_names, type_values);
+
+    if (mtt->mt->convtocode != NULL)
+        mtd->convtocode = templateCode(pt, &mtd->iff->used,
+                mtt->mt->convtocode, type_names, type_values);
+
+    if (mtt->mt->releasecode != NULL)
+        mtd->releasecode = templateCode(pt, &mtd->iff->used,
+                mtt->mt->releasecode, type_names, type_values);
 
     mtd->next = pt->mappedtypes;
     pt->mappedtypes = mtd;
@@ -3600,6 +3574,18 @@ static void ifaceFileIsUsed(ifaceFileList **used, argDef *ad, int need_types)
 
 
 /*
+ * Add an enum's interface file to that used by a module.
+ */
+static void enumIfaceFileIsUsed(enumDef *ed, moduleDef *mod)
+{
+    ifaceFileDef *enum_iff = getIfaceFileForEnum(ed);
+
+    if (enum_iff != NULL)
+        appendToIfaceFileList(&mod->used, enum_iff);
+}
+
+
+/*
  * Return the interface file for an enum, or NULL if it doesn't have one.
  */
 static ifaceFileDef *getIfaceFileForEnum(enumDef *ed)
@@ -3667,9 +3653,6 @@ static void createSortedNumberedTypesTable(sipSpec *pt, moduleDef *mod)
         if (cd->iff->module != mod)
             continue;
 
-        if (cd->iff->first_alt != cd->iff)
-            continue;
-
         if (generatingCodeForModule(pt, mod) || cd->iff->needed)
             if (!isHiddenNamespace(cd))
                 mod->nr_needed_types++;
@@ -3678,9 +3661,6 @@ static void createSortedNumberedTypesTable(sipSpec *pt, moduleDef *mod)
     for (mtd = pt->mappedtypes; mtd != NULL; mtd = mtd->next)
     {
         if (mtd->iff->module != mod)
-            continue;
-
-        if (mtd->iff->first_alt != mtd->iff)
             continue;
 
         if (generatingCodeForModule(pt, mod) || mtd->iff->needed)
@@ -3698,9 +3678,6 @@ static void createSortedNumberedTypesTable(sipSpec *pt, moduleDef *mod)
         if (ed->ecd != NULL && isTemplateClass(ed->ecd))
             continue;
 
-        if (ed->first_alt != ed)
-            continue;
-
         if (generatingCodeForModule(pt, mod) || needsEnum(ed))
             mod->nr_needed_types++;
     }
@@ -3714,9 +3691,6 @@ static void createSortedNumberedTypesTable(sipSpec *pt, moduleDef *mod)
     for (cd = pt->classes; cd != NULL; cd = cd->next)
     {
         if (cd->iff->module != mod)
-            continue;
-
-        if (cd->iff->first_alt != cd->iff)
             continue;
 
         if (generatingCodeForModule(pt, mod) || cd->iff->needed)
@@ -3733,9 +3707,6 @@ static void createSortedNumberedTypesTable(sipSpec *pt, moduleDef *mod)
     for (mtd = pt->mappedtypes; mtd != NULL; mtd = mtd->next)
     {
         if (mtd->iff->module != mod)
-            continue;
-
-        if (mtd->iff->first_alt != mtd->iff)
             continue;
 
         if (generatingCodeForModule(pt, mod) || mtd->iff->needed)
@@ -3757,9 +3728,6 @@ static void createSortedNumberedTypesTable(sipSpec *pt, moduleDef *mod)
             continue;
 
         if (ed->ecd != NULL && isTemplateClass(ed->ecd))
-            continue;
-
-        if (ed->first_alt != ed)
             continue;
 
         if (generatingCodeForModule(pt, mod) || needsEnum(ed))

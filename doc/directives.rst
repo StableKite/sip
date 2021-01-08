@@ -80,27 +80,6 @@ For example::
 .. seealso:: :directive:`%GetCode`, :directive:`%SetCode`
 
 
-.. directive:: %API
-
-:directive:`%API`
------------------
-
-.. deprecated:: 5.0
-    This will be removed in v6.
-
-.. parsed-literal::
-    %API(name = *name*, version = *integer*)
-
-This directive is used to define an API and set its default version number.  A
-version number must be greater than or equal to 1.
-
-See :ref:`ref-incompat-apis` for more detail.
-
-For example::
-
-    %API(name=PyQt4, version=1)
-
-
 .. directive:: %AutoPyName
 
 :directive:`%AutoPyName`
@@ -170,70 +149,6 @@ int sipRes
 PyObject \*sipSelf
     This is the Python object that wraps the structure or class instance, i.e.
     ``self``.
-
-
-.. directive:: %BIGetCharBufferCode
-
-:directive:`%BIGetCharBufferCode`
----------------------------------
-
-.. deprecated:: 5.0
-    This will be removed in v6.
-
-.. parsed-literal::
-    %BIGetCharBufferCode
-        *code*
-    %End
-
-This directive is ignored.
-
-
-.. directive:: %BIGetReadBufferCode
-
-:directive:`%BIGetReadBufferCode`
----------------------------------
-
-.. deprecated:: 5.0
-    This will be removed in v6.
-
-.. parsed-literal::
-    %BIGetReadBufferCode
-        *code*
-    %End
-
-This directive is ignored.
-
-
-.. directive:: %BIGetSegCountCode
-
-:directive:`%BIGetSegCountCode`
--------------------------------
-
-.. deprecated:: 5.0
-    This will be removed in v6.
-
-.. parsed-literal::
-    %BIGetSegCountCode
-        *code*
-    %End
-
-This directive is ignored.
-
-
-.. directive:: %BIGetWriteBufferCode
-
-:directive:`%BIGetWriteBufferCode`
-----------------------------------
-
-.. deprecated:: 5.0
-    This will be removed in v6.
-
-.. parsed-literal::
-    %BIGetWriteBufferCode
-        *code*
-    %End
-
-This directive is ignored.
 
 
 .. directive:: %BIReleaseBufferCode
@@ -466,8 +381,8 @@ class hierarchy in PyQt5::
     %End
 
 This directive is used to specify the handwritten code that converts a Python
-object to a mapped type instance and to handle any ownership transfers.  It is
-used as part of the :directive:`%MappedType` directive and as part of a class
+object to a C/C++ instance and to handle any ownership transfers.  It is used
+as part of the :directive:`%MappedType` directive and as part of a class
 specification.  The code is also called to determine if the Python object is of
 the correct type prior to conversion.
 
@@ -498,6 +413,12 @@ PyObject \*sipTransferObj
     transferred to C/C++ and *sipPy* associated with *sipTransferObj*.  The
     code can choose to interpret these changes in any way.
 
+void \*\*sipUserStatePtr
+    This is a pointer through which a mapped type convertor can store
+    additional state information.  Any value set will be passed to the code
+    defined by the corresponding :directive:`%ReleaseCode` directive invoked by
+    a call to :c:func:`sipReleaseTypeUS()`.
+
 The handwritten code must explicitly return an ``int`` the meaning of which
 depends on the value of ``sipIsErr``.
 
@@ -508,13 +429,17 @@ returned.
 If ``sipIsErr`` is not ``NULL`` then a combination of the following flags is
 returned.
 
-        - :c:macro:`SIP_TEMPORARY` is set to indicate that the returned
-          instance is a temporary and should be released to avoid a memory
-          leak.
+    - :c:macro:`SIP_TEMPORARY` is set to indicate that the returned instance is
+      a temporary and should be released, by calling :c:func:`sipReleaseType()`
+      or :c:func:`sipReleaseTypeUS()`, to avoid a memory leak.
 
-        - :c:macro:`SIP_DERIVED_CLASS` is set to indicate that the type of the
-          returned instance is a derived class.  See
-          :ref:`ref-derived-classes`.
+    - :c:macro:`SIP_DERIVED_CLASS` is set by a class convertor to indicate that
+      the type of the returned instance is a derived class.  See
+      :ref:`ref-derived-classes`.
+
+    - :c:macro:`SIP_USER` is a flag that can be returned by a mapped type
+      convertor.  It will be passed to the code defined by a corresponding
+      :directive:`%ReleaseCode` directive.
 
 The following example converts a Python list of ``QPoint`` instances to a
 ``QList<QPoint>`` instance::
@@ -525,20 +450,9 @@ The following example converts a Python list of ``QPoint`` instances to a
         if (!sipIsErr)
         {
             // Checking whether or not None has been passed instead of a list
-            // has already been done.
-            if (!PyList_Check(sipPy))
-                return 0;
-
-            // Check the type of each element.  We specify SIP_NOT_NONE to
-            // disallow None because it is a list of QPoint, not of a pointer
-            // to a QPoint, so None isn't appropriate.
-            for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
-                if (!sipCanConvertToType(PyList_GET_ITEM(sipPy, i),
-                                         sipType_QPoint, SIP_NOT_NONE))
-                    return 0;
-
-            // The type is valid.
-            return 1;
+            // has already been done.  Note that we don't check the type of the
+            // individual elements of the list.
+            return PyList_Check(sipPy);
         }
 
         // Create the instance on the heap.
@@ -552,11 +466,10 @@ The following example converts a Python list of ``QPoint`` instances to a
             // Get the address of the element's C++ instance.  Note that, in
             // this case, we don't apply any ownership changes to the list
             // elements, only to the list itself.
-            qp = reinterpret_cast<QPoint *>(sipConvertToType(
-                                                    PyList_GET_ITEM(sipPy, i),
-                                                    sipType_QPoint, 0,
-                                                    SIP_NOT_NONE,
-                                                    &state, sipIsErr));
+            qp = reinterpret_cast<QPoint *>(
+                    sipForceConvertToType(PyList_GET_ITEM(sipPy, i),
+                            sipType_QPoint, 0, SIP_NOT_NONE, &state,
+                            sipIsErr));
 
             // Deal with any errors.
             if (*sipIsErr)
@@ -594,9 +507,9 @@ would normally be automatically generated.  This means that the handwritten
 code must also handle instances of the class itself and not just the additional
 types that are being supported.  This should be done by making calls to
 :c:func:`sipCanConvertToType()` to check the object type and
-:c:func:`sipConvertToType()` to convert the object.  The
-:c:macro:`SIP_NO_CONVERTORS` flag *must* be passed to both these functions to
-prevent recursive calls to the handwritten code.
+:c:func:`sipConvertToTypeUS()` or :c:func:`sipConvertToType()` to convert the
+object.  The :c:macro:`SIP_NO_CONVERTORS` flag *must* be passed to these
+functions to prevent recursive calls to the handwritten code.
 
 
 .. directive:: %Copying
@@ -1424,6 +1337,7 @@ For example::
         [:directive:`%TypeHeaderCode`]
         [:directive:`%ConvertToTypeCode`]
         [:directive:`%ConvertFromTypeCode`]
+        [:directive:`%ReleaseCode`]
     };
 
     %MappedType *type*
@@ -1431,6 +1345,7 @@ For example::
         [:directive:`%TypeHeaderCode`]
         [:directive:`%ConvertToTypeCode`]
         [:directive:`%ConvertFromTypeCode`]
+        [:directive:`%ReleaseCode`]
     };
 
 This directive is used to define an automatic mapping between a C or C++ type
@@ -1457,6 +1372,9 @@ type.
 The optional :directive:`%ConvertFromTypeCode` sub-directive is used to specify
 the handwritten code that converts an instance of the mapped type to a Python
 object.
+
+The optional :directive:`%ReleaseCode` sub-directive is used to specify the
+handwritten code that releases an instance of the mapped type to the heap.
 
 For example::
 
@@ -1683,8 +1601,10 @@ int sipIsErr
 
 PyObject \*sipSelf
     If the directive is used in the context of a class constructor, destructor
-    or method then this is the Python object that wraps the structure or class
-    instance, i.e. ``self``.
+    or non-static method then this is the Python object that wraps the
+    structure or class instance, i.e. ``self``.  Starting with ABI v13.0, in
+    the context of a static method, this will contain the Python type object of
+    the class.
 
 bool sipSelfWasArg
     This is only made available for non-abstract, virtual methods.  It is set
@@ -2101,6 +2021,35 @@ The following variable is made available to the handwritten code:
     reference is the same as the type defined in the ``throw ()`` specifier.
 
 See the :directive:`%Exception` directive for an example.
+
+
+.. directive:: %ReleaseCode
+
+:directive:`%ReleaseCode`
+-------------------------
+
+.. parsed-literal::
+    %ReleaseCode
+        *code*
+    %End
+
+This directive is used to specify handwritten code that releases a C/C++
+instance to the heap.  By default a C instance is released by calling
+:c:func:`sipFree()` and a C++ instance is released by calling its destructor.
+It is specified as part of the :directive:`%MappedType` directive.
+
+The following variables are made available to the handwritten code:
+
+*type* \*sipCpp
+    This is a pointer to the C/C++ instance.
+
+int sipState
+    This is the value of the :c:macro:`SIP_USER` returned by the code specified
+    by the corresponding :directive:`%ConvertToTypeCode` directive.
+
+void \*sipUserState
+    This is the value of the pointer saved by the code specified by the
+    corresponding :directive:`%ConvertToTypeCode` directive.
 
 
 .. directive:: %SetCode

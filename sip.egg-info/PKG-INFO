@@ -1,6 +1,6 @@
 Metadata-Version: 1.2
 Name: sip
-Version: 5.5.0
+Version: 6.0.0
 Summary: A Python bindings generator for C/C++ libraries
 Home-page: https://www.riverbankcomputing.com/software/sip/
 Author: Riverbank Computing Limited
@@ -82,4 +82,4 @@ Description: SIP - A Python Bindings Generator for C and C++ Libraries
 Platform: X11
 Platform: macOS
 Platform: Windows
-Requires-Python: >=3.5.1
+Requires-Python: >=3.6

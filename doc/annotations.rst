@@ -41,27 +41,9 @@ Annotations can have one of the following types:
 *string*
     The value is a double quoted string.
 
-*API range*
-    The value is the name of an API (defined using the :directive:`%API`
-    directive) separated by a range of version numbers with a colon.
-
-    The range of version numbers is a pair of numbers separated by a hyphen
-    specifying the lower and upper bounds of the range.  A version number is
-    within the range if it is greater or equal to the lower bound and less
-    than the upper bound.  Each bound can be omitted meaning that the range is
-    unbounded in that direction.
-
-    For example::
-
-        # This is part of the PyQt4 API up to but excluding v2.
-        void hex() /API=PyQt4:-2/
-
-        # This is part of the PyQt4 API starting from v2.
-        void hex() /PyName=hex_, API=PyQt4:2-/
-
 The following example shows argument and function annotations::
 
-    void exec(QWidget * /Transfer/) /ReleaseGIL, PyName=call_exec/;
+    void exec(QWidget * /Transfer/) /ReleaseGIL/;
 
 
 .. _ref-arg-annos:
@@ -154,11 +136,8 @@ Argument Annotations
     The default encoding is specified by the :directive:`%DefaultEncoding`
     directive.  If the directive is not specified then ``None`` is used.
 
-    Python v3 will use the ``bytes`` type to represent the argument if the
-    encoding is ``"None"`` and the ``str`` type otherwise.
-
-    Python v2 will use the ``str`` type to represent the argument if the
-    encoding is ``"None"`` and the ``unicode`` type otherwise.
+    The ``bytes`` type is used to represent the argument if the encoding is
+    ``"None"`` and the ``str`` type otherwise.
 
 
 .. argument-annotation:: GetWrapper
@@ -365,23 +344,6 @@ Class Annotations
     does not have any :directive:`%ConvertToTypeCode`.
 
 
-.. class-annotation:: API
-
-    .. deprecated:: 5.0
-        This will be removed in v5.1.
-
-    This API range annotation is used to specify an API and corresponding
-    range of version numbers that the class is enabled for.
-
-    If a class or mapped type has different implementations enabled for
-    different ranges of version numbers then those ranges must not overlap.
-
-    Note that sub-classing from a class that has different implementations is
-    not currently supported.
-
-    See :ref:`ref-incompat-apis` for more detail.
-
-
 .. class-annotation:: DelayDtor
 
     This boolean annotation is used to specify that the class's destructor
@@ -444,9 +406,7 @@ Class Annotations
 .. class-annotation:: FileExtension
 
     This string annotation is used to specify the filename extension to be used
-    for the file containing the generated code for this class.  A separate file
-    will be generated even if the :option:`-j <sip5 -j>` command line option is
-    specified.
+    for the file containing the generated code for this class.
 
 .. class-annotation:: ExportDerived
 
@@ -510,10 +470,7 @@ Class Annotations
 .. class-annotation:: PyName
 
     This name annotation specifies an alternative name for the class being
-    wrapped which is used when it is referred to from Python.  It is required
-    when a class name is the same as a Python keyword.  It may also be used to
-    avoid name clashes with other objects (e.g. enums, exceptions, functions)
-    that have the same name in the same C++ scope.
+    wrapped which is used when it is referred to from Python.
 
     .. seealso:: :directive:`%AutoPyName`
 
@@ -585,22 +542,6 @@ Mapped Type Annotations
     :directive:`%ConvertToTypeCode`.
 
 
-.. mapped-type-annotation:: API
-
-    .. deprecated:: 5.0
-        This will be removed in v5.1.
-
-    This API range annotation is used to specify an API and corresponding
-    range of version numbers that the mapped type is enabled for.
-
-    If a class or mapped type has different implementations enabled for
-    different ranges of version numbers then those ranges must not overlap.
-
-    It should not be used with mapped type templates.
-
-    See :ref:`ref-incompat-apis` for more detail.
-
-
 .. mapped-type-annotation:: NoRelease
 
     This boolean annotation is used to specify that the mapped type does not
@@ -653,6 +594,15 @@ Mapped Type Annotations
 Enum Annotations
 ----------------
 
+.. enum-annotation:: BaseType
+
+    This name annotation specifies the type from the :mod:`enum` module
+    that will be used as the base type of the enum.  The possible values are
+    :class:`~enum.Enum`, :class:`~enum.Flag`, :class:`~enum.IntEnum` and
+    :class:`~enum.IntFlag`.  The default value is :class:`~enum.Enum`.
+
+    This annotation is only available when ABI v13 or later is specified.
+
 .. enum-annotation:: NoScope
 
     This boolean annotation specifies the that scope of an enum's members
@@ -671,11 +621,7 @@ Enum Annotations
 .. enum-annotation:: PyName
 
     This name annotation specifies an alternative name for the enum or enum
-    member being wrapped which is used when it is referred to from Python.  It
-    is required when an enum or enum member name is the same as a Python
-    keyword.  It may also be used to avoid name clashes with other objects
-    (e.g. classes, exceptions, functions) that have the same name in the same
-    C++ scope.
+    member being wrapped which is used when it is referred to from Python.
 
     .. seealso:: :directive:`%AutoPyName`
 
@@ -694,10 +640,7 @@ Exception Annotations
 .. exception-annotation:: PyName
 
     This name annotation specifies an alternative name for the exception being
-    defined which is used when it is referred to from Python.  It is required
-    when an exception name is the same as a Python keyword.  It may also be
-    used to avoid name clashes with other objects (e.g. classes, enums,
-    functions) that have the same name.
+    defined which is used when it is referred to from Python.
 
     .. seealso:: :directive:`%AutoPyName`
 
@@ -721,17 +664,6 @@ Function Annotations
     :stype:`SIP_PYCALLABLE`, :stype:`SIP_PYDICT`, :stype:`SIP_PYLIST`,
     :stype:`SIP_PYSLICE`, :stype:`SIP_PYTUPLE` or :stype:`SIP_PYTYPE`) may be
     ``None``.
-
-
-.. function-annotation:: API
-
-    .. deprecated:: 5.0
-        This will be removed in v5.1.
-
-    This API range annotation is used to specify an API and corresponding
-    range of version numbers that the function is enabled for.
-
-    See :ref:`ref-incompat-apis` for more detail.
 
 
 .. function-annotation:: AutoGen
@@ -937,10 +869,7 @@ Function Annotations
 .. function-annotation:: PyName
 
     This name annotation specifies an alternative name for the function being
-    wrapped which is used when it is referred to from Python.  It is required
-    when a function or method name is the same as a Python keyword.  It may
-    also be used to avoid name clashes with other objects (e.g. classes, enums,
-    exceptions) that have the same name in the same C++ scope.
+    wrapped which is used when it is referred to from Python.
 
     .. seealso:: :directive:`%AutoPyName`
 
@@ -1090,10 +1019,7 @@ Typedef Annotations
 
     This name annotation only applies when the typedef is being used to create
     the wrapping for a class defined using a template and specifies an
-    alternative name for the class when it is referred to from Python.  It is
-    required when a class name is the same as a Python keyword.  It may also
-    be used to avoid name clashes with other objects (e.g. enums, exceptions,
-    functions) that have the same name in the same C++ scope.
+    alternative name for the class when it is referred to from Python.
 
     .. seealso:: :directive:`%AutoPyName`
 
@@ -1156,10 +1082,7 @@ Variable Annotations
 .. variable-annotation:: PyName
 
     This name annotation specifies an alternative name for the variable being
-    wrapped which is used when it is referred to from Python.  It is required
-    when a variable name is the same as a Python keyword.  It may also be used
-    to avoid name clashes with other objects (e.g. classes, functions) that
-    have the same name in the same C++ scope.
+    wrapped which is used when it is referred to from Python.
 
     .. seealso:: :directive:`%AutoPyName`
 

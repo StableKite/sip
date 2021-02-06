@@ -1,4 +1,72 @@
+2021-02-05  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS:
+	Released as v6.0.1.
+	[55609d9eca39] [6.0.1] <6.0-maint>
+
+2021-02-04  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS:
+	Updated the NEWS file.
+	[11237db348cc] <6.0-maint>
+
+2021-01-30  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/source/13.0/siplib.c:
+	Fixed an ABI v13 bug in the error handling of enums.
+	[7a4baa5b68ea] <6.0-maint>
+
+2021-01-29  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/source/13.0/sip.rst.in:
+	Fixes to the sip module documentation for ABI v13.
+	[1c24c7a5a26d] <6.0-maint>
+
+2021-01-27  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* doc/examples.rst, examples/package/core/pyproject.toml,
+	examples/package/extras/pyproject.toml,
+	examples/standalone/pyproject.toml:
+	Updated the examples for SIP v6.
+	[fcc07a8873f7] <6.0-maint>
+
+2021-01-26  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Fixed the conversion from C++ enums to Python enums in ABI v13.
+	Bumped the patch number of ABI v13.
+	[43a2e00b3bfe] <6.0-maint>
+
+2021-01-19  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/bindings.py:
+	Remove an unused import.
+	[83ac198abe93] <6.0-maint>
+
+2021-01-13  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* doc/abi_13.rst:
+	Fixed the docs for sipConvertToEnum() in ABI v13.
+	[941ced8fc34a] <6.0-maint>
+
+2021-01-08  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/type_hints.c, sipbuild/module/source/12.8/sip.pyi,
+	sipbuild/module/source/13.0/sip.pyi:
+	Improve docstrings with SIP_PYBUFFER in their signature.
+	[96d36bf1cbf6] <6.0-maint>
+
+	* code_generator/type_hints.c:
+	Fixed the type used for unencoded char arrays in signatures and type
+	hints.
+	[8dfb37409551] <6.0-maint>
+
 2021-01-04  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.0.0 for changeset 02dc4506071b
+	[b31b6e104f3a]
 
 	* NEWS:
 	Released as v6.0.0.

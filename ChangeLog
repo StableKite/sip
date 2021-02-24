@@ -1,4 +1,37 @@
+2021-02-22  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS:
+	Released as v6.0.2.
+	[5ac13045d9fc] [6.0.2] <6.0-maint>
+
+	* NEWS:
+	Updated the NEWS file.
+	[264d1fe607df] <6.0-maint>
+
+2021-02-18  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/project.py:
+	A project with no buildable bindings is an error.
+	[f3211be5d53f] <6.0-maint>
+
+	* sipbuild/abstract_builder.py, sipbuild/bindings.py,
+	sipbuild/configurable.py, sipbuild/project.py:
+	Make sure a Configurable object is fully initialised before
+	get_options() is called.
+	[1c06dd81ae51] <6.0-maint>
+
+2021-02-09  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixed the handling of methods that wrap C++ virtuals that are called
+	with self as the first argument. (ABI v13)
+	[dbb5686e7a29] <6.0-maint>
+
 2021-02-05  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.0.1 for changeset 55609d9eca39
+	[272d3b59f505] <6.0-maint>
 
 	* NEWS:
 	Released as v6.0.1.

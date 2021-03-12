@@ -1,4 +1,42 @@
+2021-03-02  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS:
+	Released as v6.0.3.
+	[5b9087955c2f] [6.0.3] <6.0-maint>
+
+	* NEWS:
+	Updated the NEWS file.
+	[e66c02a74819] <6.0-maint>
+
+2021-02-28  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* test/utils/sip_test_case.py:
+	Fixed the unit tests for Python v3.6 on macOS with a modern Xcode.
+	[6fb53fe6c8cd] <6.0-maint>
+
+	* NEWS, sipbuild/distutils_builder.py:
+	The distutils builder now respects the minimum-macos-version option.
+	[f8ed9858e120] <6.0-maint>
+
+2021-02-27  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/source/13.0/sip.h.in:
+	Removed some warning messages from the ABI v13.0 module.
+	[e6130b47f8d5] <6.0-maint>
+
+	* test/utils/sip_test_case.py:
+	Fixed the product tests for Windows.
+	[ad129f2dcf6b] <6.0-maint>
+
+	* sipbuild/distinfo/distinfo.py:
+	Fixed Root-Is-Purelib in wheel metadata.
+	[be16b36a02b8] <6.0-maint>
+
 2021-02-22  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.0.2 for changeset 5ac13045d9fc
+	[87e862dfa8a8] <6.0-maint>
 
 	* NEWS:
 	Released as v6.0.2.

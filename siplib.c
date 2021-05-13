@@ -1,7 +1,7 @@
 /*
  * SIP library code.
  *
- * Copyright (c) 2020 Riverbank Computing Limited <info@riverbankcomputing.com>
+ * Copyright (c) 2021 Riverbank Computing Limited <info@riverbankcomputing.com>
  *
  * This file is part of SIP.
  *
@@ -414,6 +414,7 @@ static void sip_api_instance_destroyed_ex(sipSimpleWrapper **sipSelfp);
 static void sip_api_visit_wrappers(sipWrapperVisitorFunc visitor,
         void *closure);
 static int sip_api_register_exit_notifier(PyMethodDef *md);
+static sipExceptionHandler sip_api_next_exception_handler(void **statep);
 
 
 /*
@@ -617,6 +618,7 @@ static const sipAPIDef sip_api = {
      * The following are not part of the public API.
      */
     sip_api_is_py_method_12_8,
+    sip_api_next_exception_handler,
 };
 
 
@@ -13278,4 +13280,28 @@ static void sip_api_visit_wrappers(sipWrapperVisitorFunc visitor,
                 visitor(sw, closure);
         }
     }
+}
+
+
+
+
+/*
+ * Return the next exception handler.  The order is undefined.
+ */
+sipExceptionHandler sip_api_next_exception_handler(void **statep)
+{
+    sipExportedModuleDef *em = *(sipExportedModuleDef **)statep;
+
+    if (em != NULL)
+        em = em->em_next;
+    else
+        em = moduleList;
+
+    while (em->em_exception_handler == NULL)
+        if ((em = em->em_next) == NULL)
+            return NULL;
+
+    *statep = em;
+
+    return em->em_exception_handler;
 }

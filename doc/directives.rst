@@ -230,10 +230,9 @@ don't have to remember which individual module an object is defined in.
         *code*
     %End
 
-This directive is used as part of the :directive:`%MappedType` directive (when
-it is required) or of a class specification (when it is optional) to specify
-the handwritten code that converts an instance of a C/C++ type to a Python
-object.
+This directive is used as part of the :directive:`%MappedType` directive or of
+a class specification to specify the handwritten code that converts an instance
+of a C/C++ type to a Python object.
 
 If used as part of a class specification then instances of the class will be
 automatically converted to the Python object, even though the class itself has
@@ -739,14 +738,22 @@ directives that allow a block of handwritten code or text to be specified.
 This directive is used to define new Python exceptions, or to provide a stub
 for existing Python exceptions.  It allows handwritten code to be provided
 that implements the translation between C++ exceptions and Python exceptions.
-The arguments to ``throw ()`` specifiers must either be names of classes or the
-names of Python exceptions defined by this directive.
+
+The arguments to a function's ``throw ()`` specifiers must either be names of
+classes or the names of Python exceptions defined by this directive.  If a
+``throw ()`` specifier has no arguments, or the ``noexcept`` specifier is used,
+then it is assumed that the function never raises an exception.
+
+.. note::
+    ``throw ()`` specifiers are ignored (and should be omitted) when using ABI
+    v13.1 or later and v12.9 or later.
 
 *name* is the name of the exception.
 
 *base-exception* is the optional base exception.  This may be either one of
 the standard Python exceptions or one defined with a previous
-:directive:`%Exception` directive.
+:directive:`%Exception` directive.  If it is omitted then a new Python
+exception is not created.
 
 The optional :directive:`%TypeHeaderCode` sub-directive is used to specify any
 external interface to the exception being defined.
@@ -776,6 +783,24 @@ Python exception ``Exception``.
 
 An exception may be annotated with :xanno:`Default` to specify that it should
 be caught by default if there is no ``throw`` clause.
+
+In this second example we do not create a new Python exception but instead
+convert the standard C++ ``std::out_of_range`` exception to the standard Python
+``IndexError`` exception::
+
+    %Exception std::out_of_range
+    {
+    %TypeHeaderCode
+    #include <stdexcept>
+    %End
+    %RaiseCode
+        const char *detail = sipExceptionRef.what();
+
+        SIP_BLOCK_THREADS
+        PyErr_SetString(PyExc_IndexError, detail);
+        SIP_UNBLOCK_THREADS
+    %End
+    };
 
 
 .. directive:: %ExportedHeaderCode
@@ -2017,8 +2042,7 @@ Finally, the specified code must not include any ``return`` statements.
 The following variable is made available to the handwritten code:
 
 *type* &sipExceptionRef
-    This is a reference to the caught C++ exception.  The *type* of the
-    reference is the same as the type defined in the ``throw ()`` specifier.
+    This is a reference to the caught C++ exception.
 
 See the :directive:`%Exception` directive for an example.
 

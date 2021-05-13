@@ -131,6 +131,7 @@ typedef                     {return TK_TYPEDEF;}
 namespace                   {return TK_NAMESPACE;}
 operator                    {return TK_OPERATOR;}
 throw                       {return TK_THROW;}
+noexcept                    {return TK_NOEXCEPT;}
 explicit                    {return TK_EXPLICIT;}
 template                    {return TK_TEMPLATE;}
 final                       {return TK_FINAL;}
@@ -177,7 +178,6 @@ SIP_SSIZE_T {
 <directive>all_raise_py_exception   {return TK_ALLRAISEPYEXC;}
 <directive>call_super_init  {return TK_CALLSUPERINIT;}
 <directive>default_VirtualErrorHandler  {return TK_DEFERRORHANDLER;}
-<directive>version          {return TK_VERSION;}
 
 <directive>True             {return TK_TRUE_VALUE;}
 <directive>False            {return TK_FALSE_VALUE;}

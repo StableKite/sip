@@ -1,7 +1,7 @@
 /*
  * The main header file for SIP.
  *
- * Copyright (c) 2020 Riverbank Computing Limited <info@riverbankcomputing.com>
+ * Copyright (c) 2021 Riverbank Computing Limited <info@riverbankcomputing.com>
  *
  * This file is part of SIP.
  *
@@ -26,7 +26,9 @@
 
 /* Use symbolic names for ABI versions. */
 
+#define ABI_13_1    0x0d01
 #define ABI_13_0    0x0d00
+#define ABI_12_9    0x0c09
 #define ABI_12_8    0x0c08
 #define ABI_12_7    0x0c07
 
@@ -832,7 +834,7 @@ typedef struct _codeBlockList {
 
 /* The arguments to a throw specifier. */
 typedef struct _throwArgs {
-    int nrArgs;                         /* The number of arguments. */
+    int nrArgs;                         /* The number of arguments, -ve if noexcept. */
     struct _exceptionDef *args[MAX_NR_ARGS];    /* The arguments. */
 } throwArgs;
 
@@ -1013,7 +1015,6 @@ typedef struct _ifaceFileDef {
     codeBlockList *hdrcode;             /* Header code. */
     const char *file_extension;         /* The optional file extension. */
     struct _ifaceFileList *used;        /* Interface files used. */
-    platformDef *platforms;             /* The platforms. */
     struct _ifaceFileDef *next;         /* Next in the list. */
 } ifaceFileDef;
 
@@ -1090,7 +1091,6 @@ typedef struct _typedefDef {
     struct _classDef *ecd;              /* The enclosing class. */
     moduleDef *module;                  /* The owning module. */
     argDef type;                        /* The actual type. */
-    platformDef *platforms;             /* The platforms. */
     struct _typedefDef *next;           /* Next in the list. */
 } typedefDef;
 
@@ -1107,7 +1107,6 @@ typedef struct _varDef {
     codeBlockList *accessfunc;          /* The access function. */
     codeBlockList *getcode;             /* The get code. */
     codeBlockList *setcode;             /* The set code. */
-    platformDef *platforms;             /* The platforms. */
     struct _varDef *next;               /* Next in the list. */
 } varDef;
 
@@ -1118,7 +1117,6 @@ typedef struct _propertyDef {
     docstringDef *docstring;            /* The docstring. */
     const char *get;                    /* The name of the getter method. */
     const char *set;                    /* The name of the setter method. */
-    platformDef *platforms;             /* The platforms. */
     struct _propertyDef *next;          /* Next in the list. */
 } propertyDef;
 
@@ -1143,7 +1141,6 @@ typedef struct _overDef {
     char *prehook;                      /* The pre-hook name. */
     char *posthook;                     /* The post-hook name. */
     const char *virt_error_handler;     /* The virtual error handler. */
-    platformDef *platforms;             /* The platforms. */
     struct _overDef *next;              /* Next in the list. */
 } overDef;
 
@@ -1161,7 +1158,6 @@ typedef struct _ctorDef {
     codeBlockList *premethodcode;       /* Code to insert before the method code. */
     char *prehook;                      /* The pre-hook name. */
     char *posthook;                     /* The post-hook name. */
-    platformDef *platforms;             /* The platforms. */
     struct _ctorDef *next;              /* Next in the list. */
 } ctorDef;
 
@@ -1172,7 +1168,6 @@ typedef struct _enumMemberDef {
     int no_typehint;                    /* The type hint will be suppressed. */
     char *cname;                        /* The C/C++ name. */
     struct _enumDef *ed;                /* The enclosing enum. */
-    platformDef *platforms;             /* The platforms. */
     struct _enumMemberDef *next;        /* Next in the list. */
 } enumMemberDef;
 
@@ -1192,7 +1187,6 @@ typedef struct _enumDef {
     enumMemberDef *members;             /* The list of members. */
     struct _memberDef *slots;           /* The list of slots. */
     struct _overDef *overs;             /* The list of slot overloads. */
-    platformDef *platforms;             /* The platforms. */
     struct _enumDef *next;              /* Next in the list. */
 } enumDef;
 
@@ -1350,7 +1344,6 @@ typedef struct {
     codeBlockList *exptypehintcode;     /* Exported type hint code. */
     codeBlockList *docs;                /* Documentation. */
     classDef *qobject_cd;               /* QObject class, NULL if none. */
-    int sigslots;                       /* Set if signals or slots are used. */
     int genc;                           /* Set if we are generating C code. */
     struct _stringList *plugins;        /* The list of plugins. */
     struct _extractDef *extracts;       /* The list of extracts. */

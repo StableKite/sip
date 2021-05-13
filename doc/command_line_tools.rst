@@ -6,6 +6,13 @@ section are the standard options.  Any of these options could be removed, or
 new options added, by build system extensions including project-specific
 :file:`project.py` files.
 
+The build tools can also be invoked using the ``-m`` command line option of the
+Python interpreter.  For example, the following two command lines are
+equivalent::
+
+    sip-build -h
+    python -m sipbuild.tools.build -h
+
 
 :program:`sip-build`
 --------------------
@@ -95,6 +102,12 @@ The full set of command line options is:
 
     This option disables the redefinition of ``protected`` to access protected
     C++ functions from Python and is the default on Windows.
+
+.. option:: --scripts-dir DIR
+
+    Any project scripts will eventually be installed in ``DIR``.  If ``DIR`` is
+    relative then it is taken as relative to the target directory.  By default
+    the directory containing the Python interpreter is used.
 
 .. option:: --target-dir DIR
 
@@ -279,6 +292,12 @@ The full set of command line options is:
 
     This option disables the redefinition of ``protected`` to access protected
     C++ functions from Python and is the default on Windows.
+
+.. option:: --scripts-dir DIR
+
+    Any project scripts will be installed in ``DIR``.  If ``DIR`` is relative
+    then it is taken as relative to the target directory.  By default the
+    directory containing the Python interpreter is used.
 
 .. option:: --target-dir DIR
 

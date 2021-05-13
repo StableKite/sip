@@ -1,4 +1,199 @@
+2021-05-05  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/directives.rst:
+	Corrected the %ConvertFromTypeCode documentation.
+	[1eb31e4c5375] [6.1.0]
+
+2021-05-03  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/module/source/12.7/sip.h.in,
+	sipbuild/module/source/12.7/siplib.c,
+	sipbuild/module/source/12.8/sip.h.in,
+	sipbuild/module/source/12.8/siplib.c,
+	sipbuild/module/source/12.9/sip.h.in,
+	sipbuild/module/source/12.9/siplib.c,
+	sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c,
+	sipbuild/module/source/13.1/sip.h.in,
+	sipbuild/module/source/13.1/siplib.c:
+	Backed out changeset e0f4c19915e4 The deprecation policy will be
+	implemented by the code generator.
+	[df00e8f06b98]
+
+2021-05-02  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/command_line_tools.rst, sipbuild/tools/build.py,
+	sipbuild/tools/install.py, sipbuild/tools/sdist.py,
+	sipbuild/tools/wheel.py:
+	The build tools may now be invoked using the '-m' command line
+	option of the Python interpreter.
+	[bb9fcbfbe7af]
+
+	* NEWS, sipbuild/module/source/12.7/sip.h.in,
+	sipbuild/module/source/12.7/siplib.c,
+	sipbuild/module/source/12.8/sip.h.in,
+	sipbuild/module/source/12.8/siplib.c,
+	sipbuild/module/source/12.9/sip.h.in,
+	sipbuild/module/source/12.9/siplib.c,
+	sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c,
+	sipbuild/module/source/13.1/sip.h.in,
+	sipbuild/module/source/13.1/siplib.c:
+	Implemented the sip module version deprecation policy. Bumped the
+	patch version of all deprecated sip module versions.
+	[e0f4c19915e4]
+
+2021-04-28  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* doc/directives.rst:
+	Added an example to %Exception showing the conversion to a standard
+	Python exception.
+	[7e155daf8e08]
+
+	* NEWS, code_generator/gencode.c, code_generator/transform.c:
+	Fixed the inclusion of the %TypeHeaderCode for the new exception
+	handling.
+	[57e0bda6b2d8]
+
+2021-04-27  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/annotations.rst, doc/directives.rst:
+	Updated the docs regarding the exception handling changes.
+	[e8c9676d7db9]
+
+	* sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Reverted the v13.0 ABI to v13.0.1 as the .2 changes have been moved
+	to v13.1.0.
+	[a41fed2229c4]
+
+	* NEWS, code_generator/gencode.c, code_generator/parser.c,
+	code_generator/sip.h, sipbuild/module/source/12.9/MANIFEST.in,
+	sipbuild/module/source/12.9/README.in,
+	sipbuild/module/source/12.9/apiversions.c,
+	sipbuild/module/source/12.9/array.c,
+	sipbuild/module/source/12.9/array.h,
+	sipbuild/module/source/12.9/bool.cpp,
+	sipbuild/module/source/12.9/descriptors.c,
+	sipbuild/module/source/12.9/int_convertors.c,
+	sipbuild/module/source/12.9/objmap.c,
+	sipbuild/module/source/12.9/pyproject.toml,
+	sipbuild/module/source/12.9/qtlib.c,
+	sipbuild/module/source/12.9/setup.cfg.in,
+	sipbuild/module/source/12.9/setup.py.in,
+	sipbuild/module/source/12.9/sip.h.in,
+	sipbuild/module/source/12.9/sip.pyi,
+	sipbuild/module/source/12.9/sip.rst.in,
+	sipbuild/module/source/12.9/sipint.h,
+	sipbuild/module/source/12.9/siplib.c,
+	sipbuild/module/source/12.9/threads.c,
+	sipbuild/module/source/12.9/voidptr.c,
+	sipbuild/module/source/13.1/MANIFEST.in,
+	sipbuild/module/source/13.1/README.in,
+	sipbuild/module/source/13.1/array.c,
+	sipbuild/module/source/13.1/array.h,
+	sipbuild/module/source/13.1/bool.cpp,
+	sipbuild/module/source/13.1/descriptors.c,
+	sipbuild/module/source/13.1/int_convertors.c,
+	sipbuild/module/source/13.1/objmap.c,
+	sipbuild/module/source/13.1/pyproject.toml,
+	sipbuild/module/source/13.1/setup.cfg.in,
+	sipbuild/module/source/13.1/setup.py.in,
+	sipbuild/module/source/13.1/sip.h.in,
+	sipbuild/module/source/13.1/sip.pyi,
+	sipbuild/module/source/13.1/sip.rst.in,
+	sipbuild/module/source/13.1/sipint.h,
+	sipbuild/module/source/13.1/siplib.c,
+	sipbuild/module/source/13.1/threads.c,
+	sipbuild/module/source/13.1/voidptr.c:
+	The mapping of C++ exceptions to Python exceptions is now handled by
+	a module-specific handler rather than individual catch () clauses on
+	each try (). The handler deals with all exceptions defined in the
+	module. Throw specifiers in .sip files are no longer necessary, are
+	deprecated and will be removed in SIP v7.
+	[52a552c495c8]
+
+	* doc/c_api.rst:
+	Fixed a documentation typo.
+	[defc872d978b]
+
+2021-04-24  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/module/source/13.0/siplib.c:
+	Fixed the conversion to a Python EnumFlag when the high bit is set.
+	[6fe16ed8cfef]
+
+2021-04-15  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/metasrc/parser.y, code_generator/sip.h:
+	Removed an unused structure element in the code generator.
+	[6bcb3ee3dfbe]
+
+2021-04-11  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/module/source/13.0/siplib.c:
+	Clear a benign exception in v13 of the sip module.
+	[58fbd92097ea]
+
+2021-04-04  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/metasrc/parser.y, code_generator/parser.c,
+	code_generator/parser.h, code_generator/sip.h:
+	Removed some unused platform support code form the parser.
+	[7e4c7edc8e00]
+
+2021-04-03  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/lexer.c, code_generator/metasrc/lexer.l,
+	code_generator/metasrc/parser.y, code_generator/parser.c,
+	code_generator/parser.h:
+	Removed an unused lexer token.
+	[d44471a6ae5a]
+
+2021-03-29  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/lexer.c, code_generator/metasrc/lexer.l,
+	code_generator/metasrc/parser.y, code_generator/parser.c,
+	code_generator/parser.h, code_generator/sip.h,
+	code_generator/transform.c, doc/directives.rst,
+	doc/introduction.rst, doc/specification_files.rst:
+	Added noexcept as a synonym for a throw with an empty argument list.
+	[e0b203094913]
+
+	* code_generator/gencode.c:
+	Fixed the code generator for C++17 and later compilers.
+	[0238474cdfc5]
+
+	* NEWS, doc/command_line_tools.rst, doc/pyproject_toml.rst,
+	sipbuild/builder.py, sipbuild/project.py:
+	Added the scripts-dir project option.
+	[ffd0551c32cc]
+
+	* NEWS:
+	Updatd the NEWS file.
+	[f21ef29f2184]
+
+	* Merged the 6.0-maint branch.
+	[9ba9ad179d97]
+
+2021-03-20  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/siplib.c:
+	Fixed ABI v13 of the sip module where /Transfer/ of an argument to a
+	static class method was broken.
+	[49d0d1a42315] <6.0-maint>
+
+2021-03-15  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* Merged the 6.0-maint branch.
+	[92ab8a6b1ffe]
+
 2021-03-02  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.0.3 for changeset 5b9087955c2f
+	[462da812c5bc] <6.0-maint>
 
 	* NEWS:
 	Released as v6.0.3.

@@ -30,12 +30,21 @@
 
 
 #ifdef __cplusplus
+#include <exception>
+
+typedef bool (*sipExceptionHandler)(std::exception_ptr);
+#else
+typedef void *sipExceptionHandler;
+#endif
+
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
 
 /* The patch version of this implementation of the ABI. */
-#define SIP_MODULE_PATCH_VERSION    1
+#define SIP_MODULE_PATCH_VERSION    0
 
 
 /*
@@ -47,11 +56,11 @@ extern "C" {
 
 /* The ABI version implemented. */
 #define SIP_ABI_MAJOR_VERSION       12
-#define SIP_ABI_MINOR_VERSION       8
+#define SIP_ABI_MINOR_VERSION       9
 
 /* The version of the code generator. */
-#define SIP_VERSION                 0x50400
-#define SIP_VERSION_STR             "5.4.0"
+#define SIP_VERSION                 0x60100
+#define SIP_VERSION_STR             "6.1.0.dev2104271705"
 
 /* These are all dependent on the user-specified name of the sip module. */
 #define _SIP_MODULE_FQ_NAME         "PyQt5.sip"
@@ -1140,6 +1149,9 @@ typedef struct _sipExportedModuleDef {
 
     /* The optional table of versioned functions. */
     sipVersionedFunctionDef *em_versioned_functions;
+
+    /* The exception handler. */
+    sipExceptionHandler em_exception_handler;
 } sipExportedModuleDef;
 
 
@@ -1643,6 +1655,7 @@ typedef struct _sipAPIDef {
      */
     PyObject *(*api_is_py_method_12_8)(sip_gilstate_t *gil, char *pymc,
             sipSimpleWrapper **sipSelfp, const char *cname, const char *mname);
+    sipExceptionHandler (*api_next_exception_handler)(void **statep);
 } sipAPIDef;
 
 const sipAPIDef *sip_init_library(PyObject *mod_dict);

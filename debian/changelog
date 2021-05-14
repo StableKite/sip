@@ -9,6 +9,7 @@ pyqt5-sip (12.9.0-1) UNRELEASED; urgency=medium
   [ Dmitry Shachnev ]
   * New upstream release.
   * Bump years in debian/copyright.
+  * Bump Standards-Version to 4.5.1, no changes needed.
 
  -- Ondřej Nový <onovy@debian.org>  Thu, 24 Sep 2020 08:42:26 +0200
 

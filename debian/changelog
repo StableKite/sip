@@ -1,4 +1,4 @@
-pyqt5-sip (12.9.0-1) UNRELEASED; urgency=medium
+pyqt5-sip (12.9.0-1) experimental; urgency=medium
 
   [ Ondřej Nový ]
   * d/control: Update Maintainer field with new Debian Python Team
@@ -11,7 +11,7 @@ pyqt5-sip (12.9.0-1) UNRELEASED; urgency=medium
   * Bump years in debian/copyright.
   * Bump Standards-Version to 4.5.1, no changes needed.
 
- -- Ondřej Nový <onovy@debian.org>  Thu, 24 Sep 2020 08:42:26 +0200
+ -- Dmitry Shachnev <mitya57@debian.org>  Fri, 14 May 2021 20:09:54 +0300
 
 pyqt5-sip (12.8.1-1) unstable; urgency=medium
 

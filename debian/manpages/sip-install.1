@@ -73,6 +73,11 @@ default on all platforms except Windows.
 This option disables the redefinition of \fBprotected\fP to access protected
 C++ functions from Python and is the default on Windows.
 .TP
+.B \-\-scripts\-dir DIR
+Any project scripts will be installed in \fBDIR\fP\&.  If \fBDIR\fP is relative
+then it is taken as relative to the target directory.  By default the
+directory containing the Python interpreter is used.
+.TP
 .B \-\-target\-dir DIR
 The project will be installed in \fBDIR\fP\&.  By default it is the
 \fBsite\-packages\fP directory of the Python installation.

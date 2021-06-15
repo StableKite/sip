@@ -1,3 +1,43 @@
+2021-06-09  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/parser.c, code_generator/type_hints.c:
+	Remove a compiler warning message.
+	[68e408dc64b2] [6.1.1] <6.1-maint>
+
+2021-05-15  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/parser.c, doc/directives.rst:
+	Documented %TypeCode as a sub-directive of %MappedType.
+	[2d80ffb29025] <6.1-maint>
+
+2021-05-14  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/type_hints.c:
+	Fixed the handling of hidden namespaces in .pyi files.
+	[ae26a3124039] <6.1-maint>
+
+	* sipbuild/module/abi_version.py:
+	Fixed silly regressions.
+	[78f5acf82aab] <6.1-maint>
+
+	* sipbuild/module/abi_version.py:
+	Fixes for the minimum ABI version handling.
+	[d6d4322a6bfb] <6.1-maint>
+
+2021-05-13  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/pyproject_toml.rst, sipbuild/module/abi_version.py,
+	sipbuild/project.py:
+	The abi-version project option is interpreted as a minimum version
+	rather than an exact version.
+	[b633fe823865] <6.1-maint>
+
+2021-05-07  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.1.0 for changeset 1eb31e4c5375
+	[0ace21a13bf8]
+
 2021-05-05  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* NEWS, doc/directives.rst:

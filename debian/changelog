@@ -1,4 +1,4 @@
-sip6 (6.1.1+dfsg-2) UNRELEASED; urgency=medium
+sip6 (6.1.1+dfsg-2) experimental; urgency=medium
 
   * Backport upstream patch to fix handling of Unicode docstrings.
 

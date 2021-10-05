@@ -45,9 +45,6 @@ class Bindings(Configurable):
         # "NAME=VALUE".
         Option('define_macros', option_type=list),
 
-        # The list of disabled feature tags.
-        Option('disabled_features', option_type=list),
-
         # Set if exception support is enabled.
         Option('exceptions', option_type=bool),
 
@@ -106,6 +103,8 @@ class Bindings(Configurable):
                 help="concatenate the generated bindings into N source files",
                 metavar="N"),
         Option('debug', option_type=bool, help="build with debugging symbols"),
+        Option('disabled_features', option_type=list,
+                help="disable the TAG feature tag", metavar="TAG"),
         Option('docstrings', option_type=bool, inverted=True,
                 help="disable the generation of docstrings"),
         Option('pep484_pyi', option_type=bool,
@@ -244,7 +243,7 @@ class Bindings(Configurable):
                 buildable.installables.append(installable)
         else:
             buildable.sources.extend(
-                    copy_nonshared_sources(project.abi_version,
+                    copy_nonshared_sources(project.abi_version.split('.')[0],
                             buildable.build_dir))
 
         buildable.include_dirs.extend(self.include_dirs)

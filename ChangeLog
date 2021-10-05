@@ -1,4 +1,245 @@
+2021-09-28  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/builder.py, sipbuild/project.py,
+	sipbuild/py_versions.py, sipbuild/pyproject.py:
+	Specify a minimum Python version in the name of a wheel.
+	[6ef973f68bd2] [6.2.0]
+
+2021-09-23  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* rb-product, rb-product.toml:
+	Updated the product file to current standards.
+	[3fdb9b301316]
+
+	* NEWS, code_generator/gencode.c, code_generator/metasrc/parser.y,
+	code_generator/parser.c:
+	The /PyQtNoQMetaObject/ annotation can now be applied to namespaces.
+	[ba06d3ca42df]
+
+2021-09-22  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c:
+	Fixed a code generator bug when defining an incomplete mapped type.
+	[11921850bed7]
+
+2021-09-15  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/buildable.py, sipbuild/builder.py,
+	sipbuild/distutils_builder.py, sipbuild/setuptools_builder.py:
+	Use Project.py_platform instead os sys.platform where appropriate to
+	support cross-compilation.
+	[56a1c645a1cf]
+
+2021-08-24  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/command_line_tools.rst, doc/pyproject_toml.rst,
+	sipbuild/bindings.py:
+	Added the --disabled-feature command line option to sip-build, sip-
+	install and sip-wheel.
+	[b8748ab052cc]
+
+2021-08-06  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixes for virtuals that return protected enums.
+	[861f5e3a33dd]
+
+2021-08-04  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixed a regression in the handling of Unicode docstrings.
+	[64d8a5d785e1]
+
+2021-07-13  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/pybinding.c:
+	Eliminate duplicate tags and features in the bindings .toml file.
+	[b9f1ac6505a2]
+
+2021-06-29  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, setup.py:
+	Added setuptools as an install requirement (as well as a build
+	system requirement).
+	[930e76f1cc47]
+
+2021-06-21  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/source/12/LICENSE, sipbuild/module/source/12
+	/LICENSE-GPL2, sipbuild/module/source/12/LICENSE-GPL3,
+	sipbuild/module/source/13/LICENSE, sipbuild/module/source/13
+	/LICENSE-GPL2, sipbuild/module/source/13/LICENSE-GPL3:
+	Added the license files to the sip modules.
+	[bcd0f5a3e339]
+
+	* NEWS, doc/command_line_tools.rst, doc/pyproject_toml.rst,
+	sipbuild/bindings.py, sipbuild/builder.py,
+	sipbuild/module/abi_version.py, sipbuild/module/module.py,
+	sipbuild/module/source/12.7/MANIFEST.in,
+	sipbuild/module/source/12.7/README.in,
+	sipbuild/module/source/12.7/apiversions.c,
+	sipbuild/module/source/12.7/array.c,
+	sipbuild/module/source/12.7/array.h,
+	sipbuild/module/source/12.7/bool.cpp,
+	sipbuild/module/source/12.7/descriptors.c,
+	sipbuild/module/source/12.7/int_convertors.c,
+	sipbuild/module/source/12.7/objmap.c,
+	sipbuild/module/source/12.7/pyproject.toml,
+	sipbuild/module/source/12.7/qtlib.c,
+	sipbuild/module/source/12.7/setup.cfg.in,
+	sipbuild/module/source/12.7/setup.py.in,
+	sipbuild/module/source/12.7/sip.h.in,
+	sipbuild/module/source/12.7/sip.pyi,
+	sipbuild/module/source/12.7/sip.rst.in,
+	sipbuild/module/source/12.7/sipint.h,
+	sipbuild/module/source/12.7/siplib.c,
+	sipbuild/module/source/12.7/threads.c,
+	sipbuild/module/source/12.7/voidptr.c,
+	sipbuild/module/source/12.8/MANIFEST.in,
+	sipbuild/module/source/12.8/README.in,
+	sipbuild/module/source/12.8/apiversions.c,
+	sipbuild/module/source/12.8/array.c,
+	sipbuild/module/source/12.8/array.h,
+	sipbuild/module/source/12.8/bool.cpp,
+	sipbuild/module/source/12.8/descriptors.c,
+	sipbuild/module/source/12.8/int_convertors.c,
+	sipbuild/module/source/12.8/objmap.c,
+	sipbuild/module/source/12.8/pyproject.toml,
+	sipbuild/module/source/12.8/qtlib.c,
+	sipbuild/module/source/12.8/setup.cfg.in,
+	sipbuild/module/source/12.8/setup.py.in,
+	sipbuild/module/source/12.8/sip.h.in,
+	sipbuild/module/source/12.8/sip.pyi,
+	sipbuild/module/source/12.8/sip.rst.in,
+	sipbuild/module/source/12.8/sipint.h,
+	sipbuild/module/source/12.8/siplib.c,
+	sipbuild/module/source/12.8/threads.c,
+	sipbuild/module/source/12.8/voidptr.c,
+	sipbuild/module/source/12.9/MANIFEST.in,
+	sipbuild/module/source/12.9/README.in,
+	sipbuild/module/source/12.9/apiversions.c,
+	sipbuild/module/source/12.9/array.c,
+	sipbuild/module/source/12.9/array.h,
+	sipbuild/module/source/12.9/bool.cpp,
+	sipbuild/module/source/12.9/descriptors.c,
+	sipbuild/module/source/12.9/int_convertors.c,
+	sipbuild/module/source/12.9/objmap.c,
+	sipbuild/module/source/12.9/pyproject.toml,
+	sipbuild/module/source/12.9/qtlib.c,
+	sipbuild/module/source/12.9/setup.cfg.in,
+	sipbuild/module/source/12.9/setup.py.in,
+	sipbuild/module/source/12.9/sip.h.in,
+	sipbuild/module/source/12.9/sip.pyi,
+	sipbuild/module/source/12.9/sip.rst.in,
+	sipbuild/module/source/12.9/sipint.h,
+	sipbuild/module/source/12.9/siplib.c,
+	sipbuild/module/source/12.9/threads.c,
+	sipbuild/module/source/12.9/voidptr.c,
+	sipbuild/module/source/12/MANIFEST.in,
+	sipbuild/module/source/12/README.in,
+	sipbuild/module/source/12/apiversions.c,
+	sipbuild/module/source/12/array.c,
+	sipbuild/module/source/12/array.h,
+	sipbuild/module/source/12/bool.cpp,
+	sipbuild/module/source/12/descriptors.c,
+	sipbuild/module/source/12/int_convertors.c,
+	sipbuild/module/source/12/objmap.c,
+	sipbuild/module/source/12/pyproject.toml,
+	sipbuild/module/source/12/qtlib.c,
+	sipbuild/module/source/12/setup.cfg.in,
+	sipbuild/module/source/12/setup.py.in,
+	sipbuild/module/source/12/sip.h.in,
+	sipbuild/module/source/12/sip.pyi,
+	sipbuild/module/source/12/sip.rst.in,
+	sipbuild/module/source/12/sipint.h,
+	sipbuild/module/source/12/siplib.c,
+	sipbuild/module/source/12/threads.c,
+	sipbuild/module/source/12/voidptr.c,
+	sipbuild/module/source/13.0/MANIFEST.in,
+	sipbuild/module/source/13.0/README.in,
+	sipbuild/module/source/13.0/array.c,
+	sipbuild/module/source/13.0/array.h,
+	sipbuild/module/source/13.0/bool.cpp,
+	sipbuild/module/source/13.0/descriptors.c,
+	sipbuild/module/source/13.0/int_convertors.c,
+	sipbuild/module/source/13.0/objmap.c,
+	sipbuild/module/source/13.0/pyproject.toml,
+	sipbuild/module/source/13.0/setup.cfg.in,
+	sipbuild/module/source/13.0/setup.py.in,
+	sipbuild/module/source/13.0/sip.h.in,
+	sipbuild/module/source/13.0/sip.pyi,
+	sipbuild/module/source/13.0/sip.rst.in,
+	sipbuild/module/source/13.0/sipint.h,
+	sipbuild/module/source/13.0/siplib.c,
+	sipbuild/module/source/13.0/threads.c,
+	sipbuild/module/source/13.0/voidptr.c,
+	sipbuild/module/source/13.1/MANIFEST.in,
+	sipbuild/module/source/13.1/README.in,
+	sipbuild/module/source/13.1/array.c,
+	sipbuild/module/source/13.1/array.h,
+	sipbuild/module/source/13.1/bool.cpp,
+	sipbuild/module/source/13.1/descriptors.c,
+	sipbuild/module/source/13.1/int_convertors.c,
+	sipbuild/module/source/13.1/objmap.c,
+	sipbuild/module/source/13.1/pyproject.toml,
+	sipbuild/module/source/13.1/setup.cfg.in,
+	sipbuild/module/source/13.1/setup.py.in,
+	sipbuild/module/source/13.1/sip.h.in,
+	sipbuild/module/source/13.1/sip.pyi,
+	sipbuild/module/source/13.1/sip.rst.in,
+	sipbuild/module/source/13.1/sipint.h,
+	sipbuild/module/source/13.1/siplib.c,
+	sipbuild/module/source/13.1/threads.c,
+	sipbuild/module/source/13.1/voidptr.c,
+	sipbuild/module/source/13/MANIFEST.in,
+	sipbuild/module/source/13/README.in,
+	sipbuild/module/source/13/array.c,
+	sipbuild/module/source/13/array.h,
+	sipbuild/module/source/13/bool.cpp,
+	sipbuild/module/source/13/descriptors.c,
+	sipbuild/module/source/13/int_convertors.c,
+	sipbuild/module/source/13/objmap.c,
+	sipbuild/module/source/13/pyproject.toml,
+	sipbuild/module/source/13/setup.cfg.in,
+	sipbuild/module/source/13/setup.py.in,
+	sipbuild/module/source/13/sip.h.in,
+	sipbuild/module/source/13/sip.pyi,
+	sipbuild/module/source/13/sip.rst.in,
+	sipbuild/module/source/13/sipint.h,
+	sipbuild/module/source/13/siplib.c,
+	sipbuild/module/source/13/threads.c,
+	sipbuild/module/source/13/voidptr.c, sipbuild/project.py:
+	Removed all but the latest minor versions of the sip module. ABI
+	versions, wherever specified, and now minimal versions with a
+	default minor version of 0.
+	[78e51dd152e0]
+
+2021-06-20  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/conf.py, doc/index.rst, doc/sipbuild_api.rst:
+	Added SetuptoolsBuilder to the documentation.
+	[15946098a760]
+
+	* sipbuild/setuptools_builder.py:
+	Completed the implementation of the setuptools builder.
+	[4da043f9c2a2]
+
+2021-06-16  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/__init__.py, sipbuild/builder.py, sipbuild/project.py,
+	sipbuild/py_versions.py, sipbuild/setuptools_builder.py:
+	Initial commit of the setuptools builder as the default for Python
+	v3.10.
+	[444a9a79ab75]
+
+	* Merged the 6.1-maint branch.
+	[f498dad306fc]
+
 2021-06-09  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.1.1 for changeset 68e408dc64b2
+	[0f156a2f669d] <6.1-maint>
 
 	* NEWS, code_generator/parser.c, code_generator/type_hints.c:
 	Remove a compiler warning message.

@@ -21,13 +21,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from collections import OrderedDict
-from distutils.sysconfig import get_python_inc, get_python_lib
+import collections
 import os
 import packaging
 import shutil
 import subprocess
 import sys
+import sysconfig
 import tempfile
 import warnings
 
@@ -37,7 +37,7 @@ from .bindings import Bindings
 from .configurable import Configurable, Option
 from .exceptions import UserException
 from .module import resolve_abi_version
-from .py_versions import FIRST_SUPPORTED_MINOR, LAST_SUPPORTED_MINOR
+from .py_versions import OLDEST_SUPPORTED_MINOR
 from .pyproject import (PyProjectException, PyProjectOptionException,
         PyProjectUndefinedOptionException)
 
@@ -78,7 +78,7 @@ class Project(AbstractProject, Configurable):
         Option('py_debug', option_type=bool),
 
         # The name of the directory containing Python.h.
-        Option('py_include_dir', default=get_python_inc()),
+        Option('py_include_dir', default=sysconfig.get_path('include')),
 
         # The name of the target Python platform.
         Option('py_platform'),
@@ -133,7 +133,7 @@ class Project(AbstractProject, Configurable):
         Option('scripts_dir', default=os.path.dirname(sys.executable),
                 help="the scripts installation directory", metavar="DIR",
                 tools=['build', 'install']),
-        Option('target_dir', default=get_python_lib(plat_specific=1),
+        Option('target_dir', default=sysconfig.get_path('platlib'),
                 help="the target installation directory", metavar="DIR",
                 tools=['build', 'install']),
         Option('api_dir', help="generate a QScintilla .api file in DIR",
@@ -155,7 +155,7 @@ class Project(AbstractProject, Configurable):
 
         # The current directory should contain the .toml file.
         self.root_dir = os.getcwd()
-        self.bindings = OrderedDict()
+        self.bindings = collections.OrderedDict()
         self.bindings_factories = []
         self.builder = None
         self.buildables = []
@@ -177,17 +177,21 @@ class Project(AbstractProject, Configurable):
             self.bindings_factory = self.import_callable(self.bindings_factory,
                     Bindings)
 
+        if self.py_major_version is None or self.py_minor_version is None:
+            self.py_major_version = sys.hexversion >> 24
+            self.py_minor_version = (sys.hexversion >> 16) & 0x0ff
+
         if self.builder_factory is None:
-            from .distutils_builder import DistutilsBuilder
-            self.builder_factory = DistutilsBuilder
+            if (self.py_major_version, self.py_minor_version) >= (3, 10):
+                from .setuptools_builder import SetuptoolsBuilder
+                self.builder_factory = SetuptoolsBuilder
+            else:
+                from .distutils_builder import DistutilsBuilder
+                self.builder_factory = DistutilsBuilder
         elif isinstance(self.builder_factory, str):
             # Convert the name to a callable.
             self.builder_factory = self.import_callable(self.builder_factory,
                     AbstractBuilder)
-
-        if self.py_major_version is None or self.py_minor_version is None:
-            self.py_major_version = sys.hexversion >> 24
-            self.py_minor_version = (sys.hexversion >> 16) & 0x0ff
 
         if self.py_platform is None:
             self.py_platform = sys.platform
@@ -576,18 +580,20 @@ class Project(AbstractProject, Configurable):
         self.sip_include_dirs = [self.project_path(d)
                 for d in self.sip_include_dirs]
 
-        # Make sure we support the targeted version of Python.
+        # Check that the targeted version of Python isn't too old.  We hope
+        # that we will support newer versions automatically, but it's not
+        # guaranteed.
         py_version = (self.py_major_version, self.py_minor_version)
-        first_version = (3, FIRST_SUPPORTED_MINOR)
-        last_version = (3, LAST_SUPPORTED_MINOR)
+        first_version = (3, OLDEST_SUPPORTED_MINOR)
 
-        if py_version < first_version or py_version > last_version:
+        if py_version < first_version or self.py_major_version > 3:
             raise UserException(
                     "Python v{}.{} is not supported".format(
                             self.py_major_version, self.py_minor_version))
 
-        # Make sure we have a supported ABI version.
-        self.abi_version = resolve_abi_version(self.abi_version, exact=False)
+        # Get the supported ABI version.  (The actual version may have a later
+        # minor version.)
+        self.abi_version = resolve_abi_version(self.abi_version, module=False)
 
         # Checks for standalone projects.
         if tool in Option.BUILD_TOOLS and not self.sip_module:

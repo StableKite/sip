@@ -1,3 +1,17 @@
+v6.2.0 28th September 2021
+  - The interpreter tag in the name of a wheel now specifies a minimum Python
+    version (rather than each supported Python version) when the limited API is
+    used.
+  - The /PyQtNoQMetaObject/ annotation can now be applied to namespaces.
+  - sip-build, sip-install and sip-wheel now support the --disabled-feature
+    command line option.
+  - Added support for Python v3.10.
+  - Added the setuptools builder which is the default for Python v3.10 and
+    later.
+  - The ABI version, wherever specified, is now a minimum version with a
+    default minor version of 0.
+  - Bug fixes.
+
 v6.1.1 9th June 2021
   - The abi-version project option is interpreted as a minimum version rather
     than an exact version.

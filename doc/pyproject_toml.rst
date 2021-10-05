@@ -85,9 +85,8 @@ list options may contain environment markers as defined in `PEP 508
 
 **abi-version**
     The minimum version number of the ABI of the :mod:`sip` module being used.
-    If only the major version number is specified then the latest minor version
-    with that major version is used.  By the default the very latest version is
-    used.
+    If only the major version number is specified then the minor version
+    defaults to 0.  By the default the latest major version is used.
 
 **api-dir**
     The value is the name of a the directory in which a QScintilla :file:`.api`
@@ -281,7 +280,8 @@ values of all list options may contain environment markers as defined in `PEP
     or ``"NAME=VALUE"``.
 
 **disabled-features**
-    The value is a list of disabled :directive:`%Feature` tags.
+    The value is a list of disabled :directive:`%Feature` tags.  There is also
+    a corresponding command line option.
 
 **docstrings**
     The boolean value specifies if docstrings that describe the signature of

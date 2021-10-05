@@ -22,12 +22,12 @@
 
 
 from abc import abstractmethod
-from distutils.util import get_platform
 import glob
 import os
 import shutil
 import stat
 import sys
+import sysconfig
 
 from .abstract_builder import AbstractBuilder
 from .buildable import BuildableFromSources
@@ -36,7 +36,7 @@ from .distinfo import write_metadata
 from .exceptions import UserException
 from .installable import Installable
 from .module import copy_sip_h, copy_sip_pyi
-from .py_versions import FIRST_SUPPORTED_MINOR, LAST_SUPPORTED_MINOR
+from .py_versions import OLDEST_SUPPORTED_MINOR
 from .version import SIP_VERSION, SIP_VERSION_STR
 
 
@@ -152,12 +152,11 @@ class Builder(AbstractBuilder):
         wheel_tag = []
 
         if all_use_limited_api:
-            vtags = ['cp3{}'.format(v)
-                    for v in range(FIRST_SUPPORTED_MINOR,
-                            LAST_SUPPORTED_MINOR + 1)]
-            wheel_tag.append('.'.join(vtags))
-
-            wheel_tag.append('none' if sys.platform == 'win32' else 'abi3')
+            # When the ABI tag is 'abi3' the interpreter tag is interpreted as
+            # a minimum Python version.  This doesn't seem to be defined in a
+            # PEP but is implemented in current pips.
+            wheel_tag.append('cp3' + str(OLDEST_SUPPORTED_MINOR))
+            wheel_tag.append('abi3')
         else:
             major_minor = '{}{}'.format((sys.hexversion >> 24) & 0xff,
                     (sys.hexversion >> 16) & 0xff)
@@ -169,9 +168,9 @@ class Builder(AbstractBuilder):
             except AttributeError:
                 wheel_tag.append('none')
 
-        platform_tag = get_platform()
+        platform_tag = sysconfig.get_platform()
 
-        if sys.platform == 'darwin' and project.minimum_macos_version:
+        if project.py_platform == 'darwin' and project.minimum_macos_version:
             # We expect a three part tag so leave anything else unchanged.
             parts = platform_tag.split('-')
             if len(parts) == 3:
@@ -180,7 +179,7 @@ class Builder(AbstractBuilder):
 
                 platform_tag = '-'.join(parts)
 
-        elif sys.platform == 'linux' and project.manylinux:
+        elif project.py_platform == 'linux' and project.manylinux:
             # We expect a two part tag so leave anything else unchanged.
             parts = platform_tag.split('-')
             if len(parts) == 2:
@@ -269,6 +268,8 @@ class Builder(AbstractBuilder):
 
         project = self.project
 
+        abi_major_version, abi_minor_version = project.abi_version.split('.')
+
         # Get the list of directories to search for .sip files.
         sip_include_dirs = list(project.sip_include_dirs)
 
@@ -287,12 +288,11 @@ class Builder(AbstractBuilder):
                             project.get_bindings_dir()))
 
             # Generate the sip.h file for the shared sip module.
-            copy_sip_h(project.abi_version, project.build_dir,
+            copy_sip_h(abi_major_version, project.build_dir,
                     project.sip_module)
 
-        abi_major, abi_minor = project.abi_version.split('.')
-        set_globals(SIP_VERSION, SIP_VERSION_STR, int(abi_major),
-                int(abi_minor), project.sip_module, UserException,
+        set_globals(SIP_VERSION, SIP_VERSION_STR, int(abi_major_version),
+                int(abi_minor_version), project.sip_module, UserException,
                 [d.replace('\\', '/') for d in sip_include_dirs])
 
         # Generate the code for each set of bindings.
@@ -333,7 +333,7 @@ class Builder(AbstractBuilder):
             # Include sip.pyi if any of the bindings generate a .pyi file.
             for bindings in project.bindings.values():
                 if bindings.pep484_pyi:
-                    copy_sip_pyi(project.abi_version, project.build_dir)
+                    copy_sip_pyi(abi_major_version, project.build_dir)
 
                     installable = Installable('sip_pyi',
                             target_subdir=package_dir)

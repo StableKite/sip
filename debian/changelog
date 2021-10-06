@@ -1,9 +1,9 @@
-pyqt5-sip (12.9.0-3) UNRELEASED; urgency=medium
+pyqt5-sip (12.9.0-3) unstable; urgency=medium
 
   * Stop building extensions for Python debug interpreter (closes: #994338).
     - Rely on automatic dbgsym packages for debug symbols.
 
- -- Dmitry Shachnev <mitya57@debian.org>  Wed, 29 Sep 2021 14:12:32 +0300
+ -- Dmitry Shachnev <mitya57@debian.org>  Wed, 06 Oct 2021 12:51:22 +0300
 
 pyqt5-sip (12.9.0-2) unstable; urgency=medium
 

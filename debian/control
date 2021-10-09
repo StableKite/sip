@@ -7,7 +7,6 @@ Build-Depends: bison,
                debhelper-compat (= 13),
                dh-python,
                flex,
-               python3-all-dbg,
                python3-all-dev,
                python3-packaging,
                python3-setuptools,
@@ -29,23 +28,6 @@ Description: Python bindings generator for C/C++ libraries — the build system
  .
  The sipbuild module implements the SIP build system. The module may be used by
  project-specific project.py scripts or extended by other build systems.
-
-Package: python3-sipbuild-dbg
-Architecture: any
-Section: debug
-Depends: python3-sipbuild (= ${binary:Version}),
-         ${misc:Depends},
-         ${python3:Depends},
-         ${shlibs:Depends}
-Description: Python bindings generator for C/C++ libraries — debug extension
- SIP is a collection of tools that makes it very easy to create Python bindings
- for C and C++ libraries.
- .
- The sipbuild module implements the SIP build system. The module may be used by
- project-specific project.py scripts or extended by other build systems.
- .
- This package contains the extension built for the Python 3 debug interpreter,
- and the debugging symbols for python3-sipbuild package.
 
 Package: sip-tools
 Architecture: all

@@ -4,6 +4,7 @@ sip6 (6.2.0+dfsg-1) UNRELEASED; urgency=medium
   * Update manpages based on command_line_tools.rst changes.
   * Stop building extension for Python debug interpreter (closes: #994380).
     - Rely on automatic dbgsym packages for debug symbols.
+  * Drop unicode_docstrings.diff, included in the new release.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Thu, 07 Oct 2021 22:28:25 +0300
 

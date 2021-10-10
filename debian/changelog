@@ -1,4 +1,4 @@
-sip6 (6.2.0+dfsg-1) UNRELEASED; urgency=medium
+sip6 (6.2.0+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
   * Update manpages based on command_line_tools.rst changes.
@@ -9,7 +9,7 @@ sip6 (6.2.0+dfsg-1) UNRELEASED; urgency=medium
     - Remove explicit dependency of sip-tools on python3-pkg-resources.
   * Add superficial import test via autodep8.
 
- -- Dmitry Shachnev <mitya57@debian.org>  Thu, 07 Oct 2021 22:28:25 +0300
+ -- Dmitry Shachnev <mitya57@debian.org>  Sun, 10 Oct 2021 15:08:02 +0300
 
 sip6 (6.1.1+dfsg-3) unstable; urgency=medium
 

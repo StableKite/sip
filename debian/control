@@ -21,7 +21,10 @@ Vcs-Browser: https://salsa.debian.org/python-team/packages/sip6
 Package: python3-sipbuild
 Architecture: any
 Section: python
-Depends: ${misc:Depends}, ${python3:Depends}, ${shlibs:Depends}
+Depends: python3-setuptools,
+         ${misc:Depends},
+         ${python3:Depends},
+         ${shlibs:Depends}
 Description: Python bindings generator for C/C++ libraries — the build system
  SIP is a collection of tools that makes it very easy to create Python bindings
  for C and C++ libraries.
@@ -31,10 +34,7 @@ Description: Python bindings generator for C/C++ libraries — the build system
 
 Package: sip-tools
 Architecture: all
-Depends: python3-pkg-resources,
-         python3-sipbuild (>= 6),
-         ${misc:Depends},
-         ${python3:Depends}
+Depends: python3-sipbuild (>= 6.2), ${misc:Depends}, ${python3:Depends}
 Breaks: sip5-tools (<< 6)
 Replaces: sip5-tools (<< 6)
 Description: Python bindings generator for C/C++ libraries — command line tools

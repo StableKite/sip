@@ -315,6 +315,47 @@ class Project(AbstractProject, Configurable):
 
         return ''
 
+    def get_platform_tag(self):
+        """ Return the platform tag to use in a wheel name.  This default
+        implementation uses the platform name and applies PEP defined
+        conventions depending on OS version and GLIBC version as appropriate.
+        """
+
+        platform_tag = sysconfig.get_platform()
+
+        if self.py_platform == 'darwin' and self.minimum_macos_version:
+            # We expect a three part tag so leave anything else unchanged.
+            parts = platform_tag.split('-')
+            if len(parts) == 3:
+                parts[1] = '{}.{}'.format(self.minimum_macos_version[0],
+                        self.minimum_macos_version[1])
+
+                platform_tag = '-'.join(parts)
+
+        elif self.py_platform == 'linux' and self.manylinux:
+            # We expect a two part tag so leave anything else unchanged.
+            parts = platform_tag.split('-')
+            if len(parts) == 2:
+                if self.minimum_glibc_version > (2, 17):
+                    # PEP 600.
+                    parts[0] = 'manylinux'
+                    parts.insert(1,
+                            '{}.{}'.format(self.minimum_glibc_version[0],
+                                    self.minimum_glibc_version[1]))
+                elif self.minimum_glibc_version > (2, 12):
+                    # PEP 599.
+                    parts[0] = 'manylinux2014'
+                elif self.minimum_glibc_version > (2, 5):
+                    # PEP 571.
+                    parts[0] = 'manylinux2010'
+                else:
+                    # PEP 513.
+                    parts[0] = 'manylinux1'
+
+                platform_tag = '-'.join(parts)
+
+        return platform_tag.replace('.', '_').replace('-', '_')
+
     def get_requires_dists(self):
         """ Return any 'Requires-Dist' to add to the project's meta-data. """
 
@@ -395,6 +436,64 @@ class Project(AbstractProject, Configurable):
 
         self.builder.install()
         self._remove_build_dir()
+
+    @property
+    def minimum_glibc_version(self):
+        """ The getter for the minimum GLIBC version. """
+
+        return self._minimum_glibc_version
+
+    @minimum_glibc_version.setter
+    def minimum_glibc_version(self, value):
+        """ The setter for the minimum GLIBC version. """
+
+        # Handle the initial creation of the option value.
+        if value is None and not hasattr(self, '_minimum_glibc_version'):
+            self._minimum_glibc_version = None
+            return
+
+        # Make sure any minimum GLIBC version is valid and convert it to a
+        # 2-tuple.
+        if value:
+            try:
+                value = self._convert_major_minor(value)
+            except ValueError:
+                raise PyProjectOptionException('minimum-glibc-version',
+                        "'{0}' is an invalid GLIBC version number".format(
+                                value),
+                        section_name='tool.sip.project')
+        else:
+            value = (2, 5)
+
+        self._minimum_glibc_version = value
+
+    @property
+    def minimum_macos_version(self):
+        """ The getter for the minimum macOS version. """
+
+        return self._minimum_macos_version
+
+    @minimum_macos_version.setter
+    def minimum_macos_version(self, value):
+        """ The setter for the minimum macOS version. """
+
+        # Handle the initial creation of the option value.
+        if value is None and not hasattr(self, '_minimum_macos_version'):
+            self._minimum_macos_version = None
+            return
+
+        # Make sure any minimum macOS version is valid and convert it to a
+        # 2-tuple.
+        if value:
+            try:
+                value = self._convert_major_minor(value)
+            except ValueError:
+                raise PyProjectOptionException('minimum-macos-version',
+                        "'{0}' is an invalid macOS version number".format(
+                                value),
+                        section_name='tool.sip.project')
+
+        self._minimum_macos_version = value
 
     @staticmethod
     def open_for_writing(fname):
@@ -548,32 +647,6 @@ class Project(AbstractProject, Configurable):
             raise PyProjectOptionException('build-tag',
                     "'{0}' must begin with a digit".format(self.build_tag),
                     section_name='tool.sip.project')
-
-        # Make sure any minimum GLIBC version is valid and convert it to a
-        # 2-tuple.
-        if self.minimum_glibc_version:
-            try:
-                self.minimum_glibc_version = self._convert_major_minor(
-                        self.minimum_glibc_version)
-            except ValueError:
-                raise PyProjectOptionException('minimum-glibc-version',
-                        "'{0}' is an invalid GLIBC version number".format(
-                                self.minimum_glibc_version),
-                        section_name='tool.sip.project')
-        else:
-            self.minimum_glibc_version = (2, 5)
-
-        # Make sure any minimum macOS version is valid and convert it to a
-        # 2-tuple.
-        if self.minimum_macos_version:
-            try:
-                self.minimum_macos_version = self._convert_major_minor(
-                        self.minimum_macos_version)
-            except ValueError:
-                raise PyProjectOptionException('minimum-macos-version',
-                        "'{0}' is an invalid macOS version number".format(
-                                self.minimum_macos_version),
-                        section_name='tool.sip.project')
 
         # Make sure relevent paths are absolute and use native separators.
         self.sip_files_dir = self.project_path(self.sip_files_dir)

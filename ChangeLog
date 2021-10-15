@@ -1,3 +1,40 @@
+2021-10-13  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/project.py:
+	Validate and convert the minimum GLIBC and macOS versions in a
+	property setter rather than when the configuration is validated so
+	that the converted values are always available.
+	[75658f9a58cb] [6.3.1] <6.3-maint>
+
+2021-10-12  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.3.0 for changeset e16c8d1338ca
+	[8987efbbc00c]
+
+2021-10-05  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/sipbuild_api.rst, sipbuild/builder.py,
+	sipbuild/project.py:
+	Added Project.get_platform_tag() to allow sub-classes to change the
+	platform tag used in wheel names.
+	[e16c8d1338ca] [6.3.0]
+
+	* Merged the 6.2-maint branch.
+	[8d936434fbb1]
+
+2021-10-01  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/pybinding.c, setup.cfg, setup.py:
+	SIP now uses the limited API itself.
+	[1c6d1d99e390] <6.2-maint>
+
+2021-09-30  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.2.0 for changeset 6ef973f68bd2
+	[3a4d09a31aad]
+
 2021-09-28  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* NEWS, sipbuild/builder.py, sipbuild/project.py,

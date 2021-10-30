@@ -293,7 +293,7 @@ static int isString(argDef *ad);
 static scopedNameDef *stripScope(scopedNameDef *snd, int strip);
 static void prEnumMemberScope(enumMemberDef *emd, FILE *fp);
 static void normaliseSignalArg(argDef *ad);
-static void generate_include_sip_h(FILE *fp);
+static void generate_include_sip_h(moduleDef *mod, FILE *fp);
 static int get_nr_members(const enumDef *ed);
 ifaceFileDef *pyScopeIface(classDef *cd);
 ifaceFileDef *pyEnumScopeIface(enumDef *ed);
@@ -469,7 +469,7 @@ static const char *generateInternalAPIHeader(sipSpec *pt, moduleDef *mod,
 
     declareLimitedAPI(py_debug, mod, fp);
 
-    generate_include_sip_h(fp);
+    generate_include_sip_h(mod, fp);
 
     if (pluginPyQt5(pt) || pluginPyQt6(pt))
         prcode(fp,
@@ -1017,7 +1017,7 @@ static void generateCompositeCpp(sipSpec *pt, const char *codeDir,
 
     declareLimitedAPI(py_debug, NULL, fp);
 
-    generate_include_sip_h(fp);
+    generate_include_sip_h(pt->module, fp);
 
     prcode(fp,
 "\n"
@@ -10722,6 +10722,8 @@ static void generateThrowSpecifier(throwArgs *ta,FILE *fp)
 static void generateConstructorCall(classDef *cd, ctorDef *ct, int error_flag,
         int old_error_flag, moduleDef *mod, FILE *fp)
 {
+    int a;
+
     prcode(fp,
 "        {\n"
         );
@@ -10760,14 +10762,17 @@ static void generateConstructorCall(classDef *cd, ctorDef *ct, int error_flag,
             ,ct->prehook);
 
     if (ct->methodcode != NULL)
+    {
         generateCppCodeBlock(ct->methodcode,fp);
+    }
     else if (generating_c)
+    {
         prcode(fp,
 "            sipCpp = sipMalloc(sizeof (%U));\n"
             , cd);
+    }
     else
     {
-        int a;
         int rgil = ((release_gil || isReleaseGILCtor(ct)) && !isHoldGILCtor(ct));
 
         if (raisesPyExceptionCtor(ct))
@@ -10813,21 +10818,17 @@ static void generateConstructorCall(classDef *cd, ctorDef *ct, int error_flag,
 "            Py_END_ALLOW_THREADS\n"
                 );
 
-        /* Handle any /KeepReference/ and /Transfer/ arguments. */
+        /*
+         * Handle any /Transfer/ arguments.  Note that this code isn't
+         * generated fi there is handrwritten code.  This is inconsistent with
+         * the handling of methods.
+         */
         for (a = 0; a < ct->pysig.nrArgs; ++a)
         {
             argDef *ad = &ct->pysig.args[a];
 
             if (!isInArg(ad))
                 continue;
-
-            if (keepReference(ad))
-            {
-                prcode(fp,
-"\n"
-"            sipKeepReference((PyObject *)sipSelf, %d, %a%s);\n"
-                    , ad->key, mod, ad, a, (((ad->atype == ascii_string_type || ad->atype == latin1_string_type || ad->atype == utf8_string_type) && ad->nrderefs == 1) || !isGetWrapper(ad) ? "Keep" : "Wrapper"));
-            }
 
             if (isTransferred(ad))
             {
@@ -10847,6 +10848,23 @@ static void generateConstructorCall(classDef *cd, ctorDef *ct, int error_flag,
 "\n"
 "            *sipOwner = Py_None;\n"
                 );
+    }
+
+    /* Handle any /KeepReference/ arguments. */
+    for (a = 0; a < ct->pysig.nrArgs; ++a)
+    {
+        argDef *ad = &ct->pysig.args[a];
+
+        if (!isInArg(ad))
+            continue;
+
+        if (keepReference(ad))
+        {
+            prcode(fp,
+"\n"
+"            sipKeepReference((PyObject *)sipSelf, %d, %a%s);\n"
+                , ad->key, mod, ad, a, (((ad->atype == ascii_string_type || ad->atype == latin1_string_type || ad->atype == utf8_string_type) && ad->nrderefs == 1) || !isGetWrapper(ad) ? "Keep" : "Wrapper"));
+        }
     }
 
     gc_ellipsis(&ct->pysig, fp);
@@ -14978,8 +14996,14 @@ static void prEnumMemberScope(enumMemberDef *emd, FILE *fp)
 /*
  * Generate the inclusion of sip.h.
  */
-static void generate_include_sip_h(FILE *fp)
+static void generate_include_sip_h(moduleDef *mod, FILE *fp)
 {
+    if (isPY_SSIZE_T_CLEAN(mod))
+        prcode(fp,
+"\n"
+"#define PY_SSIZE_T_CLEAN\n"
+            );
+
     prcode(fp,
 "\n"
 "#include \"sip.h\"\n"

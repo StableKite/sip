@@ -1,4 +1,33 @@
+2021-10-24  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c, code_generator/lexer.c,
+	code_generator/metasrc/lexer.l, code_generator/metasrc/parser.y,
+	code_generator/parser.c, code_generator/parser.h,
+	code_generator/sip.h, doc/directives.rst:
+	Added the 'py_ssize_t_clean' argument to the '%Module' directive.
+	[5d67349bb5a9] [6.4.0]
+
+	* Merged the 6.3-maint branch.
+	[d837f2a3147f]
+
+2021-10-16  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c:
+	/KeepReference/ in ctor arguments is handled even if there is
+	%MethodCode.
+	[563952767743] <6.3-maint>
+
+2021-10-14  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, test/utils/sip_test_case.py:
+	Fixed the tests for the setuptools builder.
+	[e83240f16d3c] <6.3-maint>
+
 2021-10-13  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.3.1 for changeset 75658f9a58cb
+	[a6535ed5c00d] <6.3-maint>
 
 	* NEWS, sipbuild/project.py:
 	Validate and convert the minimum GLIBC and macOS versions in a

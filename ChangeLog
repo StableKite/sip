@@ -1,3 +1,35 @@
+2021-11-25  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c, code_generator/metasrc/parser.y,
+	code_generator/parser.c, code_generator/sip.h,
+	code_generator/transform.c:
+	Removed some redundant legacy code.
+	[8583e2bb1b32] [6.5.0]
+
+2021-11-24  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/type_hints.c:
+	Don't generate type hints for namespace extenders.
+	[e3cf19c9e65e]
+
+2021-11-21  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c, code_generator/metasrc/parser.y,
+	code_generator/parser.c, code_generator/sip.h,
+	code_generator/type_hints.c, doc/annotations.rst,
+	sipbuild/module/source/13/sip.h.in,
+	sipbuild/module/source/13/siplib.c:
+	Added 'UIntEnum' as a value of the /BaseType/ enum annotation to
+	support enum.IntEnum types with unsigned values. The latest version
+	of ABI v13 is v13.2.0.
+	[1321d3ad2747]
+
+2021-10-28  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.4.0 for changeset 5d67349bb5a9
+	[05e6ab7c140e]
+
 2021-10-24  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* NEWS, code_generator/gencode.c, code_generator/lexer.c,

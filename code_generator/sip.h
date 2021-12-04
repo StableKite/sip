@@ -84,7 +84,7 @@
 /* Handle module flags. */
 
 #define MOD_HAS_DELAYED_DTORS   0x0001  /* It has a class with a delayed dtor. */
-#define MOD_IS_CONSOLIDATED     0x0002  /* It is a consolidated module. */
+#define MOD_IS_UNUSED           0x0002  /* This flag is unused. */
 #define MOD_IS_COMPOSITE        0x0004  /* It is a composite module. */
 #define MOD_IS_TRANSFORMED      0x0008  /* It's types have been transformed. */
 #define MOD_USE_ARG_NAMES       0x0010  /* Use real argument names. */
@@ -99,11 +99,8 @@
 
 #define hasDelayedDtors(m)  ((m)->modflags & MOD_HAS_DELAYED_DTORS)
 #define setHasDelayedDtors(m)   ((m)->modflags |= MOD_HAS_DELAYED_DTORS)
-#define isConsolidated(m)   ((m)->modflags & MOD_IS_CONSOLIDATED)
-#define setIsConsolidated(m)    ((m)->modflags |= MOD_IS_CONSOLIDATED)
 #define isComposite(m)      ((m)->modflags & MOD_IS_COMPOSITE)
 #define setIsComposite(m)   ((m)->modflags |= MOD_IS_COMPOSITE)
-#define isContainer(m)      ((m)->modflags & (MOD_IS_CONSOLIDATED | MOD_IS_COMPOSITE))
 #define setIsTransformed(m) ((m)->modflags |= MOD_IS_TRANSFORMED)
 #define isTransformed(m)    ((m)->modflags & MOD_IS_TRANSFORMED)
 #define setUseArgNames(m)   ((m)->modflags |= MOD_USE_ARG_NAMES)
@@ -307,11 +304,12 @@
 #define ENUM_NO_SCOPE       0x00000200  /* Omit the member scopes. */
 #define ENUM_NEEDS_ENUM     0x00000400  /* The module needs it. */
 #define ENUM_SCOPED         0x00000800  /* A C++0x11 scoped enum. */
-#define ENUM_MASK           0x00003000  /* The enum base type mask. */
+#define ENUM_MASK           0x00007000  /* The enum base type mask. */
 #define ENUM_ENUM           0x00000000  /* The base type is Enum. */
 #define ENUM_FLAG           0x00001000  /* The base type is Flag. */
 #define ENUM_INT_ENUM       0x00002000  /* The base type is IntEnum. */
 #define ENUM_INT_FLAG       0x00003000  /* The base type is IntFlag. */
+#define ENUM_UINT_ENUM      0x00004000  /* The base type is IntEnum with unsigned members. */
 
 #define isProtectedEnum(e)  ((e)->enumflags & SECT_IS_PROT)
 #define setIsProtectedEnum(e)   ((e)->enumflags |= SECT_IS_PROT)
@@ -335,6 +333,8 @@
 #define setIsEnumIntEnum(e) ((e)->enumflags |= ENUM_INT_ENUM)
 #define isEnumIntFlag(e)    (((e)->enumflags & ENUM_MASK) == ENUM_INT_FLAG)
 #define setIsEnumIntFlag(e) ((e)->enumflags |= ENUM_INT_FLAG)
+#define isEnumUIntEnum(e)   (((e)->enumflags & ENUM_MASK) == ENUM_UINT_ENUM)
+#define setIsEnumUIntEnum(e)    ((e)->enumflags |= ENUM_UINT_ENUM)
 
 
 /* Handle hierarchy flags. */
@@ -1345,7 +1345,6 @@ typedef struct {
     virtErrorHandler *errorhandlers;    /* The list of virtual error handlers. */
     codeBlockList *exphdrcode;          /* Exported header code. */
     codeBlockList *exptypehintcode;     /* Exported type hint code. */
-    codeBlockList *docs;                /* Documentation. */
     classDef *qobject_cd;               /* QObject class, NULL if none. */
     int genc;                           /* Set if we are generating C code. */
     struct _stringList *plugins;        /* The list of plugins. */

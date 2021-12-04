@@ -1087,14 +1087,6 @@ static void generateNameCache(sipSpec *pt, FILE *fp)
     prcode(fp,
 "\n"
 "/* Define the strings used by this module. */\n"
-        );
-
-    if (isConsolidated(pt->module))
-        prcode(fp,
-"extern const char sipStrings_%s[];\n"
-            , pt->module->name);
-
-    prcode(fp,
 "const char sipStrings_%s[] = {\n"
         , pt->module->name);
 
@@ -1481,6 +1473,8 @@ static const char *generateCpp(sipSpec *pt, moduleDef *mod,
                 base_type = "SIP_ENUM_FLAG";
             else if (isEnumIntEnum(ed))
                 base_type = "SIP_ENUM_INT_ENUM";
+            else if (isEnumUIntEnum(ed))
+                base_type = "SIP_ENUM_UINT_ENUM";
             else
                 base_type = "SIP_ENUM_ENUM";
 

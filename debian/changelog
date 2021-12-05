@@ -1,6 +1,7 @@
 sip6 (6.5.0+dfsg-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Add sip.egg-info/PKG-INFO to debian/clean.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Sat, 04 Dec 2021 19:01:51 +0300
 

@@ -1,11 +1,11 @@
-sip6 (6.5.0+dfsg-1) UNRELEASED; urgency=medium
+sip6 (6.5.0+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
   * Add sip.egg-info/PKG-INFO to debian/clean.
   * Run install only with the default Python version, to make sure we don’t
     ship usr/lib/python3.10/dist-packages/sipbuild/code_generator.abi3.so.
 
- -- Dmitry Shachnev <mitya57@debian.org>  Sat, 04 Dec 2021 19:01:51 +0300
+ -- Dmitry Shachnev <mitya57@debian.org>  Sun, 05 Dec 2021 17:38:54 +0300
 
 sip6 (6.4.0+dfsg-1) unstable; urgency=medium
 

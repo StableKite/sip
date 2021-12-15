@@ -5,7 +5,7 @@ Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Dmitry Shachnev <mitya57@debian.org>
 Build-Depends: bison,
                debhelper-compat (= 13),
-               dh-python,
+               dh-python (>= 5.20211213),
                flex,
                python3-all-dev,
                python3-packaging,

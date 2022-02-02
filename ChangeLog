@@ -1,3 +1,142 @@
+2022-01-25  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/metasrc/parser.y, code_generator/parser.c,
+	code_generator/sip.h, code_generator/transform.c:
+	Don't cache the name of mapped type templates.
+	[96a0deaabfa4] [6.5.1] <6.5-maint>
+
+	* NEWS, code_generator/gencode.c, code_generator/metasrc/parser.y,
+	code_generator/parser.c, code_generator/sip.h,
+	code_generator/transform.c, sipbuild/module/source/12/sip.h.in,
+	sipbuild/module/source/12/siplib.c,
+	sipbuild/module/source/13/sip.h.in,
+	sipbuild/module/source/13/siplib.c:
+	Backed out the change that removed support for slots in enums as
+	they are used to implement operators between enums.
+	[221bd63f1663] <6.5-maint>
+
+2022-01-24  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/sip.h:
+	Removed a redundant data structure type.
+	[1c255c20d5c4] <6.5-maint>
+
+	* code_generator/transform.c:
+	Make the sub-order of the name cache alphabetical so that it is
+	repeatable.
+	[2ca2af967ee7] <6.5-maint>
+
+2022-01-21  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/buildable.py:
+	Suppress version information in the bindings .toml file.
+	[9c0cf07fb8e3] <6.5-maint>
+
+	* NEWS, sipbuild/builder.py, sipbuild/module/module.py:
+	Suppress version information in the sip module.
+	[5f3db5dccecd] <6.5-maint>
+
+2022-01-20  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/command_line_tools.rst, doc/pyproject_toml.rst,
+	sipbuild/builder.py, sipbuild/project.py:
+	Added the --no-compile option to sip-build.
+	[44091be44d5d] <6.5-maint>
+
+	* NEWS, code_generator/gencode.c, code_generator/pybinding.c,
+	code_generator/type_hints.c, doc/command_line_tools.rst,
+	doc/pyproject_toml.rst, sipbuild/builder.py, sipbuild/project.py:
+	Added the --no-version-info command line option to sip-build.
+	[3907854527a4] <6.5-maint>
+
+2022-01-19  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c, code_generator/metasrc/parser.y,
+	code_generator/parser.c, code_generator/sip.h,
+	code_generator/transform.c, sipbuild/module/source/12/sip.h.in,
+	sipbuild/module/source/12/siplib.c,
+	sipbuild/module/source/13/sip.h.in,
+	sipbuild/module/source/13/siplib.c:
+	Removed ancient unused support for slots in enums.
+	[33fb1b443d21] <6.5-maint>
+
+2022-01-15  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/module/source/12/objmap.c,
+	sipbuild/module/source/12/sip.h.in,
+	sipbuild/module/source/13/objmap.c,
+	sipbuild/module/source/13/sip.h.in:
+	Fix a use-after-free bug in all versions of the sip module.
+	[072b8949de41] <6.5-maint>
+
+2022-01-07  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c:
+	Fixed the generated code for API 13 that determines whether the self
+	argument of a method is 'self' or 'cls'.
+	[3f632f439886] <6.5-maint>
+
+2021-12-22  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c, code_generator/metasrc/parser.y,
+	code_generator/parser.c, code_generator/parser.h,
+	code_generator/sip.h, code_generator/transform.c,
+	code_generator/type_hints.c:
+	Refactoring in anticipation of removing the existing parser.
+	[5428e8cdbe12] <6.5-maint>
+
+	* NEWS, code_generator/gencode.c, code_generator/sip.h,
+	code_generator/transform.c:
+	Re-implemented the cast function so that the generated code works
+	with both virtual and non-virtual diamond hierarchies.
+	[a511a01e4555] <6.5-maint>
+
+2021-12-20  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/parser.c, doc/pyproject_toml.rst,
+	doc/sipbuild_api.rst:
+	Documentation fixes.
+	[741f094fd708] <6.5-maint>
+
+	* NEWS, code_generator/metasrc/parser.y:
+	Clarified a comment.
+	[f7bb7e784874] <6.5-maint>
+
+2021-12-19  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c, code_generator/parser.c,
+	code_generator/type_hints.c:
+	Do not generate a 'self' argument in docstrings or .pyi files for
+	methods that are in a hidden namespace.
+	[628174d9f0b9] <6.5-maint>
+
+	* NEWS, code_generator/metasrc/parser.y, code_generator/parser.c,
+	code_generator/sip.h, code_generator/transform.c:
+	More minor refactoring and comments.
+	[c0429779bf87] <6.5-maint>
+
+2021-12-16  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/metasrc/parser.y, code_generator/parser.c,
+	code_generator/sip.h, code_generator/transform.c:
+	Minor refactoring of template instantiation.
+	[74ae1a8f2afe] <6.5-maint>
+
+	* doc/specification_files.rst:
+	Removed references to old unsupported annotations in the docs.
+	[5414497f2296] <6.5-maint>
+
+	* code_generator/metasrc/parser.y, code_generator/parser.c,
+	code_generator/sip.h, code_generator/transform.c:
+	Removed a redundant argument.
+	[69d307570a75] <6.5-maint>
+
+2021-12-01  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.5.0 for changeset 8583e2bb1b32
+	[ebaf1f8926f8]
+
 2021-11-25  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* NEWS, code_generator/gencode.c, code_generator/metasrc/parser.y,

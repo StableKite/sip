@@ -3,6 +3,7 @@ sip6 (6.5.1+dfsg-1) UNRELEASED; urgency=medium
   * New upstream release.
   * Run install with all Python versions again. dh_python3 now handles
     presence of *.abi3.so for multiple versions correctly.
+  * Update sip-build.1 based on command_line_tools.rst change.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Wed, 15 Dec 2021 22:56:39 +0300
 

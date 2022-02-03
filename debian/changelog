@@ -1,5 +1,6 @@
-sip6 (6.5.0+dfsg-2) UNRELEASED; urgency=medium
+sip6 (6.5.1+dfsg-1) UNRELEASED; urgency=medium
 
+  * New upstream release.
   * Run install with all Python versions again. dh_python3 now handles
     presence of *.abi3.so for multiple versions correctly.
 

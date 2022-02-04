@@ -1,7 +1,7 @@
 /*
  * The SIP module interface.
  *
- * Copyright (c) 2020 Riverbank Computing Limited <info@riverbankcomputing.com>
+ * Copyright (c) 2022 Riverbank Computing Limited <info@riverbankcomputing.com>
  *
  * This file is part of SIP.
  *
@@ -43,8 +43,10 @@ extern "C" {
 #endif
 
 
-/* The patch version of this implementation of the ABI. */
-#define SIP_MODULE_PATCH_VERSION    0
+/* The version of the ABI. */
+#define SIP_ABI_MAJOR_VERSION       12
+#define SIP_ABI_MINOR_VERSION       9
+#define SIP_MODULE_PATCH_VERSION    1
 
 
 /*
@@ -54,13 +56,9 @@ extern "C" {
  */
 
 
-/* The ABI version implemented. */
-#define SIP_ABI_MAJOR_VERSION       12
-#define SIP_ABI_MINOR_VERSION       9
-
 /* The version of the code generator. */
-#define SIP_VERSION                 0x60100
-#define SIP_VERSION_STR             "6.1.0.dev2104271705"
+#define SIP_VERSION                 0x60501
+#define SIP_VERSION_STR             "6.5.1"
 
 /* These are all dependent on the user-specified name of the sip module. */
 #define _SIP_MODULE_FQ_NAME         "PyQt5.sip"

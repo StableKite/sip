@@ -33,13 +33,13 @@ module_src = sorted(glob.glob('*.c'))
 if sys.platform == 'win32':
     module_src.append('bool.cpp')
 
-module = Extension('PyQt5.sip', module_src)
+module = Extension('PyQt6.sip', module_src)
 
 # Do the setup.
 setup(
-        name='PyQt5_sip',
-        version='12.9.1',
+        name='PyQt6_sip',
+        version='13.2.1',
         license='SIP',
-        python_requires='>=3.5',
+        python_requires='>=3.6',
         ext_modules=[module]
      )

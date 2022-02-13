@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Contact: pyqt@riverbankcomputing.com
-Upstream-Name: PyQt5-sip
+Upstream-Name: PyQt6-sip
 
 Files: *
 Copyright: 2015-2022 Riverbank Computing Limited <info@riverbankcomputing.com>

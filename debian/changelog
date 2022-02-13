@@ -1,3 +1,10 @@
+pyqt6-sip (13.2.1-1) UNRELEASED; urgency=medium
+
+  * Clone pyqt5-sip package as pyqt6-sip (closes: #1005707).
+  * New upstream release.
+
+ -- Dmitry Shachnev <mitya57@debian.org>  Sun, 13 Feb 2022 20:29:49 +0300
+
 pyqt5-sip (12.9.1-1) unstable; urgency=medium
 
   * New upstream release.

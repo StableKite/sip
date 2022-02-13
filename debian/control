@@ -1,4 +1,4 @@
-Source: pyqt5-sip
+Source: pyqt6-sip
 Section: python
 Priority: optional
 Maintainer: Debian Python Team <team+python@tracker.debian.org>
@@ -9,16 +9,16 @@ Build-Depends: debhelper-compat (= 13),
                python3-setuptools (>= 30.3)
 Rules-Requires-Root: no
 Standards-Version: 4.6.0
-Homepage: https://pypi.org/project/PyQt5-sip/
-Vcs-Git: https://salsa.debian.org/python-team/packages/pyqt5-sip.git
-Vcs-Browser: https://salsa.debian.org/python-team/packages/pyqt5-sip
+Homepage: https://pypi.org/project/PyQt6-sip/
+Vcs-Git: https://salsa.debian.org/python-team/packages/pyqt6-sip.git
+Vcs-Browser: https://salsa.debian.org/python-team/packages/pyqt6-sip
 
-Package: python3-pyqt5.sip
+Package: python3-pyqt6.sip
 Architecture: any
 Depends: ${misc:Depends}, ${python3:Depends}, ${shlibs:Depends}
 Description: runtime module for Python extensions using SIP
  SIP is a collection of tools that makes it very easy to create Python bindings
  for C and C++ libraries.
  .
- PyQt5.sip is a runtime module, it is used by PyQt5 and other Python extension
+ PyQt6.sip is a runtime module, it is used by PyQt6 and other Python extension
  modules built with SIP.

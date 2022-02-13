@@ -6,7 +6,7 @@ cd $AUTOPKGTEST_TMP
 
 for py in $(py3versions -s); do
   echo "testing $py"
-  $py -c "from PyQt5.sip import _C_API"
+  $py -c "from PyQt6.sip import _C_API"
   echo "testing $py-dbg"
-  $py-dbg -c "from PyQt5.sip import _C_API"
+  $py-dbg -c "from PyQt6.sip import _C_API"
 done

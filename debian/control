@@ -5,6 +5,7 @@ Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Dmitry Shachnev <mitya57@debian.org>
 Build-Depends: debhelper-compat (= 13),
                dh-python,
+               pybuild-plugin-pyproject,
                python3-all-dev,
                python3-setuptools (>= 30.3)
 Rules-Requires-Root: no

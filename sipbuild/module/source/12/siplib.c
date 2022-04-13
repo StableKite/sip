@@ -1,7 +1,7 @@
 /*
  * SIP library code.
  *
- * Copyright (c) 2021 Riverbank Computing Limited <info@riverbankcomputing.com>
+ * Copyright (c) 2022 Riverbank Computing Limited <info@riverbankcomputing.com>
  *
  * This file is part of SIP.
  *
@@ -786,9 +786,6 @@ static PyTypeObject sipEnumType_Type = {
 };
 
 
-/*
- * Remove these in SIP v5.
- */
 sipQtAPI *sipQtSupport = NULL;
 sipTypeDef *sipQObjectType;
 
@@ -1042,18 +1039,6 @@ const sipAPIDef *sip_init_library(PyObject *mod_dict)
 
     PyObject *obj;
     PyMethodDef *md;
-
-    /*
-     * Remind ourselves to add support for capsule variables when we have
-     * another reason to move to the next major version number.
-     */
-#if SIP_API_MAJOR_NR > 12
-#error "Add support for capsule variables"
-#endif
-
-#if PY_VERSION_HEX < 0x03070000 && defined(WITH_THREAD)
-    PyEval_InitThreads();
-#endif
 
     /* Add the SIP version number. */
     obj = PyLong_FromLong(SIP_VERSION);
@@ -1794,7 +1779,7 @@ static int sip_api_export_module(sipExportedModuleDef *client,
     client->em_next = moduleList;
     moduleList = client;
 
-    /* Get any keyword handler.  Remove this in SIP v5. */
+    /* Get any keyword handler. */
     if (!got_kw_handler)
     {
         kw_handler = sip_api_import_symbol("pyqt_kw_handler");
@@ -2491,8 +2476,6 @@ static PyObject *buildObject(PyObject *obj, const char *fmt, va_list va)
 
         case 'E':
             {
-                /* Remove in v5.1. */
-
                 int ev = va_arg(va, int);
                 PyTypeObject *et = va_arg(va, PyTypeObject *);
 
@@ -2614,8 +2597,6 @@ static PyObject *buildObject(PyObject *obj, const char *fmt, va_list va)
 
         case 'B':
             {
-                /* Remove in v5.1. */
-
                 void *p = va_arg(va,void *);
                 sipWrapperType *wt = va_arg(va, sipWrapperType *);
                 PyObject *xfer = va_arg(va, PyObject *);
@@ -2638,8 +2619,6 @@ static PyObject *buildObject(PyObject *obj, const char *fmt, va_list va)
 
         case 'C':
             {
-                /* Remove in v5.1. */
-
                 void *p = va_arg(va,void *);
                 sipWrapperType *wt = va_arg(va, sipWrapperType *);
                 PyObject *xfer = va_arg(va, PyObject *);
@@ -2984,8 +2963,6 @@ static int parseResult(PyObject *method, PyObject *res,
 
             case 'E':
                 {
-                    /* Remove in v5.1. */
-
                     PyTypeObject *et = va_arg(va, PyTypeObject *);
                     int *p = va_arg(va, int *);
                     int v = sip_api_convert_to_enum(arg, ((sipEnumTypeObject *)et)->type);
@@ -3193,8 +3170,6 @@ static int parseResult(PyObject *method, PyObject *res,
 
             case 's':
                 {
-                    /* Remove in v5.1. */
-
                     const char **p = va_arg(va, const char **);
 
                     if (parseBytes_AsString(arg, p) < 0)
@@ -3265,8 +3240,6 @@ static int parseResult(PyObject *method, PyObject *res,
 
             case 'C':
                 {
-                    /* Remove in v5.1. */
-
                     if (*fmt == '\0')
                     {
                         invalid = TRUE;
@@ -3299,8 +3272,6 @@ static int parseResult(PyObject *method, PyObject *res,
 
             case 'D':
                 {
-                    /* Remove in v5.1. */
-
                     if (*fmt == '\0')
                     {
                         invalid = TRUE;
@@ -7291,8 +7262,6 @@ static const sipTypeDef *sip_api_type_scope(const sipTypeDef *td)
  */
 static int sip_api_can_convert_to_enum(PyObject *obj, const sipTypeDef *td)
 {
-    /* Remove in v5.1. */
-
     assert(sipTypeIsEnum(td));
 
     /* If the object is an enum then it must be the right enum. */
@@ -7868,8 +7837,6 @@ static void sip_api_transfer_back(PyObject *self)
  */
 static void sip_api_transfer_break(PyObject *self)
 {
-    /* Remove in v5.1. */
-
     if (self != NULL && PyObject_TypeCheck(self, (PyTypeObject *)&sipWrapper_Type))
     {
         sipSimpleWrapper *sw = (sipSimpleWrapper *)self;
@@ -9229,8 +9196,6 @@ static const sipTypeDef *sip_api_find_type(const char *type)
  */
 static const sipMappedType *sip_api_find_mapped_type(const char *type)
 {
-    /* Remove in v5.1. */
-
     const sipTypeDef *td = sip_api_find_type(type);
 
     if (td != NULL && sipTypeIsMapped(td))
@@ -9245,8 +9210,6 @@ static const sipMappedType *sip_api_find_mapped_type(const char *type)
  */
 static sipWrapperType *sip_api_find_class(const char *type)
 {
-    /* Remove in v5.1. */
-
     const sipTypeDef *td = sip_api_find_type(type);
 
     if (td != NULL && sipTypeIsClass(td))
@@ -9262,8 +9225,6 @@ static sipWrapperType *sip_api_find_class(const char *type)
  */
 static PyTypeObject *sip_api_find_named_enum(const char *type)
 {
-    /* Remove in v5.1. */
-
     const sipTypeDef *td = sip_api_find_type(type);
 
     if (td != NULL && sipTypeIsEnum(td))
@@ -9433,8 +9394,6 @@ static int compareStringMapEntry(const void *key,const void *el)
 static sipWrapperType *sip_api_map_string_to_class(const char *typeString,
         const sipStringTypeClassMap *map, int maplen)
 {
-    /* Remove in v5.1. */
-
     sipStringTypeClassMap *me;
 
     me = (sipStringTypeClassMap *)bsearch((const void *)typeString,
@@ -9471,8 +9430,6 @@ static int compareIntMapEntry(const void *keyp,const void *el)
 static sipWrapperType *sip_api_map_int_to_class(int typeInt,
         const sipIntTypeClassMap *map, int maplen)
 {
-    /* Remove in v5.1. */
-
     sipIntTypeClassMap *me;
 
     me = (sipIntTypeClassMap *)bsearch((const void *)&typeInt,
@@ -10140,7 +10097,7 @@ static int sipSimpleWrapper_init(sipSimpleWrapper *self, PyObject *args,
         }
     }
 
-    /* Call the handler if we have one.  Remove this in SIP v5. */
+    /* Call the handler if we have one. */
     if (kw_handler != NULL && unused != NULL && isQObject((PyObject *)self))
     {
         int rc = kw_handler((PyObject *)self, sipNew, unused);
@@ -12738,7 +12695,9 @@ static int sip_api_is_user_type(const sipWrapperType *wt)
 
 
 /*
- * Return a frame from the execution stack.
+ * Return a frame from the execution stack.  Note that we use 'struct _frame'
+ * rather than PyFrameObject because the latter wasn't exposed to the limited
+ * API until Python v3.9.
  */
 static struct _frame *sip_api_get_frame(int depth)
 {
@@ -12750,7 +12709,14 @@ static struct _frame *sip_api_get_frame(int depth)
 
     while (frame != NULL && depth > 0)
     {
+#if PY_VERSION_HEX < 0x03090000
         frame = frame->f_back;
+#else
+        frame = PyFrame_GetBack(frame);
+
+        /* Historically we return a borrowed reference. */
+        Py_XDECREF(frame);
+#endif
         --depth;
     }
 
@@ -13248,16 +13214,12 @@ int sip_api_convert_from_slice_object(PyObject *slice, Py_ssize_t length,
         Py_ssize_t *start, Py_ssize_t *stop, Py_ssize_t *step,
         Py_ssize_t *slicelength)
 {
-#if PY_VERSION_HEX >= 0x03070000
     if (PySlice_Unpack(slice, start, stop, step) < 0)
         return -1;
 
     *slicelength = PySlice_AdjustIndices(length, start, stop, *step);
 
     return 0;
-#else
-    return PySlice_GetIndicesEx(slice, length, start, stop, step, slicelength);
-#endif
 }
 
 

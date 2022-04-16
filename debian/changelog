@@ -1,3 +1,10 @@
+sip6 (6.6.1+dfsg-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+  * Update Files-Excluded for the new release.
+
+ -- Dmitry Shachnev <mitya57@debian.org>  Sat, 16 Apr 2022 16:22:05 +0300
+
 sip6 (6.5.1+dfsg-1) unstable; urgency=medium
 
   * New upstream release.

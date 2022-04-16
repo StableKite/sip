@@ -24,8 +24,8 @@
 #include <Python.h>
 
 /* Sanity check on the Python version. */
-#if PY_VERSION_HEX < 0x03060000
-#error "This version of PyQt6.sip requires Python v3.6 or later"
+#if PY_VERSION_HEX < 0x03070000
+#error "This version of PyQt6.sip requires Python v3.7 or later"
 #endif
 
 
@@ -45,22 +45,28 @@ extern "C" {
 
 /* The version of the ABI. */
 #define SIP_ABI_MAJOR_VERSION       13
-#define SIP_ABI_MINOR_VERSION       2
+#define SIP_ABI_MINOR_VERSION       3
 #define SIP_MODULE_PATCH_VERSION    1
 
 
 /*
- * The changes to this version of the ABI.
+ * The change history of the ABI.
+ *
+ * v13.3
+ *  - Python v3.7 or later is required.
  *
  * v13.2
  *  - Added support for SIP_ENUM_UINT_ENUM to represent IntEnums with unsigned
  *    members.
+ *
+ * v13.1
+ *  - Added sipNextExceptionHandler().
  */
 
 
 /* The version of the code generator. */
-#define SIP_VERSION                 0x60501
-#define SIP_VERSION_STR             "6.5.1"
+#define SIP_VERSION                 0x60601
+#define SIP_VERSION_STR             "6.6.1"
 
 /* These are all dependent on the user-specified name of the sip module. */
 #define _SIP_MODULE_FQ_NAME         "PyQt6.sip"

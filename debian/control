@@ -3,12 +3,11 @@ Section: devel
 Priority: optional
 Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Dmitry Shachnev <mitya57@debian.org>
-Build-Depends: bison,
-               debhelper-compat (= 13),
+Build-Depends: debhelper-compat (= 13),
                dh-python (>= 5.20211213),
-               flex,
                python3-all-dev,
                python3-packaging,
+               python3-ply,
                python3-setuptools,
                python3-toml
 Build-Depends-Indep: dh-sequence-sphinxdoc, python3-doc, python3-sphinx

@@ -1,4 +1,4 @@
-sip6 (6.6.1+dfsg-1) UNRELEASED; urgency=medium
+sip6 (6.6.1+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
   * Update Files-Excluded for the new release.

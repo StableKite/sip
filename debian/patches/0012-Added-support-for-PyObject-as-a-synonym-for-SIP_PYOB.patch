@@ -1,0 +1,25 @@
+From: Phil Thompson <phil@riverbankcomputing.com>
+Date: Mon, 2 May 2022 15:56:50 +0100
+Subject: Added support for PyObject* as a synonym for SIP_PYOBJECT.
+
+---
+ sipbuild/generator/parser/rules.py | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/sipbuild/generator/parser/rules.py b/sipbuild/generator/parser/rules.py
+index 7764042..d6ec1f6 100644
+--- a/sipbuild/generator/parser/rules.py
++++ b/sipbuild/generator/parser/rules.py
+@@ -1523,6 +1523,12 @@ def p_cpp_type(p):
+         value.derefs.extend(p[2])
+         value.is_reference = p[3]
+ 
++        # PyObject * is a synonym for SIP_PYOBJECT.
++        if value.type is ArgumentType.DEFINED and len(value.definition) == 1 and value.definition.base_name == 'PyObject' and len(value.derefs) == 1 and not value.is_reference:
++            value.type = ArgumentType.PYOBJECT
++            value.definition = None
++            value.derefs = []
++
+     p[0] = value
+ 
+ 

@@ -1,0 +1,96 @@
+From: Phil Thompson <phil@riverbankcomputing.com>
+Date: Fri, 29 Apr 2022 12:52:56 +0100
+Subject: Fixed the parsing of file paths to match the old C implementation.
+
+---
+ sipbuild/generator/parser/rules.py  | 24 ++++--------------------
+ sipbuild/generator/parser/tokens.py |  6 +++---
+ 2 files changed, 7 insertions(+), 23 deletions(-)
+
+diff --git a/sipbuild/generator/parser/rules.py b/sipbuild/generator/parser/rules.py
+index 21cc21f..8258be0 100644
+--- a/sipbuild/generator/parser/rules.py
++++ b/sipbuild/generator/parser/rules.py
+@@ -698,7 +698,7 @@ def p_import(p):
+ 
+ 
+ def p_import_simple(p):
+-    "import_simple : file_path"
++    "import_simple : FILE_PATH"
+ 
+     pm = p.parser.pm
+ 
+@@ -735,7 +735,7 @@ def p_import_args(p):
+ 
+ 
+ def p_import_arg(p):
+-    "import_arg : name '=' file_path"
++    "import_arg : name '=' FILE_PATH"
+ 
+     p[0] = {p[1]: p[3]}
+ 
+@@ -748,7 +748,7 @@ def p_include(p):
+ 
+ 
+ def p_include_simple(p):
+-    "include_simple : file_path"
++    "include_simple : FILE_PATH"
+ 
+     pm = p.parser.pm
+ 
+@@ -785,7 +785,7 @@ def p_include_args(p):
+ 
+ 
+ def p_include_arg(p):
+-    """include_arg : name '=' file_path
++    """include_arg : name '=' FILE_PATH
+         | optional '=' bool_value"""
+ 
+     p[0] = {p[1]: p[3]}
+@@ -3274,22 +3274,6 @@ def p_empty(p):
+     p[0] = None
+ 
+ 
+-def p_file_name(p):
+-    """file_name : '.'
+-        | PARENT_DIR
+-        | dotted_name
+-        | file_name '-' dotted_name"""
+-
+-    p[0] = str(p[1]) if len(p) == 2 else p[1] + '-' + str(p[3])
+-
+-
+-def p_file_path(p):
+-    """file_path : file_name
+-        | file_path '/' file_name"""
+-
+-    p[0] = p[1] if len(p) == 2 else p[1] + '/' + p[3]
+-
+-
+ def p_opt_const(p):
+     """opt_const : const
+         | empty"""
+diff --git a/sipbuild/generator/parser/tokens.py b/sipbuild/generator/parser/tokens.py
+index 57520ae..ca4eed4 100644
+--- a/sipbuild/generator/parser/tokens.py
++++ b/sipbuild/generator/parser/tokens.py
+@@ -97,8 +97,8 @@ directive_keywords = {
+ 
+ # The lexer tokens.
+ tokens = [
+-    'CODE_BLOCK', 'ELLIPSIS', 'EOF', 'EOL', 'LOGICAL_OR', 'NAME', 'NUMBER',
+-    'PARENT_DIR', 'QUOTED_CHAR', 'REAL', 'SCOPE', 'STRING',
++    'CODE_BLOCK', 'ELLIPSIS', 'EOF', 'EOL', 'FILE_PATH', 'LOGICAL_OR', 'NAME',
++    'NUMBER', 'QUOTED_CHAR', 'REAL', 'SCOPE', 'STRING',
+ ]
+ 
+ tokens.extend(directives)
+@@ -382,7 +382,7 @@ def t_QCH(t):
+ 
+ 
+ # The remaining trivial token definitions.
+-t_PARENT_DIR = r'\.\.'
++t_FILE_PATH = r'[\._A-Za-z][\._/A-Za-z0-9\-]*[\._A-Za-z0-9]'
+ t_ELLIPSIS = r'\.\.\.'
+ t_LOGICAL_OR = r'\|\|'
+ t_SCOPE = r'::'

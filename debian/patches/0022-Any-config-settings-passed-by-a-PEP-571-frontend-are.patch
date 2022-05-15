@@ -1,0 +1,200 @@
+From: Phil Thompson <phil@riverbankcomputing.com>
+Date: Sat, 7 May 2022 15:03:49 +0100
+Subject: Any config settings passed by a PEP 571 frontend are now used.
+
+---
+ doc/sipbuild_api.rst         |  4 ++--
+ sipbuild/abstract_project.py |  6 +++---
+ sipbuild/api.py              | 25 ++++++++++++++++---------
+ sipbuild/configurable.py     |  4 ++--
+ sipbuild/project.py          | 24 ++++++++----------------
+ 5 files changed, 31 insertions(+), 32 deletions(-)
+
+diff --git a/doc/sipbuild_api.rst b/doc/sipbuild_api.rst
+index 3323543..36bba71 100644
+--- a/doc/sipbuild_api.rst
++++ b/doc/sipbuild_api.rst
+@@ -128,7 +128,7 @@ build systems.
+ 
+         :param PyProject pyproject: is the parsed :file:`pyproject.toml` file.
+         :param str tool: is the name of the tool, either ``'build'``,
+-            ``'install'``, ``'pep517'``, ``'sdist'`` or ``'wheel'``.
++            ``'install'``, ``'sdist'`` or ``'wheel'``.
+         :param str tool_description: is a short description of the tool.
+ 
+ 
+@@ -529,7 +529,7 @@ build systems.
+         line option, the name should be preceded by ``no-``.
+     :param list[str] tools: is the list of tools that use the option as a
+         command line option.  If it isn't specified then the list of build
+-        tools is used, i.e. ``['build', 'install', 'pep517', 'wheel']``.
++        tools is used, i.e. ``['build', 'install', 'wheel']``.
+ 
+ 
+ :py:class:`~sipbuild.Project`
+diff --git a/sipbuild/abstract_project.py b/sipbuild/abstract_project.py
+index 5e5b055..0f6c2c6 100644
+--- a/sipbuild/abstract_project.py
++++ b/sipbuild/abstract_project.py
+@@ -1,4 +1,4 @@
+-# Copyright (c) 2020, Riverbank Computing Limited
++# Copyright (c) 2022, Riverbank Computing Limited
+ # All rights reserved.
+ #
+ # This copy of SIP is licensed for use under the terms of the SIP License
+@@ -34,7 +34,7 @@ class AbstractProject(ABC):
+     """ This specifies the API of a project. """
+ 
+     @classmethod
+-    def bootstrap(cls, tool, tool_description=''):
++    def bootstrap(cls, tool, tool_description='', arguments=None):
+         """ Return an AbstractProject instance fully configured for a
+         particular command line tool.
+         """
+@@ -72,7 +72,7 @@ class AbstractProject(ABC):
+         else:
+             project_factory = cls.import_callable(project_factory_name, cls)
+ 
+-        project = project_factory()
++        project = project_factory(arguments)
+ 
+         if not isinstance(project, cls):
+             raise UserException(
+diff --git a/sipbuild/api.py b/sipbuild/api.py
+index e4e7008..9b2b25a 100644
+--- a/sipbuild/api.py
++++ b/sipbuild/api.py
+@@ -1,4 +1,4 @@
+-# Copyright (c) 2019, Riverbank Computing Limited
++# Copyright (c) 2022, Riverbank Computing Limited
+ # All rights reserved.
+ #
+ # This copy of SIP is licensed for use under the terms of the SIP License
+@@ -28,10 +28,8 @@ from .exceptions import handle_exception
+ def build_sdist(sdist_directory, config_settings=None):
+     """ The PEP 517 hook for building an sdist from pyproject.toml. """
+ 
+-    # Note that we ignore config_settings until we have a frontend that we can
+-    # fully test with.  (pip seems lacking at the moment.)
+-
+-    project = AbstractProject.bootstrap('pep517')
++    project = AbstractProject.bootstrap('sdist',
++            arguments=_convert_config_settings(config_settings))
+ 
+     # pip executes this in a separate process and doesn't handle exceptions
+     # very well.  However it does capture stdout and (eventually) show it to
+@@ -45,10 +43,8 @@ def build_sdist(sdist_directory, config_settings=None):
+ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
+     """ The PEP 517 hook for building a wheel from pyproject.toml. """
+ 
+-    # Note that we ignore config_settings until we have a frontend that we can
+-    # fully test with.  (pip seems lacking at the moment.)
+-
+-    project = AbstractProject.bootstrap('pep517')
++    project = AbstractProject.bootstrap('wheel',
++            arguments=_convert_config_settings(config_settings))
+ 
+     # pip executes this in a separate process and doesn't handle exceptions
+     # very well.  However it does capture stdout and (eventually) show it to
+@@ -57,3 +53,14 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
+         return project.build_wheel(wheel_directory)
+     except Exception as e:
+         handle_exception(e)
++
++
++def _convert_config_settings(config_settings):
++    """ Return any configuration settings from the frontend to a pseudo-command
++    line.
++    """
++
++    if config_settings is None:
++        config_settings = {}
++
++    return [k + '=' + v if v else k for k, v in config_settings.items()]
+diff --git a/sipbuild/configurable.py b/sipbuild/configurable.py
+index 9092449..7790703 100644
+--- a/sipbuild/configurable.py
++++ b/sipbuild/configurable.py
+@@ -1,4 +1,4 @@
+-# Copyright (c) 2021, Riverbank Computing Limited
++# Copyright (c) 2022, Riverbank Computing Limited
+ # All rights reserved.
+ #
+ # This copy of SIP is licensed for use under the terms of the SIP License
+@@ -244,7 +244,7 @@ class Option:
+     """
+ 
+     # The tools that will build a set of bindings.
+-    BUILD_TOOLS = ('build', 'install', 'pep517', 'wheel')
++    BUILD_TOOLS = ('build', 'install', 'wheel')
+ 
+     # All the valid tools.
+     _ALL_TOOLS = BUILD_TOOLS + ('sdist', )
+diff --git a/sipbuild/project.py b/sipbuild/project.py
+index e9330d4..8e82f99 100644
+--- a/sipbuild/project.py
++++ b/sipbuild/project.py
+@@ -154,11 +154,13 @@ class Project(AbstractProject, Configurable):
+                 metavar="NAME"),
+     )
+ 
+-    def __init__(self, **kwargs):
++    def __init__(self, arguments, **kwargs):
+         """ Initialise the project. """
+ 
+         super().__init__()
+ 
++        self._arguments = arguments
++
+         # The current directory should contain the .toml file.
+         self.root_dir = os.getcwd()
+         self.bindings = collections.OrderedDict()
+@@ -210,11 +212,6 @@ class Project(AbstractProject, Configurable):
+     def apply_user_defaults(self, tool):
+         """ Set default values for user options that haven't been set yet. """
+ 
+-        # If we are the backend to a 3rd-party frontend (most probably pip)
+-        # then let it handle the verbosity of messages.
+-        if self.verbose is None and tool == '':
+-            self.verbose = True
+-
+         # This is only used when creating sdist and wheel files.
+         if self.name is None:
+             self.name = self.metadata['name']
+@@ -575,14 +572,9 @@ class Project(AbstractProject, Configurable):
+         # Set the initial configuration from the pyproject.toml file.
+         self._set_initial_configuration(pyproject, tool)
+ 
+-        # Add any tool-specific command line options for (so far unspecified)
++        # Add any tool-specific command line arguments for (so far unspecified)
+         # parts of the configuration.
+-        if tool != 'pep517':
+-            self._configure_from_command_line(tool, tool_description)
+-        else:
+-            # Until pip improves it's error reporting we give the user all the
+-            # help we can.
+-            self.verbose = True
++        self._configure_from_arguments(tool, tool_description)
+ 
+         # Now that any help has been given we can report a problematic
+         # pyproject.toml file.
+@@ -718,8 +710,8 @@ class Project(AbstractProject, Configurable):
+         for bindings in self.bindings.values():
+             bindings.verify_configuration(tool)
+ 
+-    def _configure_from_command_line(self, tool, tool_description):
+-        """ Update the configuration from the user supplied command line. """
++    def _configure_from_arguments(self, tool, tool_description):
++        """ Update the configuration from any user supplied arguments. """
+ 
+         from argparse import SUPPRESS
+         from .argument_parser import ArgumentParser
+@@ -745,7 +737,7 @@ class Project(AbstractProject, Configurable):
+             bindings.add_command_line_options(parser, tool, all_options)
+ 
+         # Parse the arguments and update the corresponding configurables.
+-        args = parser.parse_args()
++        args = parser.parse_args(self._arguments)
+ 
+         for option, configurables in all_options.items():
+             for configurable in configurables:

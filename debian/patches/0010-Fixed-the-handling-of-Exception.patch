@@ -1,0 +1,21 @@
+From: Phil Thompson <phil@riverbankcomputing.com>
+Date: Mon, 2 May 2022 12:52:53 +0100
+Subject: Fixed the handling of %Exception.
+
+---
+ sipbuild/generator/parser/parser_manager.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sipbuild/generator/parser/parser_manager.py b/sipbuild/generator/parser/parser_manager.py
+index 20dc124..8d49302 100644
+--- a/sipbuild/generator/parser/parser_manager.py
++++ b/sipbuild/generator/parser/parser_manager.py
+@@ -307,7 +307,7 @@ class ParserManager:
+     def find_exception(self, p, symbol, fq_cpp_name, raise_code=None):
+         """ Find an exception, optionally creating a new one. """
+ 
+-        fq_cpp_name = normalised_scoped_name(fq_cpp_name, self.scope)
++        # Note that we don't normalise the name.
+         iface_file = self.find_iface_file(p, symbol, fq_cpp_name,
+                 IfaceFileType.EXCEPTION)
+ 

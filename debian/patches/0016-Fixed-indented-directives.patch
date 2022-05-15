@@ -1,0 +1,21 @@
+From: Phil Thompson <phil@riverbankcomputing.com>
+Date: Mon, 2 May 2022 17:03:30 +0100
+Subject: Fixed indented directives.
+
+---
+ sipbuild/generator/parser/tokens.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sipbuild/generator/parser/tokens.py b/sipbuild/generator/parser/tokens.py
+index 2722cce..4f2fb69 100644
+--- a/sipbuild/generator/parser/tokens.py
++++ b/sipbuild/generator/parser/tokens.py
+@@ -174,7 +174,7 @@ def t_RPAREN(t):
+ 
+ # Handle directives.
+ def t_DIRECTIVE(t):
+-    r'(?m)^\s*%[a-zA-Z][a-zA-Z]*'
++    r'%[a-zA-Z][a-zA-Z]*'
+ 
+     # The name of the directive is used as its type.
+     name = t.value[t.value.index('%') + 1:]

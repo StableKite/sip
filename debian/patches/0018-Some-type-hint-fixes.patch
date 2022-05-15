@@ -1,0 +1,37 @@
+From: Phil Thompson <phil@riverbankcomputing.com>
+Date: Tue, 3 May 2022 18:17:48 +0100
+Subject: Some type hint fixes.
+
+---
+ code_generator/type_hints.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/code_generator/type_hints.c b/code_generator/type_hints.c
+index 35a94cd..b652a17 100644
+--- a/code_generator/type_hints.c
++++ b/code_generator/type_hints.c
+@@ -309,7 +309,14 @@ static void pyiClass(sipSpec *pt, moduleDef *mod, classDef *cd,
+         }
+         else if (cd->supertype != NULL)
+         {
+-            fprintf(fp, "%s", cd->supertype->text);
++            /*
++             * This is a hack to correct the .pyi file when the supertype
++             * hasn't been given a fully qualified name (ie. with ABI v12).
++             */
++            if (sipName != NULL && strncmp(cd->supertype->text, "sip.", 4) == 0)
++                fprintf(fp, "%s.%s", sipName, &cd->supertype->text[4]);
++            else
++                fprintf(fp, "%s", cd->supertype->text);
+         }
+         else
+         {
+@@ -507,7 +514,7 @@ static void pyiMappedType(sipSpec *pt, moduleDef *mod, mappedTypeDef *mtd,
+     {
+         separate(TRUE, indent, fp);
+         prIndent(indent, fp);
+-        fprintf(fp, "class %s(sip.wrapper):\n", mtd->pyname->text);
++        fprintf(fp, "class %s(%s.wrapper):\n", mtd->pyname->text, (sipName != NULL ? sipName : "sip"));
+ 
+         ++indent;
+ 

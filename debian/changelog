@@ -1,4 +1,4 @@
-sip6 (6.6.1+dfsg-2) UNRELEASED; urgency=medium
+sip6 (6.6.1+dfsg-2) unstable; urgency=medium
 
   * Add upstream changes up to 2022-05-13 (closes: #1009939, #1010910).
 

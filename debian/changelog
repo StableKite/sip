@@ -1,4 +1,4 @@
-sip6 (6.6.1+dfsg-3) UNRELEASED; urgency=medium
+sip6 (6.6.1+dfsg-3) unstable; urgency=medium
 
   * Backport upstream patch to fix __delattr__ handling (closes: #1011093).
 

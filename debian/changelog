@@ -1,3 +1,9 @@
+sip6 (6.6.1+dfsg-3) UNRELEASED; urgency=medium
+
+  * Backport upstream patch to fix __delattr__ handling (closes: #1011093).
+
+ -- Dmitry Shachnev <mitya57@debian.org>  Thu, 19 May 2022 21:58:18 +0300
+
 sip6 (6.6.1+dfsg-2) unstable; urgency=medium
 
   * Add upstream changes up to 2022-05-13 (closes: #1009939, #1010910).

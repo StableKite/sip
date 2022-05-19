@@ -1,0 +1,22 @@
+From: Phil Thompson <phil@riverbankcomputing.com>
+Date: Tue, 17 May 2022 20:16:26 +0100
+Subject: Ensure '__delattr__' is included in generated code if it is needed.
+
+---
+ sipbuild/generator/parser/parser_manager.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/sipbuild/generator/parser/parser_manager.py b/sipbuild/generator/parser/parser_manager.py
+index a93ac6d..3dfef8b 100644
+--- a/sipbuild/generator/parser/parser_manager.py
++++ b/sipbuild/generator/parser/parser_manager.py
+@@ -1980,6 +1980,9 @@ class ParserManager:
+ 
+             # __delattr__ is implemented as __setattr__.
+             if py_slot is PySlot.DELATTR:
++                if self.in_main_module:
++                    self.cached_name(py_name).used = True
++
+                 py_slot = PySlot.SETATTR
+                 py_name = '__setattr__'
+ 

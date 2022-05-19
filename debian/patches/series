@@ -25,4 +25,5 @@
 0025-Fixed-the-PEP571-backend-to-handle-multiple-instance.patch
 0026-Fixed-the-handling-of-the-body-of-a-Module-directive.patch
 0027-Fixed-a-bug-in-the-handling-of-protected-enums-when-.patch
+0028-Ensure-__delattr__-is-included-in-generated-code-if-.patch
 intersphinx_local.diff

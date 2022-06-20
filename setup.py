@@ -31,14 +31,14 @@ from setuptools import Extension, setup
 module_src = sorted(glob.glob('*.c'))
 
 if sys.platform == 'win32':
-    module_src.append('bool.cpp')
+    module_src.append('sip_bool.cpp')
 
 module = Extension('PyQt6.sip', module_src)
 
 # Do the setup.
 setup(
         name='PyQt6_sip',
-        version='13.3.1',
+        version='13.4.0',
         license='SIP',
         python_requires='>=3.7',
         ext_modules=[module]

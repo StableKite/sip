@@ -2,6 +2,7 @@ sip6 (6.6.2+dfsg-1) UNRELEASED; urgency=medium
 
   * New upstream release.
   * Drop all upstream patches.
+  * Bump Standards-Version to 4.6.1, no changes needed.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Mon, 20 Jun 2022 15:21:25 +0300
 

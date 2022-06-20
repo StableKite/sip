@@ -1,6 +1,7 @@
 pyqt6-sip (13.4.0-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Bump Standards-Version to 4.6.1, no changes needed.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Mon, 20 Jun 2022 15:52:54 +0300
 

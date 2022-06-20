@@ -45,12 +45,17 @@ extern "C" {
 
 /* The version of the ABI. */
 #define SIP_ABI_MAJOR_VERSION       12
-#define SIP_ABI_MINOR_VERSION       10
-#define SIP_MODULE_PATCH_VERSION    1
+#define SIP_ABI_MINOR_VERSION       11
+#define SIP_MODULE_PATCH_VERSION    0
 
 
 /*
  * The change history of the ABI.
+ *
+ * v12.11
+ *  - Published the 'array' type.
+ *  - Added the ctd_sizeof, ctd_array_delete members to sipClassTypeDef.
+ *  - Added the '>' conversion character to sipParseArgs().
  *
  * v12.10
  *  - Python v3.7 or later is required.
@@ -260,6 +265,7 @@ typedef int (*sipVirtHandlerFunc)(sip_gilstate_t, sipVirtErrorHandlerFunc,
         sipSimpleWrapper *, PyObject *, ...);
 typedef void (*sipAssignFunc)(void *, Py_ssize_t, void *);
 typedef void *(*sipArrayFunc)(Py_ssize_t);
+typedef void (*sipArrayDeleteFunc)(void *);
 typedef void *(*sipCopyFunc)(const void *, Py_ssize_t);
 typedef void (*sipReleaseFunc)(void *, int);
 typedef PyObject *(*sipPickleFunc)(void *);
@@ -887,6 +893,12 @@ typedef struct _sipClassTypeDef {
 
     /* The mixin initialisation function. */
     initproc ctd_init_mixin;
+
+    /* The optional array delete function. */
+    sipArrayDeleteFunc ctd_array_delete;
+
+    /* The sizeof the class. */
+    size_t ctd_sizeof;
 } sipClassTypeDef;
 
 

@@ -54,6 +54,7 @@ Architecture: all
 Section: doc
 Depends: ${misc:Depends}, ${sphinxdoc:Depends}
 Suggests: python3-doc
+Multi-Arch: foreign
 Description: Python bindings generator for C/C++ libraries — documentation
  SIP is a collection of tools that makes it very easy to create Python bindings
  for C and C++ libraries.

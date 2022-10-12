@@ -1,6 +1,7 @@
 sip6 (6.7.2+dfsg-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Update manpages based on command_line_tools.rst changes.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Wed, 12 Oct 2022 20:29:24 +0300
 

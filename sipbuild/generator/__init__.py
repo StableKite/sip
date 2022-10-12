@@ -23,3 +23,4 @@
 
 # Publish the API.  This is private to the rest of sip.
 from .parser import parse
+from .resolver import resolve

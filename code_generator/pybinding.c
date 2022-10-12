@@ -18,7 +18,6 @@
 
 
 #include <assert.h>
-#include <setjmp.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -39,22 +38,14 @@ unsigned abiVersion;
 char *sipName;
 
 /* Support for fatal error handling. */
-#define NO_EXCEPTION        0           /* No exception has been set. */
-#define EXCEPTION_SET       1           /* An exception has been set. */
-#define EXCEPTION_NEEDED    2           /* An exception needs to be set. */
-
 static char error_text[1000];
-static jmp_buf on_fatal_error;
 static PyObject *exception_type;
-static void raise_exception(int action);
+static void raise_exception(void);
 
 /* Forward declarations. */
 static PyObject *py_set_globals(PyObject *self, PyObject *args);
 static PyObject *py_py2c(PyObject *self, PyObject *args);
-static PyObject *py_transform(PyObject *self, PyObject *args);
 static PyObject *py_generateCode(PyObject *self, PyObject *args);
-static PyObject *py_generateExtracts(PyObject *self, PyObject *args);
-static PyObject *py_generateAPI(PyObject *self, PyObject *args);
 static PyObject *py_generateXML(PyObject *self, PyObject *args);
 static PyObject *py_generateTypeHints(PyObject *self, PyObject *args);
 
@@ -63,7 +54,6 @@ static int sipSpec_convertor(PyObject *obj, sipSpec **ptp);
 static int stringList_convertor(PyObject *obj, stringList **slp);
 static PyObject *stringList_convert_from(stringList *sl);
 static int extend_stringList(stringList **slp, PyObject *py_list, int no_dups);
-static void exception_set(void);
 
 
 /*
@@ -74,10 +64,7 @@ PyMODINIT_FUNC PyInit_code_generator(void)
     static PyMethodDef methods[] = {
         {"set_globals", py_set_globals, METH_VARARGS, NULL},
         {"py2c", py_py2c, METH_VARARGS, NULL},
-        {"transform", py_transform, METH_VARARGS, NULL},
         {"generateCode", py_generateCode, METH_VARARGS, NULL},
-        {"generateExtracts", py_generateExtracts, METH_VARARGS, NULL},
-        {"generateAPI", py_generateAPI, METH_VARARGS, NULL},
         {"generateXML", py_generateXML, METH_VARARGS, NULL},
         {"generateTypeHints", py_generateTypeHints, METH_VARARGS, NULL},
         {NULL, NULL, 0, NULL},
@@ -132,7 +119,6 @@ static PyObject *py_set_globals(PyObject *self, PyObject *args)
 static PyObject *py_py2c(PyObject *self, PyObject *args)
 {
     PyObject *spec;
-    int action;
     const char *encoding;
     extern sipSpec *py2c(PyObject *, const char *);
 
@@ -141,38 +127,7 @@ static PyObject *py_py2c(PyObject *self, PyObject *args)
             &encoding))
         return NULL;
 
-    if ((action = setjmp(on_fatal_error)) != NO_EXCEPTION)
-    {
-        raise_exception(action);
-        return NULL;
-    }
-
     return PyCapsule_New(py2c(spec, encoding), NULL, NULL);
-}
-
-
-/*
- * Wrapper around transform().
- */
-static PyObject *py_transform(PyObject *self, PyObject *args)
-{
-    sipSpec *pt;
-    int strict, action;
-
-    if (!PyArg_ParseTuple(args, "O&p",
-            sipSpec_convertor, &pt,
-            &strict))
-        return NULL;
-
-    if ((action = setjmp(on_fatal_error)) != NO_EXCEPTION)
-    {
-        raise_exception(action);
-        return NULL;
-    }
-
-    transform(pt, strict);
-
-    Py_RETURN_NONE;
 }
 
 
@@ -184,7 +139,7 @@ static PyObject *py_generateCode(PyObject *self, PyObject *args)
     sipSpec *pt;
     char *codeDir, *srcSuffix;
     const char *api_header;
-    int exceptions, tracing, releaseGIL, parts, docs, py_debug, action;
+    int exceptions, tracing, releaseGIL, parts, docs, py_debug;
     stringList *versions, *xfeatures, *sources;
 
     if (!PyArg_ParseTuple(args, "O&O&O&pppiO&O&pp",
@@ -201,69 +156,17 @@ static PyObject *py_generateCode(PyObject *self, PyObject *args)
             &py_debug))
         return NULL;
 
-    if ((action = setjmp(on_fatal_error)) != NO_EXCEPTION)
-    {
-        raise_exception(action);
-        return NULL;
-    }
-
     sources = generateCode(pt, codeDir, srcSuffix, exceptions, tracing,
             releaseGIL, parts, versions, xfeatures, docs, py_debug,
             &api_header);
 
+    if (sources == NULL)
+    {
+        raise_exception();
+        return NULL;
+    }
+
     return Py_BuildValue("(sN)", api_header, stringList_convert_from(sources));
-}
-
-
-/*
- * Wrapper around generateExtracts().
- */
-static PyObject *py_generateExtracts(PyObject *self, PyObject *args)
-{
-    sipSpec *pt;
-    stringList *extracts;
-    int action;
-
-    if (!PyArg_ParseTuple(args, "O&O&",
-            sipSpec_convertor, &pt,
-            stringList_convertor, &extracts))
-        return NULL;
-
-    if ((action = setjmp(on_fatal_error)) != NO_EXCEPTION)
-    {
-        raise_exception(action);
-        return NULL;
-    }
-
-    generateExtracts(pt, extracts);
-
-    Py_RETURN_NONE;
-}
-
-
-/*
- * Wrapper around generateAPI().
- */
-static PyObject *py_generateAPI(PyObject *self, PyObject *args)
-{
-    sipSpec *pt;
-    char *apiFile;
-    int action;
-
-    if (!PyArg_ParseTuple(args, "O&O&",
-            sipSpec_convertor, &pt,
-            fs_convertor, &apiFile))
-        return NULL;
-
-    if ((action = setjmp(on_fatal_error)) != NO_EXCEPTION)
-    {
-        raise_exception(action);
-        return NULL;
-    }
-
-    generateAPI(pt, pt->module, apiFile);
-
-    Py_RETURN_NONE;
 }
 
 
@@ -274,20 +177,17 @@ static PyObject *py_generateXML(PyObject *self, PyObject *args)
 {
     sipSpec *pt;
     char *xmlFile;
-    int action;
 
     if (!PyArg_ParseTuple(args, "O&O&",
             sipSpec_convertor, &pt,
             fs_convertor, &xmlFile))
         return NULL;
 
-    if ((action = setjmp(on_fatal_error)) != NO_EXCEPTION)
+    if (generateXML(pt, pt->module, xmlFile) < 0)
     {
-        raise_exception(action);
+        raise_exception();
         return NULL;
     }
-
-    generateXML(pt, pt->module, xmlFile);
 
     Py_RETURN_NONE;
 }
@@ -300,20 +200,17 @@ static PyObject *py_generateTypeHints(PyObject *self, PyObject *args)
 {
     sipSpec *pt;
     char *pyiFile;
-    int action;
 
     if (!PyArg_ParseTuple(args, "O&O&",
             sipSpec_convertor, &pt,
             fs_convertor, &pyiFile))
         return NULL;
 
-    if ((action = setjmp(on_fatal_error)) != NO_EXCEPTION)
+    if (generateTypeHints(pt, pt->module, pyiFile) < 0)
     {
-        raise_exception(action);
+        raise_exception();
         return NULL;
     }
-
-    generateTypeHints(pt, pt->module, pyiFile);
 
     Py_RETURN_NONE;
 }
@@ -464,10 +361,9 @@ static int extend_stringList(stringList **slp, PyObject *py_list, int no_dups)
 
 
 /*
- * Display a one line error message describing a fatal error.  This does not
- * return.
+ * Display a one line error message describing a fatal error.
  */
-void fatal(const char *fmt, ...)
+int error(const char *fmt, ...)
 {
     va_list ap;
     size_t used = strlen(error_text);
@@ -477,15 +373,14 @@ void fatal(const char *fmt, ...)
     vsnprintf(&error_text[used], room, fmt, ap);
     va_end(ap);
 
-    /* Raise an exception. */
-    longjmp(on_fatal_error, EXCEPTION_NEEDED);
+    return -1;
 }
 
 
 /*
  * Append to the current error message.
  */
-void fatalAppend(const char *fmt, ...)
+void errorAppend(const char *fmt, ...)
 {
     va_list ap;
     size_t used = strlen(error_text);
@@ -500,55 +395,13 @@ void fatalAppend(const char *fmt, ...)
 /*
  * Raise an exception if needed.
  */
-static void raise_exception(int action)
+static void raise_exception()
 {
-    if (action == EXCEPTION_NEEDED)
-        PyErr_SetString(exception_type, error_text);
+    PyErr_SetString(exception_type, error_text);
 
     /*
      * The error text buffer may be used more than once as the Python exception
      * could be ignored.
      */
     error_text[0] = '\0';
-}
-
-
-/*
- * Return to the Python interpreter after an exception has been set.
- */
-static void exception_set(void)
-{
-    longjmp(on_fatal_error, EXCEPTION_SET);
-}
-
-
-/*
- * Display a warning message.
- */
-void warning(Warning w, const char *fmt, ...)
-{
-    static char warning_text[1000];
-
-    va_list ap;
-    size_t used = strlen(warning_text);
-    size_t room = sizeof (warning_text) - used - 1;
-
-    va_start(ap, fmt);
-    vsnprintf(&warning_text[used], room, fmt, ap);
-    va_end(ap);
-
-    if (strchr(fmt, '\n') != NULL)
-    {
-        int ret;
-
-        ret = PyErr_WarnEx(
-                (w == DeprecationWarning ? PyExc_FutureWarning :
-                        PyExc_UserWarning),
-                warning_text, 1);
-
-        warning_text[0] = '\0';
-
-        if (ret < 0)
-            exception_set();
-    }
 }

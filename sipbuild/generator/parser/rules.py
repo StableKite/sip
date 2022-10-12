@@ -21,14 +21,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+from ..scoped_name import ScopedName
 from ..specification import (AccessSpecifier, Argument, ArgumentType,
         ArrayArgument, ClassKey, Docstring, DocstringFormat, Extract,
         FunctionCall, IfaceFile, IfaceFileType, KwArgs, License, MappedType,
         MappedTypeTemplate, Overload, Property, PyQtMethodSpecifier,
-        QualifierType, ScopedName, Signature, Template, ThrowArguments, Value,
-        ValueType, VirtualErrorHandler, WrappedTypedef, WrappedVariable)
+        QualifierType, Signature, Template, ThrowArguments, Value, ValueType,
+        VirtualErrorHandler, WrappedTypedef, WrappedVariable)
 from ..templates import same_template_signature
-from ..utils import normalised_scoped_name, search_typedefs
+from ..utils import cached_name, normalised_scoped_name, search_typedefs
 
 from .annotations import DottedName
 from .tokens import tokens
@@ -216,7 +217,7 @@ def p_composite_module(p):
         pm.parser_error(p, 1,
                 "%CompositeModule must appear before any %Module directive")
 
-    module.fq_py_name = pm.cached_name(str(name))
+    module.fq_py_name = cached_name(pm.spec, str(name))
     module.is_composite = True
 
     for directive in body:
@@ -402,7 +403,7 @@ def p_defmetatype(p):
 
     symbol = 2 if len(p) == 3 else 6
 
-    module.default_metatype = pm.cached_name(str(p[symbol]))
+    module.default_metatype = cached_name(pm.spec, str(p[symbol]))
 
 
 # %DefaultSupertype ###########################################################
@@ -424,7 +425,7 @@ def p_defsupertype(p):
 
     symbol = 2 if len(p) == 3 else 6
 
-    module.default_supertype = pm.cached_name(str(p[symbol]))
+    module.default_supertype = cached_name(pm.spec, str(p[symbol]))
 
 
 # %Docstring ##################################################################
@@ -548,7 +549,7 @@ def p_extract(p):
         order = args.get('order', -1)
         part = p[7]
 
-    pm.spec.extracts.append(Extract(id, order, part))
+    pm.spec.extracts.append(Extract(id, order, part.text))
 
 
 def p_extract_args(p):
@@ -884,6 +885,9 @@ def p_license_arg(p):
 # The mapped type annotations.
 _MAPPED_TYPE_ANNOTATIONS = (
     'AllowNone',
+    'NoAssignmentOperator',
+    'NoCopyCtor',
+    'NoDefaultCtor',
     'NoRelease',
     'PyName',
     'PyQtFlags',
@@ -1060,7 +1064,7 @@ def p_module(p):
         body = p[7]
 
     try:
-        module.fq_py_name = pm.cached_name(str(args['name']))
+        module.fq_py_name = cached_name(pm.spec, str(args['name']))
 
         if pm.in_main_module:
             module.fq_py_name.used = True
@@ -1280,7 +1284,7 @@ def p_property(p):
 
     pm.check_attributes(p, 4, name)
 
-    name = pm.cached_name(name)
+    name = cached_name(pm.spec, name)
     if pm.in_main_module:
         name.used = True
 
@@ -1551,11 +1555,11 @@ def p_base_type(p):
         | struct scoped_name
         | union scoped_name"""
 
+    pm = p.parser.pm
+
     if isinstance(p[1], ArgumentType):
         p[0] = Argument(p[1])
     elif len(p) == 2:
-        pm = p.parser.pm
-
         # Resolve it if it is the name of a typedef.  This is done early as a
         # workaround for allowing /PyInt/ to be applied to typedef'ed types.
         ad = Argument(ArgumentType.DEFINED, definition=p[1])
@@ -1584,6 +1588,8 @@ def p_base_type(p):
     else:
         p[0] = Argument(ArgumentType.TEMPLATE,
                 definition=Template(p[1], Signature(args=p[3])))
+
+    p[0].source_location = pm.get_source_location(p, 1)
 
 
 # Map unsigned two-word POD types.
@@ -2211,7 +2217,7 @@ def p_enum_line(p):
     if len(p) == 5:
         pm.check_annotations(p, 3, "enum member", _ENUM_MEMBER_ANNOTATIONS)
 
-        p[0] = (p[1], pm.cached_name(pm.get_py_name(p[1], p[3])),
+        p[0] = (p[1], cached_name(pm.spec, pm.get_py_name(p[1], p[3])),
                 p[3].get('NoTypeHint', False))
     else:
         p[0] = None
@@ -2248,7 +2254,7 @@ def p_exception(p):
     pm.check_annotations(p, 4, "exception", _EXCEPTION_ANNOTATIONS)
 
     cpp_name = p[2]
-    py_name = pm.get_py_name(cpp_name, p[4])
+    py_name = pm.get_py_name(cpp_name.base_name, p[4])
     pm.check_attributes(p, 2, py_name)
 
     builtin_base, defined_base = p[3]
@@ -2293,6 +2299,7 @@ def p_opt_base_exception(p):
 
     if len(p) == 4:
         base = p[2]
+        base.make_absolute()
 
         # See if it is a project-defined exception.
         for xd in p.parser.pm.spec.exceptions:
@@ -2585,7 +2592,7 @@ def p_arg_type(p):
     annotations = p[3]
 
     if p[2] is not None:
-        arg.name = pm.cached_name(p[2])
+        arg.name = cached_name(pm.spec, p[2])
 
     pm.apply_common_argument_annotations(p, 3, arg, annotations)
 
@@ -2931,7 +2938,7 @@ def p_virtual_catcher_code(p):
 
 # C++ namespaces. #############################################################
 
-# The typedef annotations.
+# The namespace annotations.
 _NAMESPACE_ANNOTATIONS = (
     'PyQtNoQMetaObject',
 )
@@ -3134,7 +3141,7 @@ def p_variable(p):
     pm.check_annotations(p, annos_symbol, "variable", _VARIABLE_ANNOTATIONS)
     pm.apply_type_annotations(p, annos_symbol, type, annotations)
 
-    py_name = pm.cached_name(pm.get_py_name(cpp_name, p[3]))
+    py_name = cached_name(pm.spec, pm.get_py_name(cpp_name, p[3]))
 
     if pm.in_main_module:
         py_name.used = True

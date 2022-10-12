@@ -24,7 +24,9 @@
 
 #include <Python.h>
 
+#undef NDEBUG
 #include <assert.h>
+
 #include <limits.h>
 #include <string.h>
 
@@ -86,6 +88,8 @@ static objectCache *cache_mappedtype = NULL;
 static objectCache *cache_member = NULL;
 static objectCache *cache_module = NULL;
 static objectCache *cache_qual = NULL;
+static objectCache *cache_typehint = NULL;
+static objectCache *cache_virtualerrorhandler = NULL;
 static objectCache *cache_wrappedenum = NULL;
 static objectCache *cache_wrappedtypedef = NULL;
 
@@ -105,6 +109,8 @@ static void clear_caches(void)
     clear_cache(&cache_member);
     clear_cache(&cache_module);
     clear_cache(&cache_qual);
+    clear_cache(&cache_typehint);
+    clear_cache(&cache_virtualerrorhandler);
     clear_cache(&cache_wrappedenum);
     clear_cache(&cache_wrappedtypedef);
 }
@@ -176,8 +182,7 @@ static nameDef *cachedname_attr(PyObject *obj, const char *name,
         const char *encoding);
 static nameDef *cachedname_list_attr(PyObject *obj, const char *name,
         const char *encoding);
-static classDef *class(sipSpec *pt, PyObject *obj, const char *encoding,
-        int create);
+static classDef *class(sipSpec *pt, PyObject *obj, const char *encoding);
 static classDef *class_attr(sipSpec *pt, PyObject *obj, const char *name,
         const char *encoding);
 static classDef *class_list_attr(sipSpec *pt, PyObject *obj, const char *name,
@@ -207,8 +212,6 @@ static exceptionDef *exception_list_attr(sipSpec *pt, PyObject *obj,
 static valueDef *expr(sipSpec *pt, PyObject *obj, const char *encoding);
 static valueDef *expr_attr(sipSpec *pt, PyObject *obj, const char *name,
         const char *encoding);
-static void extract_list_attr(sipSpec *pt, PyObject *obj, const char *name,
-        const char *encoding);
 static fcallDef *functioncall(sipSpec *pt, PyObject *obj,
         const char *encoding);
 static ifaceFileDef *ifacefile(sipSpec *pt, PyObject *obj,
@@ -223,15 +226,11 @@ static int int_attr(PyObject *obj, const char *name);
 static licenseDef *license_attr(PyObject *obj, const char *name,
         const char *encoding);
 static mappedTypeDef *mappedtype(sipSpec *pt, PyObject *obj,
-        const char *encoding, int create);
+        const char *encoding);
 static mappedTypeDef *mappedtype_attr(sipSpec *pt, PyObject *obj,
         const char *name, const char *encoding);
 static mappedTypeDef *mappedtype_list_attr(sipSpec *pt, PyObject *obj,
         const char *name, const char *encoding);
-static mappedTypeTmplDef *mappedtypetemplate(sipSpec *pt, PyObject *obj,
-        const char *encoding);
-static mappedTypeTmplDef *mappedtypetemplate_list_attr(sipSpec *pt,
-        PyObject *obj, const char *name, const char *encoding);
 static memberDef *member(sipSpec *pt, PyObject *obj, const char *encoding);
 static memberDef *member_attr(sipSpec *pt, PyObject *obj, const char *name,
         const char *encoding);
@@ -244,7 +243,11 @@ static moduleDef *module_list_attr(sipSpec *pt, PyObject *obj,
         const char *name, const char *encoding);
 static moduleListDef *modulelist_attr(sipSpec *pt, PyObject *obj,
         const char *name, const char *encoding);
+static mroDef *mro_list_attr(sipSpec *pt, PyObject *obj, const char *name,
+        const char *encoding);
 static overDef *over(sipSpec *pt, PyObject *obj, const char *encoding);
+static overDef *over_attr(sipSpec *pt, PyObject *obj, const char *name,
+        const char *encoding);
 static overDef *over_list_attr(sipSpec *pt, PyObject *obj, const char *name,
         const char *encoding);
 static propertyDef *property(PyObject *obj, const char *encoding);
@@ -260,6 +263,9 @@ static signatureDef *signature(sipSpec *pt, PyObject *obj,
         const char *encoding);
 static signatureDef *signature_attr(sipSpec *pt, PyObject *obj,
         const char *name, const char *encoding);
+static sourceLocation sourcelocation(PyObject *obj, const char *encoding);
+static sourceLocation sourcelocation_attr(PyObject *obj, const char *name,
+        const char *encoding);
 static char *str(PyObject *obj, const char *encoding);
 static char *str_attr(PyObject *obj, const char *name, const char *encoding);
 static stringList *str_list_attr(PyObject *obj, const char *name,
@@ -271,14 +277,32 @@ static throwArgs *throw_arguments(sipSpec *pt, PyObject *obj,
         const char *encoding);
 static throwArgs *throw_arguments_attr(sipSpec *pt, PyObject *obj,
         const char *name, const char *encoding);
+static typeHintDef *typehint(PyObject *obj, const char *encoding);
+static typeHintDef *typehint_attr(PyObject *obj, const char *name,
+        const char *encoding);
 static void typehints_attr(PyObject *obj, const char *name,
         const char *encoding, typeHintDef **th_in, typeHintDef **th_out,
         const char **th_value);
 static valueDef *value(sipSpec *pt, PyObject *obj, const char *encoding);
 static virtErrorHandler *virtualerrorhandler(sipSpec *pt, PyObject *obj,
         const char *encoding);
+static virtErrorHandler *virtualerrorhandler_attr(sipSpec *pt, PyObject *obj,
+        const char *name, const char *encoding);
 static virtErrorHandler *virtualerrorhandler_list_attr(sipSpec *pt,
         PyObject *obj, const char *name, const char *encoding);
+static virtHandlerDef *virtualhandler(sipSpec *pt, PyObject *obj,
+        const char *encoding);
+static virtHandlerDef *virtualhandler_attr(sipSpec *pt, PyObject *obj,
+        const char *name, const char *encoding);
+static virtHandlerDef *virtualhandler_list_attr(sipSpec *pt, PyObject *obj,
+        const char *name, const char *encoding);
+static virtOverDef *virtualoverload(sipSpec *pt, PyObject *obj,
+        const char *encoding);
+static virtOverDef *virtualoverloadlist_attr(sipSpec *pt, PyObject *obj,
+        const char *name, const char *encoding);
+static visibleList *visible(sipSpec *pt, PyObject *obj, const char *encoding);
+static visibleList *visiblelist_attr(sipSpec *pt, PyObject *obj,
+        const char *name, const char *encoding);
 static enumDef *wrappedenum(sipSpec *pt, PyObject *obj, const char *encoding);
 static enumDef *wrappedenum_attr(sipSpec *pt, PyObject *obj, const char *name,
         const char *encoding);
@@ -298,6 +322,11 @@ static varDef *wrappedvariable(sipSpec *pt, PyObject *obj,
         const char *encoding);
 static varDef *wrappedvariable_list_attr(sipSpec *pt, PyObject *obj,
         const char *name, const char *encoding);
+
+/* Other forward declarations. */
+static void appendCodeBlock(codeBlockList **headp, codeBlock *cb);
+static scopedNameDef *text2scopePart(char *text);
+static typeHintDef *newTypeHint(char *raw_hint);
 
 
 /*
@@ -319,11 +348,11 @@ sipSpec *py2c(PyObject *spec, const char *encoding)
     pt->classes = class_list_attr(pt, spec, "classes", encoding);
     pt->exceptions = exception_list_attr(pt, spec, "exceptions", encoding);
     pt->mappedtypes = mappedtype_list_attr(pt, spec, "mapped_types", encoding);
-    pt->mappedtypetemplates = mappedtypetemplate_list_attr(pt, spec,
-            "mapped_type_templates", encoding);
     pt->enums = wrappedenum_list_attr(pt, spec, "enums", encoding);
     pt->vars = wrappedvariable_list_attr(pt, spec, "variables", encoding);
     pt->typedefs = wrappedtypedef_list_attr(pt, spec, "typedefs", encoding);
+    pt->virthandlers = virtualhandler_list_attr(pt, spec, "virtual_handlers",
+            encoding);
     pt->errorhandlers = virtualerrorhandler_list_attr(pt, spec,
             "virtual_error_handlers", encoding);
     pt->exphdrcode = codeblock_list_attr(spec, "exported_header_code",
@@ -332,8 +361,8 @@ sipSpec *py2c(PyObject *spec, const char *encoding)
             encoding);
     pt->genc = bool_attr(spec, "c_bindings");
     pt->plugins = str_list_attr(spec, "plugins", encoding);
-
-    extract_list_attr(pt, spec, "extracts", encoding);
+    pt->nrvirthandlers = int_attr(spec, "nr_virtual_handlers");
+    pt->qobject_cd = class_attr(pt, spec, "pyqt_qobject", encoding);
 
     return pt;
 }
@@ -449,7 +478,15 @@ static argDef *argument(sipSpec *pt, PyObject *obj, const char *encoding)
         break;
 
     case class_type:
-        value->u.cd = class(pt, definition, encoding, TRUE);
+        value->u.cd = class(pt, definition, encoding);
+        break;
+
+    case mapped_type:
+        value->u.mtd = mappedtype(pt, definition, encoding);
+        break;
+
+    case enum_type:
+        value->u.ed = wrappedenum(pt, definition, encoding);
         break;
 
     case struct_type:
@@ -558,6 +595,10 @@ static nameDef *cachedname(PyObject *obj, const char *encoding)
 
     value->text = str_attr(obj, "name", encoding);
     value->len = strlen(value->text);
+    value->offset = int_attr(obj, "offset");
+
+    if (bool_attr(obj, "is_substring"))
+        setIsSubstring(value);
 
     if (bool_attr(obj, "used"))
         setIsUsedName(value);
@@ -617,8 +658,7 @@ static nameDef *cachedname_list_attr(PyObject *obj, const char *name,
 /*
  * Convert an optional Class object.
  */
-static classDef *class(sipSpec *pt, PyObject *obj, const char *encoding,
-        int create)
+static classDef *class(sipSpec *pt, PyObject *obj, const char *encoding)
 {
     classDef *value;
     int gil_action, class_key, dtor_access;
@@ -628,9 +668,6 @@ static classDef *class(sipSpec *pt, PyObject *obj, const char *encoding,
 
     if ((value = search_cache(cache_class, obj)) != NULL)
         return value;
-
-    if (!create)
-        return NULL;
 
     value = sipMalloc(sizeof (classDef));
 
@@ -672,11 +709,17 @@ static classDef *class(sipSpec *pt, PyObject *obj, const char *encoding,
     if (bool_attr(obj, "cannot_assign"))
         setCannotAssign(value);
 
+    if (bool_attr(obj, "cannot_copy"))
+        setCannotCopy(value);
+
     if (bool_attr(obj, "handles_none"))
         setClassHandlesNone(value);
 
     if (bool_attr(obj, "has_nonlazy_method"))
         setHasNonlazyMethod(value);
+
+    if (bool_attr(obj, "has_variable_handlers"))
+        setHasVarHandlers(value);
 
     gil_action = enum_attr(obj, "dtor_gil_action");
     if (gil_action == GIL_ACTION_HOLD)
@@ -686,14 +729,18 @@ static classDef *class(sipSpec *pt, PyObject *obj, const char *encoding,
 
     if ((dtor_access = enum_attr(obj, "dtor")) != -1)
         value->classflags |= enum_attr(obj, "dtor");
-    else if (value->iff->type == class_iface && !isOpaque(value))
-        setIsPublicDtor(value);
 
-    if (bool_attr(obj, "is_template_arg"))
-        setTemplateArg(value);
+    if (bool_attr(obj, "is_qobject"))
+        setIsQObjectSubClass(value);
 
     if (bool_attr(obj, "mixin"))
         setMixin(value);
+
+    if (bool_attr(obj, "needs_array_helper"))
+        setArrayHelper(value);
+
+    if (bool_attr(obj, "needs_copy_helper"))
+        setCopyHelper(value);
 
     if (bool_attr(obj, "export_derived"))
         setExportDerived(value);
@@ -704,8 +751,8 @@ static classDef *class(sipSpec *pt, PyObject *obj, const char *encoding,
     if (bool_attr(obj, "no_type_name"))
         setUseTemplateName(value);
 
-    if (bool_attr(obj, "needs_shadow"))
-        setNeedsShadow(value);
+    if (bool_attr(obj, "has_shadow"))
+        setHasShadow(value);
 
     class_key = enum_attr(obj, "class_key");
     if (class_key == CLASS_KEY_UNION)
@@ -718,6 +765,8 @@ static classDef *class(sipSpec *pt, PyObject *obj, const char *encoding,
     value->no_typehint = bool_attr(obj, "no_type_hint");
     value->ecd = class_attr(pt, obj, "scope", encoding);
     value->real = class_attr(pt, obj, "real_class", encoding);
+    value->subbase = class_attr(pt, obj, "subclass_base", encoding);
+    value->mro = mro_list_attr(pt, obj, "mro", encoding);
     value->supers = classlist_attr(pt, obj, "superclasses", encoding);
     value->metatype = cachedname_attr(obj, "metatype", encoding);
     value->supertype = cachedname_attr(obj, "supertype", encoding);
@@ -731,6 +780,9 @@ static classDef *class(sipSpec *pt, PyObject *obj, const char *encoding,
             encoding);
     value->members = member_list_attr(pt, obj, "members", encoding);
     value->overs = over_list_attr(pt, obj, "overloads", encoding);
+    value->vmembers = virtualoverloadlist_attr(pt, obj, "virtual_overloads",
+            encoding);
+    value->visible = visiblelist_attr(pt, obj, "visible_members", encoding);
     value->casts = argument_list_attr(pt, obj, "casts", encoding);
     value->cppcode = codeblock_list_attr(obj, "type_code", encoding);
     value->convtosubcode = codeblock_list_attr(obj, "convert_to_subclass_code",
@@ -770,7 +822,7 @@ static classDef *class_attr(sipSpec *pt, PyObject *obj, const char *name,
 
     assert(attr != NULL);
 
-    value = class(pt, attr, encoding, TRUE);
+    value = class(pt, attr, encoding);
 
     Py_DECREF(attr);
 
@@ -795,7 +847,7 @@ static classDef *class_list_attr(sipSpec *pt, PyObject *obj, const char *name,
 
     for (i = 0; i < PyList_Size(attr); ++i)
     {
-        classDef *item = class(pt, PyList_GetItem(attr, i), encoding, TRUE);
+        classDef *item = class(pt, PyList_GetItem(attr, i), encoding);
         *tail = item;
         tail = &item->next;
     }
@@ -825,7 +877,7 @@ static classList *classlist_attr(sipSpec *pt, PyObject *obj, const char *name,
     {
         classList *item = sipMalloc(sizeof (classList));
 
-        item->cd = class(pt, PyList_GetItem(attr, i), encoding, TRUE);
+        item->cd = class(pt, PyList_GetItem(attr, i), encoding);
         *tail = item;
         tail = &item->next;
     }
@@ -931,6 +983,9 @@ static ctorDef *constructor(sipSpec *pt, PyObject *obj, const char *encoding)
     value->docstring = docstring_attr(obj, "docstring", encoding);
 
     value->ctorflags |= enum_attr(obj, "access_specifier");
+
+    if (bool_attr(obj, "is_cast"))
+        value->ctorflags |= CTOR_CAST;
 
     gil_action = enum_attr(obj, "gil_action");
     if (gil_action == GIL_ACTION_HOLD)
@@ -1110,13 +1165,14 @@ static exceptionDef *exception(sipSpec *pt, PyObject *obj,
 
     cache(&cache_exception, obj, value);
 
-    value->exceptionnr = -1;
+    value->exceptionnr = int_attr(obj, "exception_nr");
     value->iff = ifacefile_attr(pt, obj, "iface_file", encoding);
     value->pyname = str_attr(obj, "py_name", encoding);
     value->cd = class_attr(pt, obj, "class_exception", encoding);
     value->bibase = str_attr(obj, "builtin_base_exception", encoding);
     value->base = exception_attr(pt, obj, "defined_base_exception", encoding);
     value->raisecode = codeblock_list_attr(obj, "raise_code", encoding);
+    value->needed = bool_attr(obj, "needed");
 
     return value;
 }
@@ -1170,37 +1226,6 @@ static exceptionDef *exception_list_attr(sipSpec *pt, PyObject *obj,
 
 
 /*
- * Convert a Extract list attribute.
- */
-static void extract_list_attr(sipSpec *pt, PyObject *obj, const char *name,
-        const char *encoding)
-{
-    PyObject *attr = PyObject_GetAttrString(obj, name);
-    Py_ssize_t i;
-
-    assert(attr != NULL);
-
-    for (i = 0; i < PyList_Size(attr); ++i)
-    {
-        PyObject *item;
-        const char *id;
-        int order;
-        codeBlock *part;
-
-        item = PyList_GetItem(attr, i);
-
-        id = str_attr(item, "id", encoding);
-        order = int_attr(item, "order");
-        part = codeblock_attr(item, "part", encoding);
-
-        addExtractPart(pt, id, order, part);
-    }
-
-    Py_DECREF(attr);
-}
-
-
-/*
  * Convert a FunctionCall object.
  */
 static fcallDef *functioncall(sipSpec *pt, PyObject *obj, const char *encoding)
@@ -1247,7 +1272,7 @@ static ifaceFileDef *ifacefile(sipSpec *pt, PyObject *obj,
     value->name = cachedname_attr(obj, "cpp_name", encoding);
     value->needed = bool_attr(obj, "needed");
     value->type = (ifaceFileType)enum_attr(obj, "type");
-    value->ifacenr = -1;
+    value->ifacenr = int_attr(obj, "type_nr");
     value->fqcname = scopedname_attr(obj, "fq_cpp_name", encoding);
     value->module = module_attr(pt, obj, "module", encoding);
     value->hdrcode = codeblock_list_attr(obj, "type_header_code", encoding);
@@ -1387,7 +1412,7 @@ static licenseDef *license_attr(PyObject *obj, const char *name,
  * Convert an optional MappedType object.
  */
 static mappedTypeDef *mappedtype(sipSpec *pt, PyObject *obj,
-        const char *encoding, int create)
+        const char *encoding)
 {
     mappedTypeDef *value;
 
@@ -1397,12 +1422,18 @@ static mappedTypeDef *mappedtype(sipSpec *pt, PyObject *obj,
     if ((value = search_cache(cache_mappedtype, obj)) != NULL)
         return value;
 
-    if (!create)
-        return NULL;
-
     value = sipMalloc(sizeof (mappedTypeDef));
 
     cache(&cache_mappedtype, obj, value);
+
+    if (bool_attr(obj, "no_assignment_operator"))
+        setNoAssignOp(value);
+
+    if (bool_attr(obj, "no_copy_ctor"))
+        setNoCopyCtor(value);
+
+    if (bool_attr(obj, "no_default_ctor"))
+        setNoDefaultCtor(value);
 
     if (bool_attr(obj, "no_release"))
         setNoRelease(value);
@@ -1447,7 +1478,7 @@ static mappedTypeDef *mappedtype_attr(sipSpec *pt, PyObject *obj,
 
     assert(attr != NULL);
 
-    value = mappedtype(pt, attr, encoding, TRUE);
+    value = mappedtype(pt, attr, encoding);
 
     Py_DECREF(attr);
 
@@ -1473,53 +1504,7 @@ static mappedTypeDef *mappedtype_list_attr(sipSpec *pt, PyObject *obj,
     for (i = 0; i < PyList_Size(attr); ++i)
     {
         mappedTypeDef *item = mappedtype(pt, PyList_GetItem(attr, i),
-                encoding, TRUE);
-        *tail = item;
-        tail = &item->next;
-    }
-
-    Py_DECREF(attr);
-
-    return head;
-}
-
-
-/*
- * Convert a MappedTypeTemplate object.
- */
-static mappedTypeTmplDef *mappedtypetemplate(sipSpec *pt, PyObject *obj,
-        const char *encoding)
-{
-    mappedTypeTmplDef *value;
-
-    value = sipMalloc(sizeof (mappedTypeTmplDef));
-
-    value->sig = *signature_attr(pt, obj, "signature", encoding);
-    value->mt = mappedtype_attr(pt, obj, "mapped_type", encoding);
-
-    return value;
-}
-
-
-/*
- * Convert a MappedTypeTemplate list attribute.
- */
-static mappedTypeTmplDef *mappedtypetemplate_list_attr(sipSpec *pt,
-        PyObject *obj, const char *name, const char *encoding)
-{
-    PyObject *attr = PyObject_GetAttrString(obj, name);
-    mappedTypeTmplDef *head, **tail;
-    Py_ssize_t i;
-
-    assert(attr != NULL);
-
-    head = NULL;
-    tail = &head;
-
-    for (i = 0; i < PyList_Size(attr); ++i)
-    {
-        mappedTypeTmplDef *item = mappedtypetemplate(pt,
-                PyList_GetItem(attr, i), encoding);
+                encoding);
         *tail = item;
         tail = &item->next;
     }
@@ -1630,7 +1615,8 @@ static memberDef *member_list_attr(sipSpec *pt, PyObject *obj,
 static moduleDef *module(sipSpec *pt, PyObject *obj, const char *encoding)
 {
     moduleDef *value;
-    char *basename;
+    PyObject *needed_types_obj;
+    Py_ssize_t nr_needed_types;
 
     if (obj == Py_None)
         return NULL;
@@ -1643,12 +1629,7 @@ static moduleDef *module(sipSpec *pt, PyObject *obj, const char *encoding)
     cache(&cache_module, obj, value);
 
     value->fullname = cachedname_attr(obj, "fq_py_name", encoding);
-
-    if ((basename = strrchr(value->fullname->text, '.')) == NULL)
-        value->name = value->fullname->text;
-    else
-        value->name = basename + 1;
-
+    value->name = str_attr(obj, "py_name", encoding);
     value->docstring = docstring_attr(obj, "docstring", encoding);
 
     if (bool_attr(obj, "call_super_init"))
@@ -1680,8 +1661,6 @@ static moduleDef *module(sipSpec *pt, PyObject *obj, const char *encoding)
             "default_docstring_format");
     value->defdocstringsig = (Signature)enum_attr(obj,
             "default_docstring_signature");
-    value->defmetatype = cachedname_attr(obj, "default_metatype", encoding);
-    value->defsupertype = cachedname_attr(obj, "default_supertype", encoding);
     value->defexception = exception_attr(pt, obj, "default_exception",
             encoding);
     value->hdrcode = codeblock_list_attr(obj, "module_header_code", encoding);
@@ -1700,13 +1679,34 @@ static moduleDef *module(sipSpec *pt, PyObject *obj, const char *encoding)
     value->virt_error_handler = str_attr(obj, "default_virtual_error_handler",
             encoding);
     value->qualifiers = qual_list_attr(pt, obj, "qualifiers", encoding);
+    value->nrexceptions = int_attr(obj, "nr_exceptions");
     value->nrtypedefs = int_attr(obj, "nr_typedefs");
+    value->nrvirterrorhandlers = int_attr(obj, "nr_virtual_error_handlers");
     value->next_key = int_attr(obj, "next_key");
     value->license = license_attr(obj, "license", encoding);
     value->proxies = class_list_attr(pt, obj, "proxies", encoding);
     value->container = module_attr(pt, obj, "composite", encoding);
     value->used = ifacefilelist_attr(pt, obj, "used", encoding);
     value->imports = modulelist_attr(pt, obj, "imports", encoding);
+    value->allimports = modulelist_attr(pt, obj, "all_imports", encoding);
+
+    needed_types_obj = PyObject_GetAttrString(obj, "needed_types");
+    assert(needed_types_obj != NULL);
+
+    if ((nr_needed_types = PyList_Size(needed_types_obj)) > 0)
+    {
+        Py_ssize_t i;
+
+        value->needed_types = sipCalloc(nr_needed_types, sizeof (argDef));
+
+        for (i = 0; i < nr_needed_types; ++i)
+            value->needed_types[i] = *argument(pt,
+                    PyList_GetItem(needed_types_obj, i), encoding);
+
+        value->nr_needed_types = nr_needed_types;
+    }
+
+    Py_DECREF(needed_types_obj);
 
     return value;
 }
@@ -1790,6 +1790,36 @@ static moduleListDef *modulelist_attr(sipSpec *pt, PyObject *obj,
 
 
 /*
+ * Convert a Class list attribute to a list of mroDef.
+ */
+static mroDef *mro_list_attr(sipSpec *pt, PyObject *obj, const char *name,
+        const char *encoding)
+{
+    PyObject *attr = PyObject_GetAttrString(obj, name);
+    mroDef *head, **tail;
+    Py_ssize_t i;
+
+    assert(attr != NULL);
+
+    head = NULL;
+    tail = &head;
+
+    for (i = 0; i < PyList_Size(attr); ++i)
+    {
+        mroDef *item = sipMalloc(sizeof (mroDef));
+
+        item->cd = class(pt, PyList_GetItem(attr, i), encoding);
+        *tail = item;
+        tail = &item->next;
+    }
+
+    Py_DECREF(attr);
+
+    return head;
+}
+
+
+/*
  * Convert an Overload object.
  */
 static overDef *over(sipSpec *pt, PyObject *obj, const char *encoding)
@@ -1798,8 +1828,7 @@ static overDef *over(sipSpec *pt, PyObject *obj, const char *encoding)
     PyObject *py_sig_obj, *cpp_sig_obj;
     int access, xfer, gil_action;
 
-    value->sloc.linenr = int_attr(obj, "source_line");
-    value->sloc.name = str_attr(obj, "source_file", encoding);
+    value->sloc = sourcelocation_attr(obj, "source_location", encoding);
     value->cppname = str_attr(obj, "cpp_name", encoding);
     value->docstring = docstring_attr(obj, "docstring", encoding);
 
@@ -1812,6 +1841,9 @@ static overDef *over(sipSpec *pt, PyObject *obj, const char *encoding)
     if (bool_attr(obj, "is_virtual"))
         setIsVirtual(value);
 
+    if (bool_attr(obj, "is_virtual_reimplementation"))
+        setIsVirtualReimp(value);
+
     if (bool_attr(obj, "is_abstract"))
         setIsAbstract(value);
 
@@ -1823,6 +1855,18 @@ static overDef *over(sipSpec *pt, PyObject *obj, const char *encoding)
 
     if (bool_attr(obj, "is_auto_generated"))
         setIsAutoGen(value);
+
+    if (bool_attr(obj, "is_complementary"))
+        setIsComplementary(value);
+
+    if (bool_attr(obj, "is_reflected"))
+        setIsReflected(value);
+
+    if (bool_attr(obj, "is_global"))
+        setIsGlobal(value);
+
+    if (bool_attr(obj, "dont_deref_self"))
+        setDontDerefSelf(value);
 
     if (bool_attr(obj, "new_thread"))
         setIsNewThread(value);
@@ -1900,6 +1944,25 @@ static overDef *over(sipSpec *pt, PyObject *obj, const char *encoding)
     value->posthook = str_attr(obj, "posthook", encoding);
     value->virt_error_handler = str_attr(obj, "virtual_error_handler",
             encoding);
+
+    return value;
+}
+
+
+/*
+ * Convert an Overload attribute.
+ */
+static overDef *over_attr(sipSpec *pt, PyObject *obj, const char *name,
+        const char *encoding)
+{
+    PyObject *attr = PyObject_GetAttrString(obj, name);
+    overDef *value;
+
+    assert(attr != NULL);
+
+    value = over(pt, attr, encoding);
+
+    Py_DECREF(attr);
 
     return value;
 }
@@ -2136,6 +2199,42 @@ static signatureDef *signature_attr(sipSpec *pt, PyObject *obj,
 
 
 /*
+ * Convert an optional SourceLocation object.
+ */
+static sourceLocation sourcelocation(PyObject *obj, const char *encoding)
+{
+    sourceLocation value;
+
+    if (obj != Py_None)
+    {
+        value.linenr = int_attr(obj, "line");
+        value.name = str_attr(obj, "sip_file", encoding);
+    }
+
+    return value;
+}
+
+
+/*
+ * Convert an optional SourceLocation attribute.
+ */
+static sourceLocation sourcelocation_attr(PyObject *obj, const char *name,
+        const char *encoding)
+{
+    PyObject *attr = PyObject_GetAttrString(obj, name);
+    sourceLocation value;
+
+    assert(attr != NULL);
+
+    value = sourcelocation(attr, encoding);
+
+    Py_DECREF(attr);
+
+    return value;
+}
+
+
+/*
  * Convert an optional str.
  */
 static char *str(PyObject *obj, const char *encoding)
@@ -2252,7 +2351,6 @@ static throwArgs *throw_arguments(sipSpec *pt, PyObject *obj,
 {
     throwArgs *value;
     PyObject *args_obj;
-    Py_ssize_t i;
 
     if (obj == Py_None)
         return NULL;
@@ -2262,10 +2360,19 @@ static throwArgs *throw_arguments(sipSpec *pt, PyObject *obj,
     args_obj = PyObject_GetAttrString(obj, "arguments");
     assert(args_obj != NULL);
 
-    for (i = 0; i < PyList_Size(args_obj) && i < MAX_NR_ARGS; ++i)
-        value->args[i] = exception(pt, PyList_GetItem(args_obj, i), encoding);
+    if (args_obj != Py_None)
+    {
+        Py_ssize_t i;
 
-    value->nrArgs = i;
+        for (i = 0; i < PyList_Size(args_obj) && i < MAX_NR_ARGS; ++i)
+            value->args[i] = exception(pt, PyList_GetItem(args_obj, i), encoding);
+
+        value->nrArgs = i;
+    }
+    else
+    {
+        value->nrArgs = -1;
+    }
 
     Py_DECREF(args_obj);
 
@@ -2293,6 +2400,46 @@ static throwArgs *throw_arguments_attr(sipSpec *pt, PyObject *obj,
 
 
 /*
+ * Convert an optional TypeHint object.
+ */
+static typeHintDef *typehint(PyObject *obj, const char *encoding)
+{
+    typeHintDef *value;
+
+    if (obj == Py_None)
+        return NULL;
+
+    if ((value = search_cache(cache_typehint, obj)) != NULL)
+        return value;
+
+    value = newTypeHint(str_attr(obj, "text", encoding));
+
+    cache(&cache_typehint, obj, value);
+
+    return value;
+}
+
+
+/*
+ * Convert an optional TypeHint attribute.
+ */
+static typeHintDef *typehint_attr(PyObject *obj, const char *name,
+        const char *encoding)
+{
+    PyObject *attr = PyObject_GetAttrString(obj, name);
+    typeHintDef *value;
+
+    assert(attr != NULL);
+
+    value = typehint(attr, encoding);
+
+    Py_DECREF(attr);
+
+    return value;
+}
+
+
+/*
  * Convert an optional TypeHints attribute.
  */
 static void typehints_attr(PyObject *obj, const char *name,
@@ -2305,14 +2452,8 @@ static void typehints_attr(PyObject *obj, const char *name,
 
     if (attr != Py_None)
     {
-        char *s;
-
-        if ((s = str_attr(attr, "hint_in", encoding)) != NULL)
-            *th_in = newTypeHint(s);
-
-        if ((s = str_attr(attr, "hint_out", encoding)) != NULL)
-            *th_out = newTypeHint(s);
-
+        *th_in = typehint_attr(attr, "hint_in", encoding);
+        *th_out = typehint_attr(attr, "hint_out", encoding);
         *th_value = str_attr(attr, "default_value", encoding);
     }
 
@@ -2436,17 +2577,46 @@ static valueDef *expr_attr(sipSpec *pt, PyObject *obj, const char *name,
 
 
 /*
- * Convert a VirtualErrorHandler object.
+ * Convert an optional VirtualErrorHandler object.
  */
 static virtErrorHandler *virtualerrorhandler(sipSpec *pt, PyObject *obj,
         const char *encoding)
 {
-    virtErrorHandler *value = sipMalloc(sizeof (virtErrorHandler));
+    virtErrorHandler *value;
+
+    if (obj == Py_None)
+        return NULL;
+
+    if ((value = search_cache(cache_virtualerrorhandler, obj)) != NULL)
+        return value;
+
+    value = sipMalloc(sizeof (virtErrorHandler));
+
+    cache(&cache_virtualerrorhandler, obj, value);
 
     value->name = str_attr(obj, "name", encoding);
     value->code = codeblock_list_attr(obj, "code", encoding);
     value->mod = module_attr(pt, obj, "module", encoding);
-    value->index = -1;
+    value->index = int_attr(obj, "handler_nr");
+
+    return value;
+}
+
+
+/*
+ * Convert an optional VirtualErrorHandler attribute.
+ */
+static virtErrorHandler *virtualerrorhandler_attr(sipSpec *pt, PyObject *obj,
+        const char *name, const char *encoding)
+{
+    PyObject *attr = PyObject_GetAttrString(obj, name);
+    virtErrorHandler *value;
+
+    assert(attr != NULL);
+
+    value = virtualerrorhandler(pt, attr, encoding);
+
+    Py_DECREF(attr);
 
     return value;
 }
@@ -2482,6 +2652,171 @@ static virtErrorHandler *virtualerrorhandler_list_attr(sipSpec *pt,
 
 
 /*
+ * Convert an optional VirtualHandler object.
+ */
+static virtHandlerDef *virtualhandler(sipSpec *pt, PyObject *obj,
+        const char *encoding)
+{
+    virtHandlerDef *value;
+
+    if (obj == Py_None)
+        return NULL;
+
+    value = sipMalloc(sizeof (virtHandlerDef));
+
+    value->cppsig = signature_attr(pt, obj, "cpp_signature", encoding);
+    value->pysig = signature_attr(pt, obj, "py_signature", encoding);
+    value->virtcode = codeblock_list_attr(obj, "virtual_catcher_code",
+            encoding);
+    value->veh = virtualerrorhandler_attr(pt, obj, "virtual_error_handler",
+            encoding);
+    value->virthandlernr = int_attr(obj, "handler_nr");
+
+    if (bool_attr(obj, "abort_on_exception"))
+        setAbortOnExceptionVH(value);
+
+    if (bool_attr(obj, "transfer_result"))
+        setIsTransferVH(value);
+
+    return value;
+}
+
+
+/*
+ * Convert an optional VirtualHandler attribute.
+ */
+static virtHandlerDef *virtualhandler_attr(sipSpec *pt, PyObject *obj,
+        const char *name, const char *encoding)
+{
+    PyObject *attr = PyObject_GetAttrString(obj, name);
+    virtHandlerDef *value;
+
+    assert(attr != NULL);
+
+    value = virtualhandler(pt, attr, encoding);
+
+    Py_DECREF(attr);
+
+    return value;
+}
+
+
+/*
+ * Convert a VirtualHandler list attribute.
+ */
+static virtHandlerDef *virtualhandler_list_attr(sipSpec *pt, PyObject *obj,
+        const char *name, const char *encoding)
+{
+    PyObject *attr = PyObject_GetAttrString(obj, name);
+    virtHandlerDef *head, **tail;
+    Py_ssize_t i;
+
+    assert(attr != NULL);
+
+    head = NULL;
+    tail = &head;
+
+    for (i = 0; i < PyList_Size(attr); ++i)
+    {
+        virtHandlerDef *item = virtualhandler(pt, PyList_GetItem(attr, i),
+                encoding);
+        *tail = item;
+        tail = &item->next;
+    }
+
+    Py_DECREF(attr);
+
+    return head;
+}
+
+
+/*
+ * Convert a VirtualOverload object.
+ */
+static virtOverDef *virtualoverload(sipSpec *pt, PyObject *obj,
+        const char *encoding)
+{
+    virtOverDef *value = sipMalloc(sizeof (virtOverDef));
+
+    value->od = over_attr(pt, obj, "overload", encoding);
+    value->virthandler = virtualhandler_attr(pt, obj, "handler", encoding);
+
+    return value;
+}
+
+
+/*
+ * Convert a VirtualOverload list attribute.
+ */
+static virtOverDef *virtualoverloadlist_attr(sipSpec *pt, PyObject *obj,
+        const char *name, const char *encoding)
+{
+    PyObject *attr = PyObject_GetAttrString(obj, name);
+    virtOverDef *head, **tail;
+    Py_ssize_t i;
+
+    assert(attr != NULL);
+
+    head = NULL;
+    tail = &head;
+
+    for (i = 0; i < PyList_Size(attr); ++i)
+    {
+        virtOverDef *item = virtualoverload(pt, PyList_GetItem(attr, i),
+                encoding);
+        *tail = item;
+        tail = &item->next;
+    }
+
+    Py_DECREF(attr);
+
+    return head;
+}
+
+
+/*
+ * Convert a VisibleMember object.
+ */
+static visibleList *visible(sipSpec *pt, PyObject *obj, const char *encoding)
+{
+    visibleList *value = sipMalloc(sizeof (visibleList));
+
+    value->m = member_attr(pt, obj, "member", encoding);
+    value->cd = class_attr(pt, obj, "scope", encoding);
+
+    return value;
+}
+
+
+/*
+ * Convert a VisibleMember list attribute.
+ */
+static visibleList *visiblelist_attr(sipSpec *pt, PyObject *obj,
+        const char *name, const char *encoding)
+{
+    PyObject *attr = PyObject_GetAttrString(obj, name);
+    visibleList *head, **tail;
+    Py_ssize_t i;
+
+    assert(attr != NULL);
+
+    head = NULL;
+    tail = &head;
+
+    for (i = 0; i < PyList_Size(attr); ++i)
+    {
+        visibleList *item = visible(pt, PyList_GetItem(attr, i), encoding);
+        *tail = item;
+        tail = &item->next;
+    }
+
+    Py_DECREF(attr);
+
+    return head;
+}
+
+
+/*
  * Convert a WrappedEnum object.
  */
 static enumDef *wrappedenum(sipSpec *pt, PyObject *obj, const char *encoding)
@@ -2506,6 +2841,9 @@ static enumDef *wrappedenum(sipSpec *pt, PyObject *obj, const char *encoding)
     if (bool_attr(obj, "is_scoped"))
         setIsScopedEnum(value);
 
+    if (bool_attr(obj, "needed"))
+        setNeedsEnum(value);
+
     base_type = enum_attr(obj, "base_type");
 
     if (base_type == EBT_ENUM)
@@ -2527,19 +2865,34 @@ static enumDef *wrappedenum(sipSpec *pt, PyObject *obj, const char *encoding)
     value->cname = cachedname_attr(obj, "cached_fq_cpp_name", encoding);
     value->pyname = cachedname_attr(obj, "py_name", encoding);
     value->no_typehint = bool_attr(obj, "no_type_hint");
-    value->enumnr = -1;
+    value->enumnr = int_attr(obj, "type_nr");
 
     scope_obj = PyObject_GetAttrString(obj, "scope");
     assert(scope_obj != NULL);
 
     if (scope_obj != Py_None)
-        if ((value->ecd = class(pt, scope_obj, encoding, FALSE)) == NULL)
-            value->emtd = mappedtype(pt, scope_obj, encoding, FALSE);
+    {
+        PyObject *test_obj = PyObject_GetAttrString(scope_obj, "mro");
+
+        if (test_obj != NULL)
+        {
+            Py_DECREF(test_obj);
+
+            value->ecd = class(pt, scope_obj, encoding);
+        }
+        else
+        {
+            value->emtd = mappedtype(pt, scope_obj, encoding);
+        }
+    }
 
     Py_DECREF(scope_obj);
 
     value->module = module_attr(pt, obj, "module", encoding);
     value->members = wrappedenummember_list_attr(pt, obj, "members", encoding);
+
+    value->slots = member_list_attr(pt, obj, "slots", encoding);
+    value->overs = over_list_attr(pt, obj, "overloads", encoding);
 
     return value;
 }
@@ -2737,6 +3090,9 @@ static varDef *wrappedvariable(sipSpec *pt, PyObject *obj,
     if (bool_attr(obj, "no_setter"))
         setNoSetter(value);
 
+    if (bool_attr(obj, "needs_handler"))
+        setNeedsHandler(value);
+
     value->type = *argument_attr(pt, obj, "type", encoding);
     value->accessfunc = codeblock_list_attr(obj, "access_code", encoding);
     value->getcode = codeblock_list_attr(obj, "get_code", encoding);
@@ -2771,4 +3127,62 @@ static varDef *wrappedvariable_list_attr(sipSpec *pt, PyObject *obj,
     Py_DECREF(attr);
 
     return head;
+}
+
+
+/*
+ * Append a code block to a list of them.
+ */
+static void appendCodeBlock(codeBlockList **headp, codeBlock *cb)
+{
+    codeBlockList *cbl;
+
+    /* Handle the trivial case. */
+    if (cb == NULL)
+        return;
+
+    /* Find the end of the list. */
+    while (*headp != NULL)
+    {
+        /* Ignore if the block is already in the list. */
+        if ((*headp)->block == cb)
+            return;
+
+        headp = &(*headp)->next;
+    }
+
+    cbl = sipMalloc(sizeof (codeBlockList));
+    cbl->block = cb;
+
+    *headp = cbl;
+}
+
+
+/*
+ * Convert a text string to a scope part structure.
+ */
+static scopedNameDef *text2scopePart(char *text)
+{
+    scopedNameDef *snd;
+
+    snd = sipMalloc(sizeof (scopedNameDef));
+
+    snd->name = text;
+    snd->next = NULL;
+
+    return snd;
+}
+
+
+/*
+ * Create a new type hint for a raw string.
+ */
+static typeHintDef *newTypeHint(char *raw_hint)
+{
+    typeHintDef *thd = sipMalloc(sizeof (typeHintDef));
+
+    thd->status = needs_parsing;
+    thd->raw_hint = raw_hint;
+
+    return thd;
 }

@@ -23,7 +23,9 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
+
+from .scoped_name import ScopedName
 
 
 class AccessSpecifier(Enum):
@@ -606,172 +608,6 @@ class ValueType(Enum):
     EMPTY = 6
 
 
-class ScopedName:
-    """ Encapsulate a scoped name. """
-
-    def __init__(self, name):
-        """ Initialise the scoped name. """
-
-        if isinstance(name, list):
-            # This use is internal to this class.
-            self._name = name
-        elif isinstance(name, ScopedName):
-            # Make a copy of another ScopedName object.
-            self._name = list(name._name)
-        else:
-            # Create a simple name.
-            self._name = [name]
-
-    def __eq__(self, other):
-        """ Compare with another scoped name for equality. """
-
-        if isinstance(other, ScopedName):
-            return self._name == other._name
-
-        return NotImplemented
-
-    def __delitem__(self, index):
-        """ Remove the requested name. """
-
-        del self._name[self._normalised_index(index)]
-
-    def __getitem__(self, index):
-        """ Get the requested name. """
-
-        return self._name[self._normalised_index(index)]
-
-    def __len__(self):
-        """ Return the length of the name, ie. the number of indivual names.
-        """
-
-        nr_names = len(self._name)
-
-        if self.is_absolute:
-            nr_names -= 1
-
-        return nr_names
-
-    def __lt__(self, other):
-        """ Compare with another scoped name to allow lists to be sorted. """
-
-        if isinstance(other, ScopedName):
-            return self._name < other._name
-
-        return NotImplemented
-
-    def __setitem__(self, index, name):
-        """ Set the requested name. """
-
-        self._name[self._normalised_index(index)] = name
-
-    def __str__(self):
-        """ Return the C++ string representation. """
-
-        # The special treatment is a hack to simplify how the result is used.
-        # We ignore any leading '::' and truncate the conversion if we think we
-        # are converting an encoded template name (ie. we find a word that
-        # starts with a digit).
-        s_l = []
-        for s in self:
-            if s[0].isdigit():
-                break
-
-            s_l.append(s)
-
-        return '::'.join(s_l)
-
-    def append(self, name):
-        """ Append a simple name. """
-
-        self._name.append(name)
-
-    @property
-    def base_name(self):
-        """ The base name of the scoped name. """
-
-        return self._name[-1]
-
-    @property
-    def is_absolute(self):
-        """ True if the scoped name is absolute. """
-
-        return self._name[0] == ''
-
-    @property
-    def is_simple(self):
-        """ Return True if the name is simple, ie. relative and unscoped. """
-
-        return len(self) == 1
-
-    def matches(self, scoped_name, scope):
-        """ Return True if a scoped name matches this taking account of a scope
-        if the scoped name is relative.
-        """
-
-        assert self.is_absolute
-
-        # Check for the simple case.
-        if scoped_name.is_absolute:
-            return self == scoped_name
-
-        # Try each scope, inner to outer.
-        while scope is not None:
-            fq_name = ScopedName(scope.iface_file.fq_cpp_name)
-            fq_name._name.extend(scoped_name._name)
-
-            if self == fq_name:
-                return True
-
-            scope = scope.scope
-
-        # Try the global scope.
-        fq_name = ScopedName(scoped_name)
-        fq_name.make_absolute()
-
-        return self == fq_name
-
-    def make_absolute(self):
-        """ Make sure the scoped name is absolute. """
-
-        if self._name[0] != '':
-            self._name.insert(0, '')
-
-    @classmethod
-    def parse(cls, raw):
-        """ Return a ScopedName object by parsing a raw string. """
-
-        return cls(raw.split('::'))
-
-    def prepend(self, scoped_name):
-        """ Prepend a scoped name. """
-
-        new_name = list(scoped_name._name)
-        new_name.extend(self._name)
-        self._name = new_name
-
-    @property
-    def scope(self):
-        """ The scoped name that is the enclosing scope of this one.  It will
-        be None if there isn't one.
-        """
-
-        if len(self) == 1:
-            return None
-
-        return type(self)(self._name[:-1])
-
-    def _normalised_index(self, index):
-        """ Return a normalised index. """
-
-        if not isinstance(index, int):
-            raise TypeError("'{}' is an invalid index".format(type(index)))
-
-        if index >= 0 and self.is_absolute:
-            index += 1
-
-        return index
-
-
 @dataclass
 class Argument:
     """ Encapsulate a callable argument (or return value or variable type). """
@@ -834,6 +670,9 @@ class Argument:
     # The value of /ScopesStripped/.
     scopes_stripped: int = 0
 
+    # The source location.
+    source_location: Optional['SourceLocation'] = None
+
     # Any transfer of ownership.
     transfer: Transfer = Transfer.NONE
 
@@ -850,8 +689,19 @@ class CachedName:
     # The name.
     name: str
 
+    # Set if the name is a substring of another. (resolver)
+    is_substring: bool = False
+
+    # The offset of the name in the string pool. (resolver)
+    offset: int = 0
+
     # Set if the name is used in the generated code.
     used: bool = False
+
+    def __str__(self):
+        """ Return the string representation. """
+
+        return self.name
 
 
 @dataclass
@@ -889,6 +739,9 @@ class Constructor:
 
     # The action required on the GIL.
     gil_action: GILAction = GILAction.DEFAULT
+
+    # Set if the ctor is the implementation of a cast. (resolver)
+    is_cast: bool = False
 
     # The keyword argument support.
     kw_args: KwArgs = KwArgs.NONE
@@ -939,8 +792,8 @@ class Extract:
     # The order.  A negative value implies the part is appended to the extract.
     order: int
 
-    # The actual part of the extract.
-    part: CodeBlock
+    # The text of the extract part.
+    text: str
 
 
 @dataclass
@@ -962,7 +815,8 @@ class IfaceFile:
     type: IfaceFileType
 
     # The C/C++ name.  It will be None if the interface file relates to a
-    # template.
+    # template.  Note that this is fully qualified and so overlaps with
+    # 'fq_cpp_name'.
     cpp_name: Optional[CachedName] = None
 
     # The filename extension.
@@ -971,6 +825,9 @@ class IfaceFile:
     # The fully qualified C/C++ name.  It will be None if the interface file
     # relates to a template.
     fq_cpp_name: Optional[ScopedName] = None
+
+    # The generated type number. (resolver)
+    type_nr: int = -1
 
     # The defining module.  It will be None if the interface file relates to a
     # template.
@@ -1034,6 +891,15 @@ class MappedType:
 
     # Set if the handwritten code requires user state information.
     needs_user_state: bool = False
+
+    # Set if /NoAssignmentOperator/ was specified.
+    no_assignment_operator: bool = False
+
+    # Set if /NoCopyCtor/ was specified.
+    no_copy_ctor: bool = False
+
+    # Set if /NoDefaultCtor/ was specified.
+    no_default_ctor: bool = False
 
     # Set if /NoRelease/ was specified.
     no_release: bool = False
@@ -1107,6 +973,9 @@ class Member:
 class Module:
     """ Encapsulate a module. """
 
+    # The list of all (explicit and implied) imports. (resolver)
+    all_imports: List['Module'] = field(default_factory=list)
+
     # Set if wrapped ctors should support cooperative multi-inheritance.
     call_super_init: bool = False
 
@@ -1169,8 +1038,17 @@ class Module:
     # The next key to auto-allocate.
     next_key: int = -1
 
+    # The number of exceptions defined in this module. (resolver)
+    nr_exceptions: int = 0
+
+    # The generated types needed by this module. (resolver)
+    needed_types: List[Argument] = field(default_factory=list)
+
     # The number of typedefs defined in this module.
     nr_typedefs: int = 0
+
+    # The number of virtual error handlers defined in this module. (resolver)
+    nr_virtual_error_handlers: int = 0
 
     # The overloaded global functions.
     overloads: List['Overload'] = field(default_factory=list)
@@ -1183,6 +1061,9 @@ class Module:
 
     # The code specified by any %PreInitialisationCode directives.
     preinitialisation_code: List[CodeBlock] = field(default_factory=list)
+
+    # The name of the module. (resolver)
+    py_name: Optional[str] = None
 
     # Set if the generated bindings are Py_ssize_t clean.
     py_ssize_t_clean: bool = False
@@ -1253,6 +1134,9 @@ class Overload:
     # Set if /AutoGen/ was specified and the associated feature was enabled.
     is_auto_generated: bool = False
 
+    # Set if the overload is a complementary slot. (resolver)
+    is_complementary: bool = False
+
     # Set if the overload is const.
     is_const: bool = False
 
@@ -1262,11 +1146,23 @@ class Overload:
     # Set if the overload is final.
     is_final: bool = False
 
+    # Set if the C++ overload is global. (resolver)
+    is_global: bool = False
+
+    # Set if self should not be dereferenced. (resolver)
+    dont_deref_self: bool = False
+
+    # Set if the overload is a reflected slot. (resolver)
+    is_reflected: bool = False
+
     # Set if the overload is static.
     is_static: bool = False
 
     # Set if the overload is virtual.
     is_virtual: bool = False
+
+    # Set if the overload is a virtual reimplementation. (resolver)
+    is_virtual_reimplementation: bool = False
 
     # The keyword argument support.
     kw_args: KwArgs = KwArgs.NONE
@@ -1298,11 +1194,8 @@ class Overload:
     # Set if a Python exception is raised.
     raises_py_exception: bool = False
 
-    # The source file name.
-    source_file: Optional[str] = None
-
-    # The source line number.
-    source_line: int = 0
+    # The source location.
+    source_location: Optional['SourceLocation'] = None
 
     # The optional throw arguments.
     throw_args: Optional['ThrowArguments'] = None
@@ -1373,8 +1266,28 @@ class Signature:
 
 
 @dataclass
+class SourceLocation:
+    """ Encapsulate a location in a .sip source file. """
+
+    # The .sip file name.
+    sip_file: str
+
+    # The column number.
+    column: int = 0
+
+    # The line number.
+    line: int = 0
+
+
+@dataclass
 class Specification:
     """ Encapsulate a parsed .sip file. """
+
+    # The version of the ABI being targeted.
+    abi_version: tuple
+
+    # Set if the specification is strict.
+    is_strict: bool
 
     # Set if the bindings are for C rather than C++.
     c_bindings: bool = False
@@ -1410,20 +1323,35 @@ class Specification:
     modules: List[Module] = field(default_factory=lambda: [Module()])
 
     # The cache of names that may be required as strings in the generated code.
-    name_cache: List[CachedName] = field(default_factory=list)
+    name_cache: Dict[int, List[CachedName]] = field(default_factory=dict)
+
+    # The number of virtual handlers. (resolver)
+    nr_virtual_handlers: int = 0
 
     # The list of plugins.  Note that these are PyQt-specific and will be
     # removed in SIP v7.
     plugins: List[str] = field(default_factory=list)
 
+    # The QObject class.
+    pyqt_qobject: Optional['WrappedClass'] = None
+
     # The list of typedefs.
     typedefs: List['WrappedTypedef'] = field(default_factory=list)
+
+    # The list of variables.
+    variables: List['WrappedVariable'] = field(default_factory=list)
 
     # The list of virtual error handlers.
     virtual_error_handlers: List['VirtualErrorHandler'] = field(default_factory=list)
 
-    # The list of variables.
-    variables: List['WrappedVariable'] = field(default_factory=list)
+    # The list of virtual handlers. (resolver)
+    virtual_handlers: List['VirtualHandler'] = field(default_factory=list)
+
+    def __hash__(self):
+        """ Reimplemented so a Specification object can be used as a dict key.
+        """
+
+        return id(self)
 
 
 @dataclass
@@ -1447,14 +1375,22 @@ class ThrowArguments:
 
 
 @dataclass
+class TypeHint:
+    """ Encapsulate a PEP 484 type hint. """
+
+    # The text of the hint.
+    text: str
+
+
+@dataclass
 class TypeHints:
     """ Encapsulate a set of PEP 484 type hints for a type. """
 
     # The type hint when used to pass a value into a callable.
-    hint_in: Optional[str]
+    hint_in: Optional[TypeHint]
 
     # The type hint used to return a value from a callable.
-    hint_out: Optional[str]
+    hint_out: Optional[TypeHint]
 
     # The representation of a default value in a type hint.
     default_value: Optional[str]
@@ -1468,7 +1404,7 @@ class Value:
     value_type: ValueType
 
     # Any literal value.
-    value: Optional[Union[str, int, float, FunctionCall]]
+    value: Optional[Union[str, int, float, FunctionCall, ScopedName]]
 
     # Any binary operator.
     binary_operator: Optional[str] = None
@@ -1492,6 +1428,58 @@ class VirtualErrorHandler:
 
     # The name of the handler.
     name: str
+
+    # The number of the handler. (resolver)
+    handler_nr: int = -1
+
+
+@dataclass
+class VirtualHandler:
+    """ Encapsulate a virtual overload handler. (resolver) """
+
+    # The C/C++ signature.
+    cpp_signature: Signature
+
+    # The Python signature.
+    py_signature: Signature
+
+    # The code specified by any %VirtualCatcherCode directive.
+    virtual_catcher_code: Optional[CodeBlock]
+
+    # The virtual error handler.
+    virtual_error_handler: VirtualErrorHandler
+
+    # Set if execution should abort if there is an exception.
+    abort_on_exception: bool = False
+
+    # The number of the handler.
+    handler_nr: int = -1
+
+    # Set if ownership of the result should be transferred.
+    transfer_result: bool = False
+
+
+@dataclass
+class VirtualOverload:
+    """ Encapsulate a virtual overloaded member function. (resolver) """
+
+    # The overload
+    overload: Overload
+
+    # The handler for the overload.  It is only set for the module for which
+    # code is being generated.
+    handler: Optional[VirtualHandler]
+
+
+@dataclass
+class VisibleMember:
+    """ Encapsulate a visible member function. (resolver) """
+
+    # The member function.
+    member: Member
+
+    # The defining class.
+    scope: 'WrappedClass'
 
 
 @dataclass
@@ -1518,6 +1506,9 @@ class WrappedClass:
 
     # Set if an instance of the class cannot be assigned.
     cannot_assign: bool = False
+
+    # Set if an instance of the class cannot be copied. (resolver)
+    cannot_copy: bool = False
 
     # The list of operator casts.
     casts: List[Argument] = field(default_factory=list)
@@ -1585,6 +1576,12 @@ class WrappedClass:
     # Set if the class has a non-lazy method.
     has_nonlazy_method: bool = False
 
+    # Set if the class actually has a shadow (ie. derived) class. (resolver)
+    has_shadow: bool = False
+
+    # Set if the class has variables that need handlers. (resolver)
+    has_variable_handlers: bool = False
+
     # The %InstanceCode.
     instance_code: Optional[CodeBlock] = None
 
@@ -1600,11 +1597,11 @@ class WrappedClass:
     # Set if the class is opaque.
     is_opaque: bool = False
 
-    # The class is defined in a protected section.
+    # Set if the class is defined in a protected section.
     is_protected: bool = False
 
-    # The class has only been used as a template argument.
-    is_template_arg: bool = False
+    # Set if the class is QObject or a sub-class. (resolver)
+    is_qobject: bool = False
 
     # The methods.
     members: List[Member] = field(default_factory=list)
@@ -1614,6 +1611,16 @@ class WrappedClass:
 
     # Set if /Mixin/ was specified.
     mixin: bool = False
+
+    # The list of all classes in the class hierarchy starting with itself.
+    # (resolver)
+    mro: List['WrappedClass'] = field(default_factory=list)
+
+    # Set if the class needs an array helper. (resolver)
+    needs_array_helper: bool = False
+
+    # Set if the class needs a copy helper. (resolver)
+    needs_copy_helper: bool = False
 
     # Set if the class needs a shadow (ie. derived) class.
     needs_shadow: bool = False
@@ -1652,6 +1659,9 @@ class WrappedClass:
     # The real class if this is a proxy or a namespace extender.
     real_class: Optional['WrappedClass'] = None
 
+    # The sub-class base class. (resolver)
+    subclass_base: Optional['WrappedClass'] = None
+
     # The super-classes.
     superclasses: List['WrappedClass'] = field(default_factory=list)
 
@@ -1672,6 +1682,12 @@ class WrappedClass:
 
     # The name of the virtual error handler to use.
     virtual_error_handler: Optional[str] = None
+
+    # The virtual overloaded methods. (resolver)
+    virtual_overloads: List[VirtualOverload] = field(default_factory=list)
+
+    # The visible member functions. (resolver)
+    visible_members: List[VisibleMember] = field(default_factory=list)
 
 
 @dataclass
@@ -1699,17 +1715,31 @@ class WrappedEnum:
     # The members.
     members: List['WrappedEnumMember'] = field(default_factory=list)
 
+    # Set if this enum is needed by the module for which code is to be
+    # generated. (resolver)
+    needed: bool = False
+
     # Set if /NoScope/ was specified.
     no_scope: bool = False
 
     # Set if the type hint should be suppressed.
     no_type_hint: bool = False
 
+    # The overloaded slot member functions. (resolver)
+    overloads: List['Overload'] = field(default_factory=list)
+
     # The Python name.
     py_name: Optional[CachedName] = None
 
     # The enclosing scope.
     scope: Optional[Union[MappedType, WrappedClass]] = None
+
+    # The slot member functions.  These can only be created by global operators
+    # being moved. (resolver)
+    slots: List[Member] = field(default_factory=list)
+
+    # The generated type number. (resolver)
+    type_nr: int = -1
 
 
 @dataclass
@@ -1748,6 +1778,13 @@ class WrappedException:
 
     # The base exception if it is defined in the specification.
     defined_base_exception: Optional['WrappedException'] = None
+
+    # The number of the exception. (resolver)
+    exception_nr: int = -1
+
+    # Set if this exception is needed by the module for which code is to be
+    # generated. (resolver)
+    needed: bool = False
 
     # The Python name.
     py_name: Optional[str] = None
@@ -1800,6 +1837,9 @@ class WrappedVariable:
 
     # Set if the variable is static.
     is_static: bool = False
+
+    # Set if the variable needs a handler. (resolver)
+    needs_handler: bool = False
 
     # Set if the type hint should be suppressed.
     no_type_hint: bool = False

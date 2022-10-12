@@ -168,9 +168,15 @@ The full set of command line options is:
 .. option:: --generator NAME
 
     If the :option:`--wheel-tag` option is specified then ``NAME`` is written
-    as the ``Generator`` in the :file:`WHEEL` file in the :file:`.dist-info`
-    directory.  Otherwise ``NAME`` is written to the :file:`INSTALLER` file.
-    By default ``sip-distinfo`` is written.
+    as part of the ``Generator`` in the :file:`WHEEL` file in the
+    :file:`.dist-info` directory.  Otherwise ``NAME`` is written to the
+    :file:`INSTALLER` file.  By default ``sipbuild`` is written.
+
+.. option:: --generator-version VERSION
+
+    ``VERSION`` is written as part of the ``Generator`` in the :file:`WHEEL`
+    file in the :file:`.dist-info` directory.  By default the SIP version
+    number is written.
 
 .. option:: --gui-script ENTRY-POINT
 
@@ -370,6 +376,10 @@ The full set of command line options is:
 
     Create an sdist which can then be installed by :program:`pip` or uploaded
     to PyPI.
+
+    :program:`pip` can also be used to create a wheel from the sdist.  However,
+    for Linux wheels, :program:`auditwheel` must be run for the wheel before it
+    can be uploaded to PyPI.
 
 .. option:: --setup-cfg FILE
 

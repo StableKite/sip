@@ -329,8 +329,15 @@ class Project(AbstractProject, Configurable):
             # We expect a three part tag so leave anything else unchanged.
             parts = platform_tag.split('-')
             if len(parts) == 3:
-                parts[1] = '{}.{}'.format(self.minimum_macos_version[0],
-                        self.minimum_macos_version[1])
+                min_major = int(self.minimum_macos_version[0])
+                min_minor = int(self.minimum_macos_version[1])
+
+                # For arm64 binaries enforce a valid minimum macOS version.
+                if parts[2] == 'arm64' and min_major < 11:
+                    min_major = 11
+                    min_minor = 0
+
+                parts[1] = '{}.{}'.format(min_major, min_minor)
 
                 platform_tag = '-'.join(parts)
 
@@ -338,21 +345,13 @@ class Project(AbstractProject, Configurable):
             # We expect a two part tag so leave anything else unchanged.
             parts = platform_tag.split('-')
             if len(parts) == 2:
-                if self.minimum_glibc_version > (2, 17):
-                    # PEP 600.
-                    parts[0] = 'manylinux'
-                    parts.insert(1,
-                            '{}.{}'.format(self.minimum_glibc_version[0],
-                                    self.minimum_glibc_version[1]))
-                elif self.minimum_glibc_version > (2, 12):
-                    # PEP 599.
-                    parts[0] = 'manylinux2014'
-                elif self.minimum_glibc_version > (2, 5):
-                    # PEP 571.
-                    parts[0] = 'manylinux2010'
+                if self.minimum_glibc_version:
+                    major, minor = self.minimum_glibc_version
                 else:
-                    # PEP 513.
-                    parts[0] = 'manylinux1'
+                    major, minor = 2, 5
+
+                parts[0] = 'manylinux'
+                parts.insert(1, '{}.{}'.format(major, minor))
 
                 platform_tag = '-'.join(parts)
 
@@ -384,7 +383,7 @@ class Project(AbstractProject, Configurable):
                 next_abi_major)]
 
     def get_sip_distinfo_command_line(self, sip_distinfo, inventory,
-            generator=None, wheel_tag=None):
+            generator=None, wheel_tag=None, generator_version=None):
         """ Return a sequence of command line arguments to invoke sip-distinfo.
         """
 
@@ -404,6 +403,10 @@ class Project(AbstractProject, Configurable):
         if generator is not None:
             args.append('--generator')
             args.append(generator)
+
+        if generator_version is not None:
+            args.append('--generator-version')
+            args.append(generator_version)
 
         if wheel_tag is not None:
             args.append('--wheel-tag')
@@ -464,8 +467,6 @@ class Project(AbstractProject, Configurable):
                         "'{0}' is an invalid GLIBC version number".format(
                                 value),
                         section_name='tool.sip.project')
-        else:
-            value = (2, 5)
 
         self._minimum_glibc_version = value
 

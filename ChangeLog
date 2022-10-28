@@ -1,4 +1,181 @@
+2022-10-27  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/generator/outputs/pyi.py:
+	Fixed the .pyi file __eq__ and __ne__ entries.
+	[ea12891e29e2] [6.7.3] <6.7-maint>
+
+	* NEWS, sipbuild/generator/outputs/pyi.py:
+	Added the Python .pyi code to the repo.
+	[1246f197548e] <6.7-maint>
+
+	* sipbuild/generator/outputs/type_hints.py:
+	Brackets are allowed in non-typing module type hints.
+	[b0f99d3165dc] <6.7-maint>
+
+	* code_generator/gencode.c, code_generator/sip.h,
+	code_generator/type_hints.c:
+	Stripped out redundant C code.
+	[4dedf2303b4a] <6.7-maint>
+
+	* sipbuild/generator/outputs/type_hints.py:
+	Completed the Python implementation of type hints.
+	[ce9d2cb4dc51] <6.7-maint>
+
+	* sipbuild/generator/outputs/formatters/argument.py,
+	sipbuild/generator/outputs/formatters/enum.py,
+	sipbuild/generator/outputs/formatters/klass.py,
+	sipbuild/generator/outputs/formatters/utils.py,
+	sipbuild/generator/outputs/type_hints.py:
+	Debugging of new type hint code.
+	[1756cefda6bb] <6.7-maint>
+
+2022-10-25  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/pybinding.c, sipbuild/bindings.py,
+	sipbuild/generator/outputs/__init__.py,
+	sipbuild/generator/outputs/api.py,
+	sipbuild/generator/outputs/formatters/__init__.py,
+	sipbuild/generator/outputs/formatters/argument.py,
+	sipbuild/generator/outputs/formatters/enum.py,
+	sipbuild/generator/outputs/formatters/klass.py,
+	sipbuild/generator/outputs/formatters/signature.py,
+	sipbuild/generator/outputs/formatters/utils.py,
+	sipbuild/generator/outputs/formatters/value_list.py,
+	sipbuild/generator/outputs/formatters/variable.py,
+	sipbuild/generator/outputs/type_hints.py,
+	sipbuild/generator/outputs/xml.py,
+	sipbuild/generator/parser/parser.py,
+	sipbuild/generator/parser/parser_manager.py,
+	sipbuild/generator/specification.py:
+	Initial re-implementation of the .pyi file generation in Python.
+	[f81ba5225472] <6.7-maint>
+
+2022-10-23  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/py2c.c:
+	Removed a couple of unused conversion functions.
+	[62dfbdfe52f8] <6.7-maint>
+
+	* code_generator/py2c.c:
+	Fixed a regression in the convertion of type hints to C.
+	[d5c985671fc1] <6.7-maint>
+
+	* sipbuild/generator/outputs/formatters/argument.py,
+	sipbuild/generator/outputs/formatters/signature.py,
+	sipbuild/generator/outputs/formatters/template.py,
+	sipbuild/generator/outputs/xml.py:
+	Fixes to the XML output.
+	[11942a8be37d] <6.7-maint>
+
+	* code_generator/py2c.c:
+	Fixed a regression in the converting of type hints to C.
+	[464398062a62] <6.7-maint>
+
+	* code_generator/py2c.c, sipbuild/generator/formatters/__init__.py,
+	sipbuild/generator/formatters/argument.py,
+	sipbuild/generator/formatters/base_formatter.py,
+	sipbuild/generator/formatters/enum.py,
+	sipbuild/generator/formatters/klass.py,
+	sipbuild/generator/formatters/overload.py,
+	sipbuild/generator/formatters/scoped.py,
+	sipbuild/generator/formatters/signature.py,
+	sipbuild/generator/formatters/template.py,
+	sipbuild/generator/formatters/utils.py,
+	sipbuild/generator/formatters/value_list.py,
+	sipbuild/generator/formatters/variable.py,
+	sipbuild/generator/instantiations.py,
+	sipbuild/generator/outputs/api.py,
+	sipbuild/generator/outputs/formatters/__init__.py,
+	sipbuild/generator/outputs/formatters/argument.py,
+	sipbuild/generator/outputs/formatters/base_formatter.py,
+	sipbuild/generator/outputs/formatters/enum.py,
+	sipbuild/generator/outputs/formatters/klass.py,
+	sipbuild/generator/outputs/formatters/overload.py,
+	sipbuild/generator/outputs/formatters/scoped.py,
+	sipbuild/generator/outputs/formatters/signature.py,
+	sipbuild/generator/outputs/formatters/template.py,
+	sipbuild/generator/outputs/formatters/utils.py,
+	sipbuild/generator/outputs/formatters/value_list.py,
+	sipbuild/generator/outputs/formatters/variable.py,
+	sipbuild/generator/outputs/type_hints.py,
+	sipbuild/generator/outputs/xml.py,
+	sipbuild/generator/parser/parser_manager.py,
+	sipbuild/generator/specification.py,
+	sipbuild/generator/type_hints.py:
+	Refactoring based on a type hint just being an optional string.
+	[fb794ebfa872] <6.7-maint>
+
+	* NEWS, sipbuild/generator/outputs/xml.py:
+	The XML is now generated as an etree root node rather than an XML
+	file.
+	[9b31d8115ad0] <6.7-maint>
+
+2022-10-22  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/generator/type_hints.py:
+	Completed the Python implementation of the XML generation.
+	[59c9a1dcd3dc] <6.7-maint>
+
+	* sipbuild/generator/type_hints.py:
+	Fixed the parsing of type hints for class enums defined with Python
+	scopes.
+	[46dfc03ef680] <6.7-maint>
+
+	* sipbuild/generator/type_hints.py:
+	Fixed the parsing of mapped type type hints.
+	[990804c44eec] <6.7-maint>
+
+	* sipbuild/generator/formatters/value_list.py,
+	sipbuild/generator/type_hints.py:
+	Debugging of XML generation.
+	[888053404043] <6.7-maint>
+
+	* code_generator/export.c, code_generator/pybinding.c,
+	code_generator/sip.h, sipbuild/generator/formatters/__init__.py,
+	sipbuild/generator/formatters/argument.py,
+	sipbuild/generator/formatters/enum.py,
+	sipbuild/generator/formatters/klass.py,
+	sipbuild/generator/formatters/signature.py,
+	sipbuild/generator/formatters/template.py,
+	sipbuild/generator/formatters/utils.py,
+	sipbuild/generator/formatters/value_list.py,
+	sipbuild/generator/outputs/xml.py,
+	sipbuild/generator/resolver/resolver.py,
+	sipbuild/generator/type_hints.py:
+	Completed the Python implementation of the XML generation.
+	[492f413d83bf] <6.7-maint>
+
+2022-10-20  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* Merged the latest maint branch changes.
+	[c014ebe8e7f2] <6.7-maint>
+
+2022-10-18  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/generator/formatters/argument.py,
+	sipbuild/generator/formatters/enum.py,
+	sipbuild/generator/formatters/klass.py,
+	sipbuild/generator/formatters/utils.py,
+	sipbuild/generator/formatters/value_list.py,
+	sipbuild/generator/formatters/variable.py,
+	sipbuild/generator/instantiations.py,
+	sipbuild/generator/outputs/xml.py,
+	sipbuild/generator/parser/parser_manager.py,
+	sipbuild/generator/type_hints.py:
+	Reimplemented enough of the XML output to represent a type.
+	[c9313bf161cb] <6.7-maint>
+
+2022-10-20  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/resolver/resolver.py:
+	Fixed a bug when logging resolver errors in overloads.
+	[3b317b873f00] <6.7-maint>
+
 2022-10-12  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.7.2 for changeset 02e1e42540d2
+	[b359afe150b3] <6.7-maint>
 
 	* NEWS, sipbuild/bindings.py, sipbuild/generator/__init__.py,
 	sipbuild/generator/api.py, sipbuild/generator/extracts.py,

@@ -21,8 +21,50 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from .scoped import EmbeddedScopeFormatter
+def format_copying(copying, comment):
+    """ Return a formatted %Copying text. """
+
+    s = comment + ' ' + ''.join([b.text for b in copying]).rstrip().replace('\n', '\n' + comment + ' ')
+
+    if s:
+        s = comment + '\n' + s
+
+    return s
 
 
-class VariableFormatter(EmbeddedScopeFormatter):
-    """ This creates various string representations of a variable. """
+def format_scoped_py_name(scope, py_name):
+    """ Return a formatted scoped Python name. """
+
+    if scope is None or scope.is_hidden_namespace:
+        scope_s = ''
+    else:
+        scope_s = format_scoped_py_name(scope.scope, None) + scope.py_name.name + '.'
+
+    if py_name is None:
+        py_name_s = ''
+    else:
+        py_name_s = py_name
+
+    return scope_s + py_name_s
+
+
+def iface_is_defined(iface_file, scope, module, defined):
+    """ Return True if a type corresponding to an interface file has been
+    defined in the context of a module.
+    """
+
+    # A type in another module would have been imported.
+    if iface_file.module is not module:
+        return True
+
+    if iface_file not in defined:
+        return False
+
+    # Check all enclosing scopes have been defined as well.
+    while scope is not None:
+        if scope.iface_file not in defined:
+            return False
+
+        scope = scope.scope
+
+    return True

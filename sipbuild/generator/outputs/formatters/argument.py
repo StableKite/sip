@@ -21,8 +21,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from ..scoped_name import STRIP_NONE
-from ..specification import ArgumentType, ArrayArgument, ClassKey, ValueType
+from ...scoped_name import STRIP_NONE
+from ...specification import ArgumentType, ArrayArgument, ClassKey, ValueType
+
+from ..type_hints import TypeHintManager
 
 from .base_formatter import BaseFormatter
 from .utils import format_scoped_py_name
@@ -32,8 +34,8 @@ class ArgumentFormatter(BaseFormatter):
     """ This creates various string representations of an argument. """
 
     def cpp_type(self, *, name=None, scope=None, strip=STRIP_NONE,
-            use_typename=True, as_xml=False):
-        """ Return the C++ representation of the argument type. """
+            make_public=False, use_typename=True, as_xml=False):
+        """ Return the argument as a C++ type. """
 
         arg = self.object
 
@@ -61,7 +63,7 @@ class ArgumentFormatter(BaseFormatter):
             if arg.type is ArgumentType.FUNCTION:
                 s += ArgumentFormatter(self.spec,
                         arg.definition.result).cpp_type(scope=scope,
-                                strip=strip)
+                                strip=strip, as_xml=as_xml)
 
                 s += ' (' + '*' * nr_derefs + name + ')('
 
@@ -158,7 +160,8 @@ class ArgumentFormatter(BaseFormatter):
 
             elif arg.type is ArgumentType.MAPPED:
                 s += ArgumentFormatter(self.spec,
-                        arg.definition.type).cpp_type(scope=scope, strip=strip)
+                        arg.definition.type).cpp_type(scope=scope, strip=strip,
+                                as_xml=as_xml)
 
             elif arg.type is ArgumentType.CLASS:
                 from .klass import ClassFormatter
@@ -167,18 +170,19 @@ class ArgumentFormatter(BaseFormatter):
                     s += 'union ' if arg.definition.class_key is ClassKey.UNION else 'struct '
 
                 s += ClassFormatter(self.spec, arg.definition).scoped_name(
-                        scope=scope, strip=strip, as_xml=as_xml)
+                        scope=scope, strip=strip, make_public=make_public,
+                        as_xml=as_xml)
 
             elif arg.type is ArgumentType.TEMPLATE:
                 from .template import TemplateFormatter
 
-                s += TemplateFormatter(self.spec, arg.definition).cpp_type(
-                        scope=scope, strip=strip, as_xml=as_xml)
+                s += TemplateFormatter(self.spec, arg.definition, scope).cpp_type(
+                        strip=strip, as_xml=as_xml)
 
             elif arg.type is ArgumentType.ENUM:
                 enum = arg.definition
 
-                if enum.fq_cpp_name is None or enum.is_protected:
+                if enum.fq_cpp_name is None or (enum.is_protected and not make_public):
                     s += 'int'
                 else:
                     s += enum.fq_cpp_name.cpp_stripped(strip)
@@ -199,7 +203,7 @@ class ArgumentFormatter(BaseFormatter):
                 space_before_name = True
 
         if is_reference:
-            s += '&amp;' if as_xml else '&'
+            s += '&'
 
         if name:
             if space_before_name:
@@ -209,104 +213,7 @@ class ArgumentFormatter(BaseFormatter):
 
         return s
 
-    def py_type(self, default_value=False):
-        """ Return the Python representation of the argument type. """
-
-        arg = self.object
-
-        scope, name = self._py_arg()
-
-        s = format_scoped_py_name(scope, name)
-
-        if default_value and arg.default_value is not None:
-            if arg.name is not None:
-                s += ' ' + arg.name.name
-
-            s += '=' + self._py_default_value()
-
-        return s
-
-    def _py_arg(self):
-        """ Return an argument as a 2-tuple of scope and name. """
-
-        type = self.object.type
-        definition = self.object.definition
-
-        scope = None
-        name = "unknown-type"
-
-        if type is ArgumentType.CLASS:
-            scope = definition.scope
-            name = definition.py_name.name
-
-        elif type is ArgumentType.MAPPED:
-            if definition.py_name is not None:
-                name = definition.py_name.name
-
-        elif type is ArgumentType.DEFINED:
-            name = definition.as_py
-
-        elif type is ArgumentType.CAPSULE:
-            name = definition.base_name
-
-        elif type in (ArgumentType.STRUCT, ArgumentType.UNION, ArgumentType.VOID):
-            name = 'sip.voidptr'
-
-        elif type is ArgumentType.ENUM:
-            if definition.py_name is None:
-                name = 'int'
-            else:
-                scope = definition.scope
-                name = definition.py_name.name
-
-        elif type is ArgumentType.USTRING:
-            name = 'bytes'
-
-        elif type in (ArgumentType.STRING, ArgumentType.SSTRING, ArgumentType.WSTRING, ArgumentType.ASCII_STRING, ArgumentType.LATIN1_STRING, ArgumentType.UTF8_STRING):
-            name = 'bytes' if self.object.array is ArrayArgument.ARRAY else 'str'
-
-        elif type in (ArgumentType.BYTE, ArgumentType.SBYTE, ArgumentType.UBYTE, ArgumentType.USHORT, ArgumentType.UINT, ArgumentType.LONG, ArgumentType.LONGLONG, ArgumentType.ULONG, ArgumentType.ULONGLONG, ArgumentType.SHORT, ArgumentType.INT, ArgumentType.CINT, ArgumentType.SSIZE, ArgumentType.SIZE, ArgumentType.HASH):
-            name = 'int'
-
-        elif type in (ArgumentType.FLOAT, ArgumentType.CFLOAT, ArgumentType.DOUBLE, ArgumentType.CDOUBLE):
-            name = 'float'
-
-        elif type in (ArgumentType.BOOL, ArgumentType.CBOOL):
-            name = 'bool'
-
-        elif type is ArgumentType.PYOBJECT:
-            name = 'object'
-
-        elif type is ArgumentType.PYTUPLE:
-            name = 'tuple'
-
-        elif type is ArgumentType.PYLIST:
-            name = 'list'
-
-        elif type is ArgumentType.PYDICT:
-            name = 'dict'
-
-        elif type is ArgumentType.PYCALLABLE:
-            name = 'callable'
-
-        elif type is ArgumentType.PYSLICE:
-            name = 'slice'
-
-        elif type is ArgumentType.PYTYPE:
-            name = 'type'
-
-        elif type is ArgumentType.PYBUFFER:
-            name = 'buffer'
-
-        elif type is ArgumentType.PYENUM:
-            name = 'enum'
-
-        elif type is ArgumentType.ELLIPSIS:
-            name = '...'
-
-        return scope, name
-
-    def _py_default_value(self):
+    def py_default_value(self, embedded=False):
         """ Return the Python representation of the argument's default value.
         """
 
@@ -328,4 +235,189 @@ class ArgumentFormatter(BaseFormatter):
             if arg.type in (ArgumentType.BOOL, ArgumentType.CBOOL):
                 return 'True' if value else 'False'
 
-        return ValueListFormatter(self.spec, arg.default_value).py_expression
+        return ValueListFormatter(self.spec, arg.default_value).py_expression(
+                embedded=embedded)
+
+    def as_py_type(self, pep484=False, default_value=False):
+        """ Return the argument as a Python type. """
+
+        arg = self.object
+
+        scope, name = self._py_arg(pep484)
+
+        s = format_scoped_py_name(scope, name)
+
+        if default_value and arg.default_value is not None:
+            if arg.name is not None:
+                s += ' ' + arg.name.name
+
+            s += '=' + self.py_default_value()
+
+        return s
+
+    def as_rest_ref(self, out):
+        """ Return the argument as a reST reference. """
+
+        arg = self.object
+
+        s = ''
+
+        hint = self._get_hint(out)
+
+        if hint is None:
+            if arg.type is ArgumentType.CLASS:
+                from .klass import ClassFormatter
+
+                s += ClassFormatter(self.spec, arg.definition).as_rest_ref()
+            elif arg.type is ArgumentType.ENUM:
+                if arg.definition.py_name is not None:
+                    from .enum import EnumFormatter
+
+                    s += EnumFormatter(self.spec, arg.definition).as_rest_ref()
+                else:
+                    s += 'int'
+            elif arg.type is ArgumentType.MAPPED:
+                # There would normally be a type hint.
+                s += "unknown-type"
+            else:
+                s += self.as_py_type()
+        else:
+            s += TypeHintManager(self.spec).as_rest_ref(hint, out)
+
+        return s
+
+    def as_type_hint(self, module, out, defined):
+        """ Return the argument as a type hint. """
+
+        arg = self.object
+
+        s = ''
+
+        hint = self._get_hint(out)
+
+        if hint is None:
+            if arg.type is ArgumentType.CLASS:
+                from .klass import ClassFormatter
+
+                s += ClassFormatter(self.spec, arg.definition).as_type_hint(
+                        module, defined)
+            elif arg.type is ArgumentType.ENUM:
+                if arg.definition.py_name is not None:
+                    from .enum import EnumFormatter
+
+                    s += EnumFormatter(self.spec, arg.definition).as_type_hint(
+                            module, defined)
+                else:
+                    s += 'int'
+            elif arg.type is ArgumentType.MAPPED:
+                # There would normally be a type hint.
+                s += 'typing.Any'
+            else:
+                s += self.as_py_type(pep484=True)
+        else:
+            s += TypeHintManager(self.spec).as_type_hint(hint, module, out,
+                    defined)
+
+        return s
+
+    def _get_hint(self, out):
+        """ Return the raw type hint. """
+
+        arg = self.object
+
+        # Use any explicit type hint unless the argument is constrained.
+        if arg.type_hints is None:
+            hint = None
+        elif out:
+            hint = arg.type_hints.hint_out
+        elif arg.is_constrained:
+            hint = None
+        else:
+            hint = arg.type_hints.hint_in
+
+        return hint
+
+    def _py_arg(self, pep484):
+        """ Return an argument as a 2-tuple of scope and name. """
+
+        type = self.object.type
+        definition = self.object.definition
+        sip_module = self.spec.sip_module
+
+        scope = None
+        name = "unknown-type"
+
+        if type is ArgumentType.CLASS:
+            scope = definition.scope
+            name = definition.py_name.name
+
+        elif type is ArgumentType.MAPPED:
+            if definition.py_name is not None:
+                name = definition.py_name.name
+
+        elif type is ArgumentType.ENUM:
+            if definition.py_name is None:
+                name = 'int'
+            else:
+                scope = definition.scope
+                name = definition.py_name.name
+
+        elif type is ArgumentType.DEFINED:
+            name = definition.as_py
+
+        elif type is ArgumentType.CAPSULE:
+            name = definition.base_name
+
+        elif type in (ArgumentType.STRUCT, ArgumentType.UNION, ArgumentType.VOID):
+            name = sip_module + '.voidptr'
+
+        elif type in (ArgumentType.STRING, ArgumentType.SSTRING, ArgumentType.USTRING):
+            name = 'bytes'
+
+        elif type in (ArgumentType.WSTRING, ArgumentType.ASCII_STRING, ArgumentType.LATIN1_STRING, ArgumentType.UTF8_STRING):
+            name = 'bytes' if self.object.array is ArrayArgument.ARRAY else 'str'
+
+        elif type in (ArgumentType.BYTE, ArgumentType.SBYTE, ArgumentType.UBYTE, ArgumentType.USHORT, ArgumentType.UINT, ArgumentType.LONG, ArgumentType.LONGLONG, ArgumentType.ULONG, ArgumentType.ULONGLONG, ArgumentType.SHORT, ArgumentType.INT, ArgumentType.CINT, ArgumentType.SSIZE, ArgumentType.SIZE, ArgumentType.HASH):
+            name = 'int'
+
+        elif type in (ArgumentType.FLOAT, ArgumentType.CFLOAT, ArgumentType.DOUBLE, ArgumentType.CDOUBLE):
+            name = 'float'
+
+        elif type in (ArgumentType.BOOL, ArgumentType.CBOOL):
+            name = 'bool'
+
+        elif type is ArgumentType.PYOBJECT:
+            name = 'typing.Any' if pep484 else 'Any'
+
+        elif type is ArgumentType.PYTUPLE:
+            name = 'typing.Tuple' if pep484 else 'Tuple'
+
+        elif type is ArgumentType.PYLIST:
+            name = 'typing.List' if pep484 else 'List'
+
+        elif type is ArgumentType.PYDICT:
+            name = 'typing.Dict' if pep484 else 'Dict'
+
+        elif type is ArgumentType.PYCALLABLE:
+            name = 'typing.Callable[..., None]' if pep484 else 'Callable[..., None]'
+
+        elif type is ArgumentType.PYSLICE:
+            name = 'slice'
+
+        elif type is ArgumentType.PYTYPE:
+            name = 'type'
+
+        elif type is ArgumentType.PYBUFFER:
+            if pep484:
+                name = sip_module + '.Buffer'
+            else:
+                # This replicates sip.pyi.
+                name = f'Union[bytes, bytearray, memoryview, {sip_module}.array, {sip_module}.voidptr]'
+
+        elif type is ArgumentType.PYENUM:
+            name = 'enum.Enum'
+
+        elif type is ArgumentType.ELLIPSIS:
+            name = '*'
+
+        return scope, name

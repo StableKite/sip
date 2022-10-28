@@ -21,38 +21,18 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from ..scoped_name import STRIP_GLOBAL, STRIP_NONE
-
-from .scoped import ScopedFormatter
-from .signature import SignatureFormatter
+from .scoped import EmbeddedScopeFormatter
 
 
-class TemplateFormatter(ScopedFormatter):
-    """ This creates various string representations of a template. """
+class VariableFormatter(EmbeddedScopeFormatter):
+    """ This creates various string representations of a variable. """
 
-    def cpp_type(self, *, scope=None, strip=STRIP_NONE, as_xml=False):
-        """ Return the C++ representation of the template type. """
+    def as_rest_ref(self):
+        """ Return the fully qualified Python name as a reST reference. """
 
-        template = self.object
+        variable = self.object
+        module_name = variable.module.fq_py_name.name
+        variable_name = format_scoped_py_name(self.scope,
+                variable.py_name.name)
 
-        s = ''
-
-        if as_xml:
-            strip = STRIP_GLOBAL
-
-        s += template.cpp_name.cpp_stripped(strip)
-
-        s += '&lt;' if as_xml else '<'
-
-        s += SignatureFormatter(self.spec, template.types).cpp_arguments(
-                strip=strip, as_xml=as_xml)
-
-        if as_xml:
-            s += '&gt;'
-        else:
-            if s.endswith('>'):
-                s += ' '
-
-            s += '>'
-
-        return s
+        return f':sip:ref:`~{module_name}.{variable_name}`'

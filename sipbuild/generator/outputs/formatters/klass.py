@@ -21,16 +21,27 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from ..scoped_name import STRIP_NONE
+from ...scoped_name import STRIP_NONE
 
 from .scoped import EmbeddedScopeFormatter
 from .template import TemplateFormatter
+from .utils import format_scoped_py_name, iface_is_defined
 
 
 class ClassFormatter(EmbeddedScopeFormatter):
     """ This creates various string representations of a class. """
 
-    def scoped_name(self, *, scope=None, strip=STRIP_NONE, as_xml=False):
+    def as_rest_ref(self):
+        """ Return the fully qualified Python name as a reST reference. """
+
+        klass = self.object
+        module_name = klass.iface_file.module.fq_py_name.name
+        klass_name = format_scoped_py_name(self.scope, klass.py_name.name)
+
+        return f':sip:ref:`~{module_name}.{klass_name}`'
+
+    def scoped_name(self, *, scope=None, strip=STRIP_NONE, make_public=False,
+            as_xml=False):
         """ Return an appropriately scoped class name. """
 
         klass = self.object
@@ -40,7 +51,7 @@ class ClassFormatter(EmbeddedScopeFormatter):
                     scope=scope, strip=strip, as_xml=as_xml)
 
         # Protected classes have to be explicitly scoped.
-        if klass.is_protected:
+        if klass.is_protected and not make_public:
             # This should never happen.
             if scope is None:
                 scope = klass.iface_file
@@ -48,3 +59,17 @@ class ClassFormatter(EmbeddedScopeFormatter):
             return 'sip{scope.fq_cpp_name.as_word}::sip{klass.iface_file.fq_cpp_name.base_name}'
 
         return klass.iface_file.fq_cpp_name.cpp_stripped(strip)
+
+    def as_type_hint(self, module, defined):
+        """ Return the type hint. """
+
+        klass = self.object
+
+        # We assume that an external class will be handled properly by some
+        # handwritten type hint code.
+        quote = '' if klass.external or iface_is_defined(klass.iface_file, klass.scope, module, defined) else "'"
+
+        # Include the module name if it is not the current one.
+        module_name = klass.iface_file.module.py_name + '.' if klass.iface_file.module is not module else ''
+
+        return f'{quote}{module_name}{self.fq_py_name}{quote}'

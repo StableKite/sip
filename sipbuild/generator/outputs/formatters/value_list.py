@@ -21,10 +21,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from ..specification import ValueType
+from ...specification import ValueType
 
 from .argument import ArgumentFormatter
 from .base_formatter import BaseFormatter
+from .enum import EnumFormatter
+from .variable import VariableFormatter
 
 
 class ValueListFormatter(BaseFormatter):
@@ -36,19 +38,57 @@ class ValueListFormatter(BaseFormatter):
 
         return self._expression()
 
-    @property
-    def embedded_py_expression(self):
-        """ The Python representation of the value list as an expression
-        embedded in a string.
-        """
-
-        return self._expression(as_python=True, embedded=True)
-
-    @property
-    def py_expression(self):
+    def py_expression(self, embedded=False):
         """ The Python representation of the value list as an expression. """
 
-        return self._expression(as_python=True)
+        return self._expression(as_python=True, embedded=embedded)
+
+    def as_rest_ref(self):
+        """ Return the Python representation of the value list as a reST
+        reference.
+        """
+
+        value_list = self.object
+
+        # The value must be a scoped name and we don't handle expressions.
+        if len(value_list) != 1 or value_list[0].value_type is not ValueType.SCOPED:
+            return None
+
+        target = value_list[0].value
+
+        # See if it is an attribute.
+        for variable in self.spec.variables:
+            if variable.fq_cpp_name == target:
+                return VariableFormatter(self.spec, variable).as_rest_ref()
+
+        # See if it is an enum member.
+        target_scope = target.scope
+        if target_scope is not None:
+            target_scope.make_absolute()
+
+        target_base_name = target.base_name
+
+        for enum in self.spec.enums:
+            # Look for the member name first before working out if it is the
+            # correct enum.
+            for member in enum.members:
+                if member.cpp_name == target_base_name:
+                    formatter = EnumFormatter(self.spec, enum)
+
+                    if enum.is_scoped:
+                        # It's a scoped enum so the fully qualified name of the
+                        # enum must match the scope of the name.
+                        if target_scope is not None and enum.fq_cpp_name == target_scope:
+                            return formatter.member_as_rest_ref(member)
+                    else:
+                        # It's a traditional enum so the scope of the enum must
+                        # match the scope of the name.
+                        if (enum.scope is None and target_scope is None) or (enum.scope is not None and target_scope is not None and enum.scope.iface_file.fq_cpp_name == target_scope):
+                            return formatter.member_as_rest_ref(member)
+
+                    break
+
+        return None
 
     def _expression(self, as_python=False, embedded=False):
         """ The representation of the value list as an expression. """
@@ -110,7 +150,7 @@ class ValueListFormatter(BaseFormatter):
                         value.value.result)
 
                 if as_python:
-                    s += arg_formatter.py_type()
+                    s += arg_formatter.as_py_type()
                 else:
                     s += arg_formatter.cpp_type()
 

@@ -601,7 +601,7 @@ def _move_global_slot(spec, mod, global_slot, error_log):
 
         # Move the overload to the end of the destination list.
         if is_second:
-            overload.is_reflected
+            overload.is_reflected = True
 
         overload.access_specifier = AccessSpecifier.PUBLIC
         overload.common = arg_member
@@ -2190,9 +2190,10 @@ def _check_properties(klass, error_log):
 def _log_overload_error(error_log, text, overload, scope=None):
     """ Log an error about an overload. """
 
-    from ..formatters import OverloadFormatter
+    if scope is None:
+        fq_cpp_name = overload.cpp_name
+    else:
+        fq_cpp_name = f'{scope.iface_file.fq_cpp_name}::{overload.cpp_name}'
 
-    formatter = OverloadFormatter(overload, scope)
-
-    error_log.log(f"'{formatter.fq_cpp_name}' {text}",
+    error_log.log(f"'{fq_cpp_name}' {text}",
             source_location=overload.source_location)

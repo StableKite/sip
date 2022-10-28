@@ -8,7 +8,7 @@
 # License v2 or v3 as published by the Free Software Foundation which can be
 # found in the files LICENSE-GPL2 and LICENSE-GPL3 included in this package.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ('AS IS'
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 # ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
@@ -21,9 +21,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-# Publish the API.  This is private to the rest of sip.
-from .enum import EnumFormatter
-from .klass import ClassFormatter
-from .overload import OverloadFormatter
+from ...scoped_name import STRIP_GLOBAL, STRIP_NONE
+
+from .scoped import ScopedFormatter
 from .signature import SignatureFormatter
-from .variable import VariableFormatter
+
+
+class TemplateFormatter(ScopedFormatter):
+    """ This creates various string representations of a template. """
+
+    def cpp_type(self, *, strip=STRIP_NONE, as_xml=False):
+        """ Return the C++ representation of the template type. """
+
+        template = self.object
+
+        s = ''
+
+        if as_xml:
+            strip = STRIP_GLOBAL
+
+        s += template.cpp_name.cpp_stripped(strip)
+
+        s += '<'
+
+        s += SignatureFormatter(self.spec, template.types).cpp_arguments(
+                strip=strip, as_xml=as_xml)
+
+        if s.endswith('>') and not as_xml:
+            s += ' '
+
+        s += '>'
+
+        return s

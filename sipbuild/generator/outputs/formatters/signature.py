@@ -21,8 +21,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from ..scoped_name import STRIP_NONE
-from ..specification import ArgumentType, ArrayArgument
+from ...scoped_name import STRIP_NONE
+from ...specification import ArgumentType, ArrayArgument
 
 from .argument import ArgumentFormatter
 from .base_formatter import BaseFormatter
@@ -31,14 +31,17 @@ from .base_formatter import BaseFormatter
 class SignatureFormatter(BaseFormatter):
     """ This creates various string representations of a signature. """
 
-    def cpp_arguments(self, *, scope=None, strip=STRIP_NONE,
+    def cpp_arguments(self, *, scope=None, strip=STRIP_NONE, make_public=False,
             as_xml=False):
         """ Return the C++ representation of the signature arguments. """
 
         args = [ArgumentFormatter(self.spec, arg).cpp_type(scope=scope,
-                strip=strip, as_xml=as_xml) for arg in self.object.args]
+                strip=strip, make_public=make_public, as_xml=as_xml)
+                for arg in self.object.args]
 
-        return ', '.join(args)
+        # Note the lack of separating space (although this may be for XML only
+        # to be consistent with previous implementations).
+        return ','.join(args)
 
     @property
     def py_arguments(self):
@@ -50,7 +53,7 @@ class SignatureFormatter(BaseFormatter):
             if arg.array is not ArrayArgument.ARRAY_SIZE and arg.is_in:
                 args.append(
                         ArgumentFormatter(self.spec,
-                                arg).py_type(default_value=True))
+                                arg).as_py_type(default_value=True))
 
         return ', '.join(args)
 
@@ -65,10 +68,10 @@ class SignatureFormatter(BaseFormatter):
         if sig.result is not None:
             if sig.result.type is not ArgumentType.VOID or len(sig.result.derefs) != 0:
                 results.append(ArgumentFormatter(self.spec,
-                        sig.result).py_type())
+                        sig.result).as_py_type())
 
         for arg in sig.args:
             if arg.is_out:
-                results.append(ArgumentFormatter(self.spec, arg).py_type())
+                results.append(ArgumentFormatter(self.spec, arg).as_py_type())
 
         return ', '.join(results)

@@ -1,3 +1,15 @@
+2022-10-29  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/pyi.py:
+	Fixed a regression in the handling of type hints for properties.
+	[2157850bf018] [6.7.4] <6.7-maint>
+
+2022-10-28  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.7.3 for changeset ea12891e29e2
+	[912db062d8c7] <6.7-maint>
+
 2022-10-27  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* sipbuild/generator/outputs/pyi.py:

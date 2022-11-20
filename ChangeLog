@@ -1,3 +1,16 @@
+2022-11-15  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/extracts.py:
+	Fixed extracts when the extract file name contains a Windows disk
+	specifier.
+	[43c1391748cf] [6.7.5] <6.7-maint>
+
+2022-11-03  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.7.4 for changeset 2157850bf018
+	[7b7a870a7d35] <6.7-maint>
+
 2022-10-29  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* NEWS, sipbuild/generator/outputs/pyi.py:

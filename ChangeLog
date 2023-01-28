@@ -1,3 +1,75 @@
+2023-01-25  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/py2c.c:
+	Reduce the use of the heap when converting from Python to C data
+	structures.
+	[67273f43bdbf] [6.7.6] <6.7-maint>
+
+2023-01-12  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixed a regression so that enums are not registered if there is no
+	meta-object.
+	[f4ccf3303e59] <6.7-maint>
+
+	* NEWS, code_generator/gencode.c:
+	Ensure that all enums (including global enums) are registered with
+	Qt so that they can be used in queued connections.
+	[259096e57fd7] <6.7-maint>
+
+2022-12-16  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/module/source/13/sip.h.in,
+	sipbuild/module/source/13/sip_core.c:
+	Fixed the implementation of /Transfer/ for global functions in ABI
+	v13.
+	[bc56c45dd235] <6.7-maint>
+
+2022-12-14  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/module/source/12/sip.h.in,
+	sipbuild/module/source/12/siplib.c:
+	In API v12 prevent an attempt to sub-class from an enum. The API
+	version number is now v12.11.1.
+	[91cda197b6ca] <6.7-maint>
+
+	* NEWS, sipbuild/generator/outputs/pyi.py:
+	Fixed type hints when a signal is overloaded with a method.
+	[6343b9aeceb9] <6.7-maint>
+
+2022-12-13  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/pyi.py:
+	Fixed the .pyi file for enums with no members.
+	[b828fb046720] <6.7-maint>
+
+2022-12-05  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/pyi.py:
+	Fixed the representation of Qt signals in the .pyi files.
+	[ba2933733f6c] <6.7-maint>
+
+2022-11-21  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c, code_generator/py2c.c,
+	code_generator/sip.h, sipbuild/bindings.py,
+	sipbuild/generator/outputs/api.py,
+	sipbuild/generator/outputs/pyi.py,
+	sipbuild/generator/outputs/xml.py,
+	sipbuild/generator/parser/parser_manager.py,
+	sipbuild/generator/parser/rules.py,
+	sipbuild/generator/resolver/resolver.py,
+	sipbuild/generator/specification.py:
+	Re-factored Specification so that it just has the module that code
+	will be generated for rather than a list of all modules.
+	[be55cf9e3e79] <6.7-maint>
+
+2022-11-19  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.7.5 for changeset 43c1391748cf
+	[bc0278714cdd] <6.7-maint>
+
 2022-11-15  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* NEWS, sipbuild/generator/outputs/extracts.py:

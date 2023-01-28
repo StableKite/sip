@@ -24,7 +24,7 @@
 from ...version import SIP_VERSION_STR
 
 from ..specification import (AccessSpecifier, ArgumentType, ArrayArgument,
-        EnumBaseType, IfaceFileType, PySlot)
+        EnumBaseType, IfaceFileType, PyQtMethodSpecifier, PySlot)
 from ..utils import append_iface_file, find_method
 
 from .formatters import (ArgumentFormatter, ClassFormatter, format_copying,
@@ -35,7 +35,7 @@ def output_pyi(spec, pyi_filename):
     """ Output a .pyi file. """
 
     with open(pyi_filename, 'w') as pf:
-        module = spec.modules[0]
+        module = spec.module
 
         # Write the header.
         copying = format_copying(module.copying, '#')
@@ -58,8 +58,8 @@ f'''# The PEP 484 type hints stub file for the {module.py_name} module.
 def _composite_module(pf, spec, module):
     """ Output the type hints for a composite module. """
 
-    for mod in spec.modules:
-        if mod.composite is module:
+    for mod in spec.module.all_imports:
+        if mod.composite is spec.module:
             pf.write(f'from {mod.fq_py_name.name} import *\n')
 
 
@@ -386,8 +386,16 @@ def _enums(pf, spec, module, defined=None, scope=None, indent=0):
                 elif enum.base_type is EnumBaseType.INT_FLAG:
                     superclass = 'enum.IntFlag'
 
+            # Handle an enum with no members.
+            for member in enum.members:
+                if not member.no_type_hint:
+                    trivial = ''
+                    break
+            else:
+                trivial = ' ...'
+
             s = _indent(indent)
-            s+= f'class {enum.py_name.name}({superclass}):\n'
+            s+= f'class {enum.py_name.name}({superclass}):{trivial}\n'
             pf.write(s)
 
             indent += 1
@@ -395,12 +403,10 @@ def _enums(pf, spec, module, defined=None, scope=None, indent=0):
             enum_type = 'int'
 
         for member in enum.members:
-            if member.no_type_hint:
-                continue
-
-            s = _indent(indent)
-            s += f'{member.py_name.name} = ... # type: {enum_type}\n'
-            pf.write(s)
+            if not member.no_type_hint:
+                s = _indent(indent)
+                s += f'{member.py_name.name} = ... # type: {enum_type}\n'
+                pf.write(s)
 
         if enum.py_name is not None:
             indent -= 1
@@ -446,6 +452,18 @@ def _callable(pf, spec, module, member, overloads, is_method, defined,
 
         if overload.no_type_hint:
             continue
+
+        # Signals can have the same name as ordinary methods however
+        # 'typing.overload' cannot be used with ClassVar.  We choose to
+        # generate a type hint for the signal rather than any method.
+        if overload.pyqt_method_specifier is PyQtMethodSpecifier.SIGNAL:
+            scope = '' if module.py_name == 'QtCore' else 'QtCore.'
+
+            s = _indent(indent)
+            s += f'{overload.common.py_name.name}: typing.ClassVar[{scope}pyqtsignal]\n'
+            pf.write(s)
+
+            return
 
         nr_overloads += 1
 
@@ -518,6 +536,8 @@ def _overload(pf, spec, module, overload, overloaded, overload_nr, is_method,
     if is_method and overload.is_static:
         pf.write(_indent(indent) + '@staticmethod\n')
 
+    s = _indent(indent)
+
     if is_eq_slot:
         signature = '(self, other: object)'
     else:
@@ -526,8 +546,8 @@ def _overload(pf, spec, module, overload, overloaded, overload_nr, is_method,
         signature = _python_signature(spec, module, overload.py_signature,
                 defined, need_self=need_self)
 
-    s = _indent(indent)
     s += f'def {overload.common.py_name.name}{signature}: ...\n'
+
     pf.write(s)
 
 

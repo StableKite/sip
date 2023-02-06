@@ -1,3 +1,9 @@
+sip6 (6.7.7+dfsg-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+
+ -- Dmitry Shachnev <mitya57@debian.org>  Mon, 06 Feb 2023 17:17:11 +0400
+
 sip6 (6.7.6+dfsg-2) unstable; urgency=medium
 
   * Backport upstream patch to fix handling of composite classes

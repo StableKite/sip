@@ -1,4 +1,62 @@
+2023-02-04  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/generator/outputs/pyi.py:
+	In .pyi files generate implict imports as well as explicit imports.
+	[2d5cad50e879] [6.7.7] <6.7-maint>
+
+	* NEWS, sipbuild/generator/outputs/pyi.py:
+	Fixed the 'pyqtsignal' typo in generated .pyi files.
+	[48117db2851d] <6.7-maint>
+
+2023-02-02  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/type_hints.py:
+	Use the standard Sphinx directive to reference voidptr.
+	[2c334836f75f] <6.7-maint>
+
+2023-02-01  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/generator/outputs/formatters/argument.py,
+	sipbuild/generator/outputs/type_hints.py,
+	sipbuild/generator/outputs/xml.py:
+	Ensure voidptr is rendered consistently and as a reST reference
+	where appropriate.
+	[3b892deb8c1b] <6.7-maint>
+
+	* sipbuild/generator/outputs/formatters/argument.py,
+	sipbuild/generator/outputs/formatters/value_list.py,
+	sipbuild/generator/outputs/xml.py:
+	Changes to the XML generation to reduce differences to earlier
+	versions.
+	[41dc32eadb62] <6.7-maint>
+
+2023-01-31  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c, code_generator/py2c.c,
+	code_generator/sip.h, sipbuild/bindings.py,
+	sipbuild/generator/outputs/pyi.py,
+	sipbuild/generator/parser/parser_manager.py,
+	sipbuild/generator/parser/rules.py,
+	sipbuild/generator/specification.py:
+	Refactored the handling of composite classes so that they are
+	populated properly.
+	[0afab92347b6] <6.7-maint>
+
+2023-01-28  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/generator/outputs/xml.py:
+	Fixes for regressions in the XML generation.
+	[77ebbacae72e] <6.7-maint>
+
+	* NEWS, sipbuild/generator/parser/parser.py:
+	Fixed an incorrect API comment.
+	[febcfb71804d] <6.7-maint>
+
 2023-01-25  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.7.6 for changeset 67273f43bdbf
+	[fe69fc6295b7] <6.7-maint>
 
 	* NEWS, code_generator/py2c.c:
 	Reduce the use of the heap when converting from Python to C data

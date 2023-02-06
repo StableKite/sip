@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Riverbank Computing Limited
+# Copyright (c) 2023, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of SIP is licensed for use under the terms of the SIP License
@@ -49,7 +49,7 @@ f'''# The PEP 484 type hints stub file for the {module.py_name} module.
 
 ''')
 
-        if module.is_composite:
+        if spec.is_composite:
             _composite_module(pf, spec, module)
         else:
             _module(pf, spec, module)
@@ -79,7 +79,7 @@ import {spec.sip_module}
 
     imports = []
 
-    for mod in module.imports:
+    for mod in module.all_imports:
         parts = mod.fq_py_name.name.split('.')
 
         if mod.fq_py_name.name == mod.py_name:
@@ -460,7 +460,7 @@ def _callable(pf, spec, module, member, overloads, is_method, defined,
             scope = '' if module.py_name == 'QtCore' else 'QtCore.'
 
             s = _indent(indent)
-            s += f'{overload.common.py_name.name}: typing.ClassVar[{scope}pyqtsignal]\n'
+            s += f'{overload.common.py_name.name}: typing.ClassVar[{scope}pyqtSignal]\n'
             pf.write(s)
 
             return

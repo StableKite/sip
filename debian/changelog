@@ -2,6 +2,7 @@ sip6 (6.7.7+dfsg-1) UNRELEASED; urgency=medium
 
   * New upstream release.
   * Drop composite_classes.diff, included in the new release.
+  * Bump copyright years.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Mon, 06 Feb 2023 17:17:11 +0400
 

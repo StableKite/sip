@@ -1,4 +1,4 @@
-sip6 (6.7.8+dfsg-1) UNRELEASED; urgency=medium
+sip6 (6.7.8+dfsg-1) experimental; urgency=medium
 
   * New upstream release.
   * Drop python3-toml dependency, sip now uses tomllib.

@@ -125,6 +125,7 @@ sipbuild/project.py
 sipbuild/py_versions.py
 sipbuild/pyproject.py
 sipbuild/setuptools_builder.py
+sipbuild/toml.py
 sipbuild/version.py
 sipbuild/distinfo/__init__.py
 sipbuild/distinfo/distinfo.py

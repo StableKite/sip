@@ -176,9 +176,9 @@ static PyObject *sipArray_subscript(PyObject *self, PyObject *key)
             return NULL;
         }
 
-        return create_array(element(array->data, start), array->td,
-                array->format, array->stride, slicelength,
-                (array->flags & ~SIP_OWNS_MEMORY), array->owner);
+        return create_array(element(array, start), array->td, array->format,
+                array->stride, slicelength, (array->flags & ~SIP_OWNS_MEMORY),
+                array->owner);
     }
 
     bad_key(key);
@@ -297,7 +297,7 @@ static int sipArray_getbuffer(PyObject *self, Py_buffer *view, int flags)
     Py_INCREF(self);
 
     view->buf = array->data;
-    view->len = array->len;
+    view->len = array->len * array->stride;
     view->readonly = (array->flags & SIP_READ_ONLY);
     view->itemsize = array->stride;
 

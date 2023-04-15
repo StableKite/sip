@@ -1,6 +1,7 @@
 sip6 (6.7.8+dfsg-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Drop python3-toml dependency, sip now uses tomllib.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Sat, 15 Apr 2023 15:55:34 +0300
 

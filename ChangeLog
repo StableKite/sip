@@ -1,4 +1,22 @@
+2023-04-12  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixed the new handling of ctors with /Transfer/ annotated arguments.
+	[60b1e38738ed] [6.7.9] <6.7-maint>
+
+	* NEWS, sipbuild/module/source/12/descriptors.c,
+	sipbuild/module/source/12/sip.h.in,
+	sipbuild/module/source/13/sip.h.in,
+	sipbuild/module/source/13/sip_descriptors.c:
+	Fix the sip module to call PyObject_GC_UnTrack() in descriptor
+	dealloc functions.
+	[95f807c277e0] <6.7-maint>
+
 2023-04-04  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.7.8 for changeset fd3d08ddadc5
+	[a4fc9057db31] <6.7-maint>
 
 	* NEWS:
 	Fixed the NEWS file.

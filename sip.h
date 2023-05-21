@@ -1,7 +1,7 @@
 /*
  * The SIP module interface.
  *
- * Copyright (c) 2022 Riverbank Computing Limited <info@riverbankcomputing.com>
+ * Copyright (c) 2023 Riverbank Computing Limited <info@riverbankcomputing.com>
  *
  * This file is part of SIP.
  *
@@ -45,18 +45,21 @@ extern "C" {
 
 /* The version of the ABI. */
 #define SIP_ABI_MAJOR_VERSION       13
-#define SIP_ABI_MINOR_VERSION       4
+#define SIP_ABI_MINOR_VERSION       5
 #define SIP_MODULE_PATCH_VERSION    1
 
 
 /*
  * The change history of the ABI.
  *
+ * v13.5
+ *  - Added the '#' conversion character to the argument parsers.
+ *
  * v13.4
  *  - The enum implementation now supports missing members.
  *  - Published the 'array' type.
  *  - Added the ctd_sizeof, ctd_array_delete members to sipClassTypeDef.
- *  - Added the '>' conversion character to sipParseArgs().
+ *  - Added the '>' conversion character to the argument parsers.
  *
  * v13.3
  *  - Python v3.7 or later is required.
@@ -71,8 +74,8 @@ extern "C" {
 
 
 /* The version of the code generator. */
-#define SIP_VERSION                 0x60706
-#define SIP_VERSION_STR             "6.7.6"
+#define SIP_VERSION                 0x60709
+#define SIP_VERSION_STR             "6.7.9"
 
 /* These are all dependent on the user-specified name of the sip module. */
 #define _SIP_MODULE_FQ_NAME         "PyQt6.sip"

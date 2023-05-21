@@ -1,3 +1,9 @@
+pyqt6-sip (13.5.1-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+
+ -- Dmitry Shachnev <mitya57@debian.org>  Sun, 21 May 2023 19:29:23 +0300
+
 pyqt6-sip (13.4.1-1) unstable; urgency=medium
 
   * New upstream release.

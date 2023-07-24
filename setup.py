@@ -38,7 +38,7 @@ module = Extension('PyQt6.sip', module_src)
 # Do the setup.
 setup(
         name='PyQt6_sip',
-        version='13.5.1',
+        version='13.5.2',
         license='SIP',
         python_requires='>=3.7',
         ext_modules=[module]

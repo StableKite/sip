@@ -1,8 +1,9 @@
-sip6 (6.7.10+dfsg-1) UNRELEASED; urgency=medium
+sip6 (6.7.10+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
   * Document --minimum-glibc-version option in sip-wheel.1.
   * Add sip.egg-info/entry_points.txt to debian/clean.
+  * Upload to unstable.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Mon, 24 Jul 2023 14:25:38 +0300
 

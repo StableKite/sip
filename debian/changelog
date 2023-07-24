@@ -1,6 +1,7 @@
-pyqt6-sip (13.5.2-1) UNRELEASED; urgency=medium
+pyqt6-sip (13.5.2-1) unstable; urgency=medium
 
   * New upstream release.
+  * Upload to unstable.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Mon, 24 Jul 2023 22:08:27 +0300
 

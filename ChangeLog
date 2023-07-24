@@ -1,3 +1,138 @@
+2023-07-17  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c:
+	Improved the format of calls to sipTrace().
+	[e6fe115e5290] [6.7.10] <6.7-maint>
+
+2023-07-15  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/type_hints.c:
+	Fixed docstrings for ellipsis arguments.
+	[42d83406162b] <6.7-maint>
+
+	* sipbuild/generator/outputs/formatters/argument.py,
+	sipbuild/generator/outputs/pyi.py,
+	sipbuild/generator/parser/parser_manager.py:
+	Further fixes for ellipsys type hints.
+	[3ccadbc6f1de] <6.7-maint>
+
+	* NEWS, sipbuild/generator/parser/parser_manager.py:
+	The name of an ellipsis argument is now always 'args'.
+	[b4636fcdb515] <6.7-maint>
+
+2023-07-14  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/type_hints.c,
+	sipbuild/generator/outputs/pyi.py:
+	Fixed the use of 'Optional' in type hints.
+	[dd84cde6a8eb] <6.7-maint>
+
+2023-07-12  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/source/12/sip.pyi,
+	sipbuild/module/source/13/sip.pyi:
+	Fix the type hint for sip.voidptr.asarray().
+	[28fe369727e6] <6.7-maint>
+
+	* NEWS, sipbuild/generator/outputs/pyi.py,
+	sipbuild/generator/outputs/xml.py,
+	sipbuild/generator/python_slots.py:
+	Fixed the generation of global numeric operator functions in .pyi
+	files.
+	[4aca5521c59a] <6.7-maint>
+
+2023-07-07  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c, sipbuild/generator/specification.py:
+	Fixed the exception handler so that it is generated when there are
+	no Python exception objecst to be created.
+	[bcaf29989c44] <6.7-maint>
+
+2023-07-05  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/sip.h, code_generator/type_hints.c:
+	Fixed the parsing of type hints as used by docstrings.
+	[ff8a0e8023b5] <6.7-maint>
+
+	* NEWS, code_generator/py2c.c:
+	Removed some unused code.
+	[e20ebe0b79b3] <6.7-maint>
+
+2023-07-04  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/module/source/12/sip_array.c,
+	sipbuild/module/source/13/sip_array.c:
+	A sip.array for a wrapped type will now be handled as an array of
+	bytes by memoryview.
+	[e3eb1dcf51dc] <6.7-maint>
+
+2023-06-22  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c:
+	Fixed a spurious code generation bug.
+	[bd5a1d2693c2] <6.7-maint>
+
+2023-06-21  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c:
+	Some code formatting improvements.
+	[565f4d9746e7] <6.7-maint>
+
+2023-06-20  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c:
+	Some code formatting improvements.
+	[24ccb41eeea8] <6.7-maint>
+
+2023-06-16  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/module/source/12/siplib.c,
+	sipbuild/module/source/13/sip_core.c:
+	For Python v3.12 implement sipPyTypeDict() using PyType_GetDict().
+	[d36867e54192] <6.7-maint>
+
+	* NEWS, doc/abi_12.rst, doc/abi_13.rst,
+	sipbuild/module/source/12/sip.h.in,
+	sipbuild/module/source/12/siplib.c,
+	sipbuild/module/source/13/sip.h.in,
+	sipbuild/module/source/13/sip_core.c:
+	sipMalloc() and sipFree() are now implemented using
+	PyMem_RawMalloc() and PyMem_RawFree() so that they should be safe to
+	call from functions registered with Py_AtExit().
+	[312476401030] <6.7-maint>
+
+2023-06-08  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/command_line_tools.rst, doc/pyproject_toml.rst,
+	sipbuild/project.py:
+	Added the --minimum-glibc-version command line option to sip-wheel.
+	[88452293f4e4] <6.7-maint>
+
+2023-05-23  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/resolver/resolver.py:
+	Avoid some crashes when a class has not been defined.
+	[c7ca265b83b1] <6.7-maint>
+
+2023-04-30  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c,
+	sipbuild/generator/parser/parser_manager.py:
+	The implied setting of /NoAssignmentOperator/, /NoCopyCtor/ and
+	/NoDefaultCtor/ when /NoRelease/ is set id now implemented in the
+	parser rather than the code generator.
+	[39eb317ed4ed] <6.7-maint>
+
+	* NEWS, code_generator/gencode.c:
+	Fixed some missing SIP_NULLPTRs.
+	[cde2bfb58cc1] <6.7-maint>
+
+2023-04-13  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.7.9 for changeset 60b1e38738ed
+	[91cb9fff1d42] <6.7-maint>
+
 2023-04-12  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* code_generator/gencode.c:

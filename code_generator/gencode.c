@@ -1870,13 +1870,14 @@ static const char *generateCpp(sipSpec *pt, moduleDef *mod,
     is_inst_double = generateDoubles(pt, mod, NULL, fp);
 
     /* Generate any exceptions support. */
-    if (exceptions && mod->nrexceptions > 0)
+    if (exceptions)
     {
-        prcode(fp,
+        if (mod->nrexceptions > 0)
+            prcode(fp,
 "\n"
 "\n"
 "PyObject *sipExportedExceptions_%s[%d];\n"
-            , mname, mod->nrexceptions + 1);
+                , mname, mod->nrexceptions + 1);
 
         if (abiVersion >= ABI_13_1 || (abiVersion >= ABI_12_9 && abiVersion < ABI_13_0))
             generateExceptionHandler(pt, mod, fp);
@@ -4045,7 +4046,7 @@ static int generateMappedTypeCpp(mappedTypeDef *mtd, sipSpec *pt, FILE *fp)
 
     if (nr_methods == 0)
         prcode(fp,
-"        0, 0,\n"
+"        0, SIP_NULLPTR,\n"
             );
     else
         prcode(fp,
@@ -4054,7 +4055,7 @@ static int generateMappedTypeCpp(mappedTypeDef *mtd, sipSpec *pt, FILE *fp)
 
     if (nr_enums == 0)
         prcode(fp,
-"        0, 0,\n"
+"        0, SIP_NULLPTR,\n"
             );
     else if (nr_enums > 0)
         prcode(fp,
@@ -4062,60 +4063,53 @@ static int generateMappedTypeCpp(mappedTypeDef *mtd, sipSpec *pt, FILE *fp)
             , nr_enums, mtd->iff);
 
     prcode(fp,
-"        0, 0,\n"
-"        {0, 0, 0, 0, ");
+"        0, SIP_NULLPTR,\n"
+"        {SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR, ");
 
     if (has_ints)
         prcode(fp, "intInstances_%L", mtd->iff);
     else
-        prcode(fp, "0");
+        prcode(fp, "SIP_NULLPTR");
 
-    prcode(fp, ", 0, 0, 0, 0, 0}\n"
+    prcode(fp, ", SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR}\n"
 "    },\n"
         );
 
-    if (noRelease(mtd))
-    {
+    if (!noAssignOp(mtd))
+        prcode(fp,
+"    assign_%L,\n"
+        , mtd->iff);
+    else
         prcode(fp,
 "    SIP_NULLPTR,\n"
-"    SIP_NULLPTR,\n"
-"    SIP_NULLPTR,\n"
+            );
+
+    if (!noDefaultCtor(mtd))
+        prcode(fp,
+"    array_%L,\n"
+        , mtd->iff);
+    else
+        prcode(fp,
 "    SIP_NULLPTR,\n"
             );
-    }
-    else
-    {
-        if (!noAssignOp(mtd))
-            prcode(fp,
-"    assign_%L,\n"
-            , mtd->iff);
-        else
-            prcode(fp,
-"    SIP_NULLPTR,\n"
-                );
 
-        if (!noDefaultCtor(mtd))
-            prcode(fp,
-"    array_%L,\n"
-            , mtd->iff);
-        else
-            prcode(fp,
-"    SIP_NULLPTR,\n"
-                );
-
-        if (!noCopyCtor(mtd))
-            prcode(fp,
+    if (!noCopyCtor(mtd))
+        prcode(fp,
 "    copy_%L,\n"
-            , mtd->iff);
-        else
-            prcode(fp,
+        , mtd->iff);
+    else
+        prcode(fp,
 "    SIP_NULLPTR,\n"
-                );
+            );
 
+    if (!noRelease(mtd))
         prcode(fp,
 "    release_%L,\n"
             , mtd->iff);
-    }
+    else
+        prcode(fp,
+"    SIP_NULLPTR,\n"
+            );
 
     if (mtd->convtocode != NULL)
     {
@@ -5685,22 +5679,22 @@ static int generateSlot(moduleDef *mod, classDef *cd, enumDef *ed,
     if (isIntArgSlot(md))
     {
         has_args = FALSE;
-        arg_str = "PyObject *sipSelf,int a0";
-        decl_arg_str = "PyObject *,int";
+        arg_str = "PyObject *sipSelf, int a0";
+        decl_arg_str = "PyObject *, int";
     }
     else if (md->slot == call_slot)
     {
         if (generating_c || useKeywordArgs(md) || noArgParser(md))
-            arg_str = "PyObject *sipSelf,PyObject *sipArgs,PyObject *sipKwds";
+            arg_str = "PyObject *sipSelf, PyObject *sipArgs, PyObject *sipKwds";
         else
-            arg_str = "PyObject *sipSelf,PyObject *sipArgs,PyObject *";
+            arg_str = "PyObject *sipSelf, PyObject *sipArgs, PyObject *";
 
-        decl_arg_str = "PyObject *,PyObject *,PyObject *";
+        decl_arg_str = "PyObject *, PyObject *, PyObject *";
     }
     else if (isMultiArgSlot(md))
     {
-        arg_str = "PyObject *sipSelf,PyObject *sipArgs";
-        decl_arg_str = "PyObject *,PyObject *";
+        arg_str = "PyObject *sipSelf, PyObject *sipArgs";
+        decl_arg_str = "PyObject *, PyObject *";
     }
     else if (isZeroArgSlot(md))
     {
@@ -5710,18 +5704,18 @@ static int generateSlot(moduleDef *mod, classDef *cd, enumDef *ed,
     }
     else if (isNumberSlot(md))
     {
-        arg_str = "PyObject *sipArg0,PyObject *sipArg1";
-        decl_arg_str = "PyObject *,PyObject *";
+        arg_str = "PyObject *sipArg0, PyObject *sipArg1";
+        decl_arg_str = "PyObject *, PyObject *";
     }
     else if (md->slot == setattr_slot)
     {
-        arg_str = "PyObject *sipSelf,PyObject *sipName,PyObject *sipValue";
-        decl_arg_str = "PyObject *,PyObject *,PyObject *";
+        arg_str = "PyObject *sipSelf, PyObject *sipName, PyObject *sipValue";
+        decl_arg_str = "PyObject *, PyObject *, PyObject *";
     }
     else
     {
-        arg_str = "PyObject *sipSelf,PyObject *sipArg";
-        decl_arg_str = "PyObject *,PyObject *";
+        arg_str = "PyObject *sipSelf, PyObject *sipArg";
+        decl_arg_str = "PyObject *, PyObject *";
     }
 
     prcode(fp,
@@ -5777,7 +5771,7 @@ static int generateSlot(moduleDef *mod, classDef *cd, enumDef *ed,
         {
             if (cd != NULL)
                 prcode(fp,
-"    %S *sipCpp = reinterpret_cast<%S *>(sipGetCppPtr((sipSimpleWrapper *)sipSelf,sipType_%C));\n"
+"    %S *sipCpp = reinterpret_cast<%S *>(sipGetCppPtr((sipSimpleWrapper *)sipSelf, sipType_%C));\n"
 "\n"
 "    if (!sipCpp)\n"
                     , fqcname, fqcname, fqcname);
@@ -5832,7 +5826,7 @@ static int generateSlot(moduleDef *mod, classDef *cd, enumDef *ed,
                 prcode(fp,
 "\n"
 "    /* Raise an exception if the argument couldn't be parsed. */\n"
-"    sipBadOperatorArg(sipSelf,sipArg,%s);\n"
+"    sipBadOperatorArg(sipSelf, sipArg, %s);\n"
 "\n"
 "    return SIP_NULLPTR;\n"
                     ,slotName(md->slot));
@@ -6085,9 +6079,9 @@ static int generateClassFunctions(sipSpec *pt, moduleDef *mod, classDef *cd,
             int rgil = ((release_gil || isReleaseGILDtor(cd)) && !isHoldGILDtor(cd));
 
             /*
-             * If there is an explicit public dtor then assume there is
-                 * some way to call it which we haven't worked out (because we
-                 * don't fully understand C++).
+             * If there is an explicit public dtor then assume there is some
+             * way to call it which we haven't worked out (because we don't
+             * fully understand C++).
              */
 
             if (rgil)
@@ -6153,7 +6147,7 @@ static int generateClassFunctions(sipSpec *pt, moduleDef *mod, classDef *cd,
                 , classFQCName(cd));
 
         prcode(fp,
-"static int traverse_%C(void *sipCppV,visitproc sipVisit,void *sipArg)\n"
+"static int traverse_%C(void *sipCppV, visitproc sipVisit, void *sipArg)\n"
 "{\n"
 "    ", classFQCName(cd));
 
@@ -6284,7 +6278,6 @@ static int generateClassFunctions(sipSpec *pt, moduleDef *mod, classDef *cd,
 
             prcode(fp,
 "static void releasebuffer_%C(PyObject *%s, void *%s)\n"
-"#else\n"
                 , classFQCName(cd), argName("sipSelf", cd->releasebufcode), (generating_c || need_cpp ? "sipCppV" : ""));
         }
         else
@@ -6570,7 +6563,7 @@ static int generateClassFunctions(sipSpec *pt, moduleDef *mod, classDef *cd,
 
         if (tracing)
             prcode(fp,
-"    sipTrace(SIP_TRACE_DEALLOCS,\"dealloc_%L()\\n\");\n"
+"    sipTrace(SIP_TRACE_DEALLOCS, \"dealloc_%L()\\n\");\n"
 "\n"
                 , cd->iff);
 
@@ -6679,9 +6672,9 @@ static int generateShadowCode(sipSpec *pt, moduleDef *mod, classDef *cd,
         if (tracing)
         {
             prcode(fp,
-"    sipTrace(SIP_TRACE_CTORS,\"sip%C::sip%C(",classFQCName(cd),classFQCName(cd));
+"    sipTrace(SIP_TRACE_CTORS, \"sip%C::sip%C(",classFQCName(cd),classFQCName(cd));
             generateCalledArgs(NULL, cd->iff, ct->cppsig, Declaration, fp);
-            prcode(fp,")%X (this=0x%%08x)\\n\",this);\n"
+            prcode(fp,")%X (this=0x%%08x)\\n\", this);\n"
 "\n"
                 ,ct->exceptions);
         }
@@ -6708,7 +6701,7 @@ static int generateShadowCode(sipSpec *pt, moduleDef *mod, classDef *cd,
 
         if (tracing)
             prcode(fp,
-"    sipTrace(SIP_TRACE_DTORS,\"sip%C::~sip%C()%X (this=0x%%08x)\\n\",this);\n"
+"    sipTrace(SIP_TRACE_DTORS, \"sip%C::~sip%C()%X (this=0x%%08x)\\n\", this);\n"
 "\n"
                 ,classFQCName(cd),classFQCName(cd),cd->dtorexceptions);
 
@@ -6880,12 +6873,12 @@ static int generateVirtualCatcher(moduleDef *mod, classDef *cd, int virtNr,
     if (tracing)
     {
         prcode(fp,
-"    sipTrace(SIP_TRACE_CATCHERS,\"");
+"    sipTrace(SIP_TRACE_CATCHERS, \"");
 
         generateBaseType(cd->iff, res, TRUE, STRIP_GLOBAL, fp);
         prcode(fp," sip%C::%O(",classFQCName(cd),od);
         generateCalledArgs(NULL, cd->iff, od->cppsig, Declaration, fp);
-        prcode(fp,")%s%X (this=0x%%08x)\\n\",this);\n"
+        prcode(fp,")%s%X (this=0x%%08x)\\n\", this);\n"
 "\n"
             ,(isConst(od) ? " const" : ""),od->exceptions);
     }
@@ -10723,7 +10716,7 @@ static int generateTypeInit(classDef *cd, moduleDef *mod, FILE *fp)
     if (tracing)
         prcode(fp,
 "\n"
-"    sipTrace(SIP_TRACE_INITS,\"init_type_%L()\\n\");\n"
+"    sipTrace(SIP_TRACE_INITS, \"init_type_%L()\\n\");\n"
             , cd->iff);
 
     /*
@@ -11287,7 +11280,7 @@ static int generateFunction(sipSpec *pt, memberDef *md, overDef *overs,
 
         if (tracing)
             prcode(fp,
-"    sipTrace(SIP_TRACE_METHODS,\"meth_%L_%s()\\n\");\n"
+"    sipTrace(SIP_TRACE_METHODS, \"meth_%L_%s()\\n\");\n"
 "\n"
                 , cd->iff, pname);
 
@@ -15352,8 +15345,14 @@ static const char *userStateSuffix(argDef *ad)
 static void generateExceptionHandler(sipSpec *pt, moduleDef *mod, FILE *fp)
 {
     exceptionDef *xd;
+    int need_decl = TRUE;
 
-    prcode(fp,
+    for (xd = pt->exceptions; xd != NULL; xd = xd->next)
+        if (xd->iff->module == mod)
+        {
+            if (need_decl)
+            {
+                prcode(fp,
 "\n"
 "\n"
 "/* Handle the exceptions defined in this module. */\n"
@@ -15362,18 +15361,21 @@ static void generateExceptionHandler(sipSpec *pt, moduleDef *mod, FILE *fp)
 "    try {\n"
 "        std::rethrow_exception(sipExcPtr);\n"
 "    }\n"
-        , mod->name);
+                    , mod->name);
 
-    for (xd = pt->exceptions; xd != NULL; xd = xd->next)
-        if (xd->iff->module == mod)
+                need_decl = FALSE;
+            }
+
             generateCatchBlock(mod, xd, NULL, fp, FALSE);
+        }
 
-    prcode(fp,
+    if (!need_decl)
+        prcode(fp,
 "    catch (...) {}\n"
 "\n"
 "    return false;\n"
 "}\n"
-        );
+            );
 }
  
  

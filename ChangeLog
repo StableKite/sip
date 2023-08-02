@@ -1,3 +1,15 @@
+2023-07-31  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c:
+	Fixed a regression in the naming of ellipsis arguments.
+	[6bf5647a9373] [6.7.11] <6.7-maint>
+
+2023-07-21  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.7.10 for changeset e6fe115e5290
+	[bb88f409a993] <6.7-maint>
+
 2023-07-17  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* NEWS, code_generator/gencode.c:

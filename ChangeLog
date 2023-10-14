@@ -1,3 +1,218 @@
+2023-10-10  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c:
+	Fixed a regression in the handling of multi-argument signals.
+	[2c0f7dee9327] [6.7.12] <6.7-maint>
+
+2023-10-08  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c, code_generator/sip.h,
+	doc/abi_12.rst, doc/abi_13.rst, sipbuild/module/source/12/sip.h.in,
+	sipbuild/module/source/12/siplib.c,
+	sipbuild/module/source/13/sip.h.in,
+	sipbuild/module/source/13/sip_core.c:
+	Properly fix the Python v3.12 support by deprecating sipPyTypeDict()
+	and adding sipPyTypeDictRef(). The new ABI versions are ABI v13.6
+	and ABI v12.13.
+	[d15eee940481] <6.7-maint>
+
+	* code_generator/gencode.c, code_generator/sip.h,
+	code_generator/type_hints.c,
+	sipbuild/generator/outputs/formatters/value_list.py:
+	Some minor fixes to docstrings.
+	[2d2e5603001f] <6.7-maint>
+
+2023-10-07  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Minor code layout tweaks.
+	[286c85975250] <6.7-maint>
+
+	* doc/abi_12.rst, doc/abi_13.rst:
+	Updated the docs for sipPyTypeDict() clarifying that it returns a
+	new reference with Python v3.12. and later.
+	[ecae1030d1dc] <6.7-maint>
+
+	* code_generator/gencode.c:
+	Code formatting tweaks.
+	[eb5bab912533] <6.7-maint>
+
+2023-10-06  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/sip.h, code_generator/type_hints.c:
+	Fixed recursive type hints in docstrings.
+	[fdf845178576] <6.7-maint>
+
+	* NEWS, sipbuild/generator/outputs/formatters/argument.py,
+	sipbuild/generator/outputs/pyi.py,
+	sipbuild/generator/outputs/type_hints.py:
+	Fixed recursive type hints in .pyi files.
+	[5a4fac10d4ad] <6.7-maint>
+
+	* sipbuild/bindings.py,
+	sipbuild/generator/outputs/formatters/utils.py,
+	sipbuild/generator/outputs/pyi.py:
+	Don't include the SIP version string in .pyi files if disabled.
+	[10856e1321c1] <6.7-maint>
+
+2023-10-04  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/type_hints.c:
+	Fixed the default value of standard Python objects in docstrings.
+	[c56bcb530ea0] <6.7-maint>
+
+	* code_generator/type_hints.c:
+	Additional fix for Callable.
+	[40c033c7962d] <6.7-maint>
+
+	* NEWS, code_generator/type_hints.c:
+	Fixed the arguments to Callable when it is being returned.
+	[a7b61e9cc9a3] <6.7-maint>
+
+	* code_generator/py2c.c:
+	Use separate caches when converting input and output type hints.
+	[161862b5a5b4] <6.7-maint>
+
+	* code_generator/type_hints.c:
+	Fixed the handling of implicit Optionals.
+	[ca8981aae947] <6.7-maint>
+
+2023-10-03  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixed some formatting inconsistencies.
+	[c89c55463182] <6.7-maint>
+
+	* code_generator/type_hints.c:
+	Fixed the docstring for callables with multiple return values.
+	[91eff5fef4da] <6.7-maint>
+
+	* code_generator/gencode.c:
+	Removed special handling to avoid '>>' for old C++ compilers.
+	[0ab5a75d770e] <6.7-maint>
+
+	* code_generator/type_hints.c, sipbuild/generator/outputs/pyi.py,
+	sipbuild/generator/outputs/type_hints.py:
+	Type hint and docstring fixes for Callable.
+	[92810408fcd8] <6.7-maint>
+
+	* code_generator/type_hints.c:
+	Remove a reference to 'typing' in docstrings.
+	[666c94c401a3] <6.7-maint>
+
+	* code_generator/type_hints.c:
+	Use 'object' and 'Any' consistently between docstrings and type
+	hints.
+	[7f4cd8a7b401] <6.7-maint>
+
+	* NEWS, code_generator/gencode.c:
+	Removed special handling to avoid '<< ::' for old C++ compilers.
+	[12f6a2a7d4b7] <6.7-maint>
+
+	* sipbuild/generator/outputs/api.py,
+	sipbuild/generator/outputs/formatters/signature.py:
+	Fixes for the generation of .api files.
+	[ee8510bcb127] <6.7-maint>
+
+2023-09-26  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/formatters/signature.py:
+	Minor improvement to the XML generation.
+	[5b3e6532c11d] <6.7-maint>
+
+2023-09-25  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Fixed the current line number after auto-generated docstrings.
+	[37bcc63db137] <6.7-maint>
+
+	* NEWS, code_generator/gencode.c:
+	Fixed regression that stopped the code generator building.
+	[94f99572691b] <6.7-maint>
+
+2023-09-21  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c:
+	Improved the format of some generated code.
+	[6514a35ea97b] <6.7-maint>
+
+2023-09-16  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c:
+	Improved the format of some generated code.
+	[1ee69ea79641] <6.7-maint>
+
+2023-09-15  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c:
+	Improved the format of some generated code.
+	[5b26a1960150] <6.7-maint>
+
+2023-09-14  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c:
+	Improved the format of some generated code.
+	[faef556966a1] <6.7-maint>
+
+2023-09-13  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Improved the format of some generated code.
+	[36223b6185f5] <6.7-maint>
+
+2023-09-12  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c:
+	Improved the format of some generated code.
+	[04da35a51be4] <6.7-maint>
+
+2023-09-11  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Improved the format of some generated code.
+	[dc23535afe46] <6.7-maint>
+
+2023-09-04  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Improved the format of some generated code.
+	[3f9702eb652a] <6.7-maint>
+
+2023-09-02  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Improved the format of some generated code.
+	[dea2afb3a2eb] <6.7-maint>
+
+2023-09-01  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Improved the format of some generated code.
+	[0f560165f3fd] <6.7-maint>
+
+2023-08-30  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, code_generator/gencode.c, code_generator/py2c.c,
+	code_generator/sip.h, doc/annotations.rst,
+	sipbuild/generator/parser/parser_manager.py,
+	sipbuild/generator/specification.py:
+	Classes will automatically support being iterated over if they
+	implement '__getitem__()' or 'operator[]' and have a method
+	annotated with '__len__'.
+	[7b77587a9bb6] <6.7-maint>
+
+2023-08-29  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* code_generator/gencode.c:
+	Improved the format of some generated code.
+	[b506cb728d9a] <6.7-maint>
+
+2023-08-02  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.7.11 for changeset 6bf5647a9373
+	[f877a54098d8] <6.7-maint>
+
 2023-07-31  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* NEWS, code_generator/gencode.c:

@@ -26,9 +26,11 @@
 
 /* Use symbolic names for (significant) ABI versions. */
 
+#define ABI_13_6    0x0d06
 #define ABI_13_4    0x0d04
 #define ABI_13_1    0x0d01
 #define ABI_13_0    0x0d00
+#define ABI_12_13   0x0c0d
 #define ABI_12_11   0x0c0b
 #define ABI_12_9    0x0c09
 #define ABI_12_8    0x0c08
@@ -723,7 +725,6 @@ typedef enum {
 /* Type hint parse status. */
 typedef enum {
     needs_parsing,
-    being_parsed,
     parsed
 } typeHintParseStatus;
 
@@ -732,6 +733,7 @@ typedef enum {
 typedef enum {
     typing_node,
     class_node,
+    mapped_type_node,
     enum_node,
     other_node
 } typeHintNodeType;
@@ -902,6 +904,7 @@ typedef struct _typeHintNodeDef {
     union {
         const char *name;               /* For typing objects and others. */
         struct _classDef *cd;           /* For class nodes. */
+        struct _mappedTypeDef *mtd;     /* For maapped type nodes. */
         struct _enumDef *ed;            /* For enum nodes. */
     } u;
     struct _typeHintNodeDef *children;  /* The list of children. */
@@ -1241,6 +1244,7 @@ typedef struct _classDef {
     typeHintDef *typehint_in;           /* The PEP 484 input type hint. */
     typeHintDef *typehint_out;          /* The PEP 484 output type hint. */
     const char *typehint_value;         /* The type hint value. */
+    const char *len_cpp_name;           /* The C++ name of any __len__ overload. */
     struct _classDef *next;             /* Next in the list. */
 } classDef;
 
@@ -1306,7 +1310,7 @@ int compareScopedNames(scopedNameDef *snd1, scopedNameDef *snd2);
 char *scopedNameTail(scopedNameDef *);
 void prcode(FILE *fp, const char *fmt, ...);
 void prCopying(FILE *fp, moduleDef *mod, const char *comment);
-void prDefaultValue(argDef *ad, FILE *fp);
+void prDefaultValue(argDef *ad, int voidptr, FILE *fp);
 void prScopedPythonName(FILE *fp, classDef *scope, const char *pyname);
 int isNumberSlot(memberDef *md);
 void appendString(stringList **headp, const char *s);

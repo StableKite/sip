@@ -1,3 +1,224 @@
+2023-12-12  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/generator/outputs/code.py:
+	Fixed the generation of try/catch blocks.
+	[d6da922b80f7] [6.8.1] <6.8-maint>
+
+	* NEWS, sipbuild/generator/outputs/code.py:
+	Fixed the definition of a virtual exception handler.
+	[1d49b8dccf41] <6.8-maint>
+
+2023-12-11  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/generator/instantiations.py:
+	Fix the duplication of %TypeHeaderCode from class templates.
+	[7ead595d03cd] <6.8-maint>
+
+	* sipbuild/generator/parser/tokens.py:
+	Don't include any indentation before an %End with the code block.
+	[fb0cbb126424] <6.8-maint>
+
+	* NEWS, sipbuild/generator/outputs/code.py:
+	Fixed the handling of static wchar_t characters and strings.
+	[8135f39e1b1c] <6.8-maint>
+
+2023-12-09  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/generator/outputs/code.py:
+	Fixed the implementation of __setattr__ so that it matches previous
+	versions.
+	[fc6f81078cc4] <6.8-maint>
+
+	* sipbuild/buildable.py:
+	Fix the import of importlib.machinery.
+	[1d41113edbad] <6.8-maint>
+
+	* sipbuild/generator/outputs/code.py:
+	Fixed the freeing of wchar_t temporaries.
+	[2d6fa85ae3de] <6.8-maint>
+
+	* NEWS, sipbuild/generator/outputs/code.py:
+	Fixed the generation of a catch block.
+	[10b05deedee7] <6.8-maint>
+
+2023-12-08  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/code.py:
+	Removed a spurious opening parenthesis in a call to sipParsePair().
+	[0d6692e9c295] <6.8-maint>
+
+2023-12-05  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/code.py:
+	Fixed the call to a default ctor when generating a default value.
+	[4b98e8e43a1e] <6.8-maint>
+
+2023-12-04  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/module/source/12/siplib.c:
+	Removed a warning message (soon to be an error message) in the v12
+	module.
+	[afc99fa84d0d] <6.8-maint>
+
+2023-11-30  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/code.py:
+	Fixed a typo in the code generator.
+	[67e0294b505c] <6.8-maint>
+
+	* .hgtags:
+	Added tag 6.8.0 for changeset adaadc70327c
+	[ac5e2889ba89]
+
+2023-11-07  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/code.py:
+	Fixed a code generation bug with /PyQtNoQMetaObject/.
+	[adaadc70327c] [6.8.0]
+
+2023-11-06  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, setup.cfg, sipbuild/module/source/12/descriptors.c,
+	sipbuild/module/source/12/setup.py.in,
+	sipbuild/module/source/12/sip.h.in,
+	sipbuild/module/source/12/sip_array.c,
+	sipbuild/module/source/12/siplib.c,
+	sipbuild/module/source/12/voidptr.c,
+	sipbuild/module/source/13/setup.py.in,
+	sipbuild/module/source/13/sip.h.in,
+	sipbuild/module/source/13/sip_array.c,
+	sipbuild/module/source/13/sip_core.c,
+	sipbuild/module/source/13/sip_descriptors.c,
+	sipbuild/module/source/13/sip_voidptr.c, sipbuild/py_versions.py:
+	Dropped support for Python v3.7.
+	[024bcd5445f3]
+
+2023-11-01  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/project.py, sipbuild/pyproject.py, sipbuild/toml.py:
+	Refactored the reading of pyproject.toml so that a better balance is
+	struck between giving the user help and reporting on a badly formed
+	file.
+	[9cdf89b7dbd9]
+
+2023-10-31  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, doc/examples.rst, doc/pyproject_toml.rst,
+	examples/package/core/pyproject.toml,
+	examples/package/extras/pyproject.toml,
+	examples/standalone/pyproject.toml, sipbuild/exceptions.py,
+	sipbuild/pyproject.py:
+	Added support for the PEP 621 defined [project] section in
+	pyproject.toml. Deprecated [sip.tool.metadata].
+	[361cc953d85f]
+
+2023-10-30  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/formatters/argument.py:
+	Respect /AllowNone/ of classes and mapped types when generating type
+	hints and docstrings.
+	[2e7bb57bde75]
+
+2023-10-25  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/code.py:
+	Final fixes for when protected is not public.
+	[40ffbc1aab6c]
+
+2023-10-24  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/generator/outputs/code.py:
+	Fixed issues when protected is not public.
+	[529320a677c4]
+
+	* NEWS, sipbuild/generator/outputs/code.py:
+	Always use POSIX path separators in #line directives.
+	[8c3940b6a96d]
+
+2023-10-23  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/code.py:
+	Fixed a bug handling protected methods.
+	[c38b81d8cd06]
+
+2023-10-22  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/code.py:
+	Fixed a crash when Python and C++ signatures are different lengths.
+	[ac51f9303dd2]
+
+2023-10-19  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/code.py:
+	Fixed a regression in recent changes.
+	[dd4825cfed03]
+
+2023-10-18  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/generator/scoped_name.py:
+	Don't over-strip scoped C++ names.
+	[89787452fe21]
+
+	* sipbuild/generator/outputs/code.py:
+	Fixed calls to functions in hidden namespaces.
+	[c2ca5d751d01]
+
+	* sipbuild/generator/outputs/code.py:
+	Fixed the handling of enums in hidden namespaces.
+	[b761169bfbfd]
+
+	* NEWS, sipbuild/generator/outputs/code.py:
+	Fixed the handling of global functions in hidden namespaces.
+	[6edc9f23eabd]
+
+2023-10-14  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* MANIFEST.in, NEWS, README, code_generator/gencode.c,
+	code_generator/heap.c, code_generator/py2c.c,
+	code_generator/pybinding.c, code_generator/sip.h,
+	code_generator/type_hints.c, setup.py, sipbuild/bindings.py,
+	sipbuild/builder.py, sipbuild/generator/outputs/__init__.py,
+	sipbuild/generator/outputs/api.py,
+	sipbuild/generator/outputs/code.py,
+	sipbuild/generator/outputs/formatters/__init__.py,
+	sipbuild/generator/outputs/formatters/argument.py,
+	sipbuild/generator/outputs/formatters/base_formatter.py,
+	sipbuild/generator/outputs/formatters/enum.py,
+	sipbuild/generator/outputs/formatters/klass.py,
+	sipbuild/generator/outputs/formatters/misc.py,
+	sipbuild/generator/outputs/formatters/overload.py,
+	sipbuild/generator/outputs/formatters/scoped.py,
+	sipbuild/generator/outputs/formatters/signature.py,
+	sipbuild/generator/outputs/formatters/template.py,
+	sipbuild/generator/outputs/formatters/utils.py,
+	sipbuild/generator/outputs/formatters/value_list.py,
+	sipbuild/generator/outputs/formatters/variable.py,
+	sipbuild/generator/outputs/pyi.py,
+	sipbuild/generator/outputs/type_hints.py,
+	sipbuild/generator/outputs/xml.py,
+	sipbuild/generator/parser/parser_manager.py,
+	sipbuild/generator/parser/parsetab.py,
+	sipbuild/generator/parser/ply/__init__.py,
+	sipbuild/generator/parser/ply/lex.py,
+	sipbuild/generator/parser/ply/yacc.py,
+	sipbuild/generator/parser/rules.py,
+	sipbuild/generator/parser/tokens.py,
+	sipbuild/generator/python_slots.py,
+	sipbuild/generator/resolver/resolver.py,
+	sipbuild/generator/scoped_name.py,
+	sipbuild/generator/specification.py, sipbuild/generator/utils.py:
+	Replaced the C code generator with a pure Python implementation.
+	[3936417dbc3d]
+
+	* Merged the 6.7-maint branch.
+	[fb9b57b05de5]
+
+2023-10-12  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.7.12 for changeset 2c0f7dee9327
+	[4c26b078f32c] <6.7-maint>
+
 2023-10-10  Phil Thompson  <phil@riverbankcomputing.com>
 
 	* NEWS, code_generator/gencode.c:
@@ -580,6 +801,11 @@
 	Re-factored Specification so that it just has the module that code
 	will be generated for rather than a list of all modules.
 	[be55cf9e3e79] <6.7-maint>
+
+2022-11-20  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* Merged the 6.7-maint branch.
+	[5287712c0273]
 
 2022-11-19  Phil Thompson  <phil@riverbankcomputing.com>
 
@@ -2054,10 +2280,12 @@
 
 2021-06-21  Phil Thompson  <phil@riverbankcomputing.com>
 
-	* sipbuild/module/source/12/LICENSE, sipbuild/module/source/12
-	/LICENSE-GPL2, sipbuild/module/source/12/LICENSE-GPL3,
-	sipbuild/module/source/13/LICENSE, sipbuild/module/source/13
-	/LICENSE-GPL2, sipbuild/module/source/13/LICENSE-GPL3:
+	* sipbuild/module/source/12/LICENSE,
+	sipbuild/module/source/12/LICENSE-GPL2,
+	sipbuild/module/source/12/LICENSE-GPL3,
+	sipbuild/module/source/13/LICENSE,
+	sipbuild/module/source/13/LICENSE-GPL2,
+	sipbuild/module/source/13/LICENSE-GPL3:
 	Added the license files to the sip modules.
 	[bcd0f5a3e339]
 
@@ -3286,8 +3514,8 @@
 
 	* NEWS, doc/command_line_tools.rst, doc/pyproject_toml.rst,
 	sipbuild/distutils_builder.py, sipbuild/project.py:
-	Implemented the 'distinfo' project option and the corresponding
-	'--no-distinfo' command line option to sip-install.
+	Implemented the 'distinfo' project option and the corresponding '--
+	no-distinfo' command line option to sip-install.
 	[ec66f6f117e3]
 
 2020-08-25  Phil Thompson  <phil@riverbankcomputing.com>
@@ -6207,9 +6435,9 @@
 	* build.py, configure.py.in, sipdistutils.py, siputils.py,
 	specs/aix-g++, specs/aix-g++-64, specs/aix-xlc, specs/aix-xlc-64,
 	specs/bsdi-g++, specs/cygwin-g++, specs/darwin-g++, specs/dgux-g++,
-	specs/freebsd-g++, specs/freebsd-g++34, specs/freebsd-g++40, specs
-	/freebsd-icc, specs/haiku-g++, specs/hpux-acc, specs/hpux-acc-64,
-	specs/hpux-acc-o64, specs/hpux-cc, specs/hpux-g++,
+	specs/freebsd-g++, specs/freebsd-g++34, specs/freebsd-g++40,
+	specs/freebsd-icc, specs/haiku-g++, specs/hpux-acc, specs/hpux-
+	acc-64, specs/hpux-acc-o64, specs/hpux-cc, specs/hpux-g++,
 	specs/hpux-g++-64, specs/hpuxi-acc, specs/hpuxi-acc-64,
 	specs/hurd-g++, specs/irix-cc, specs/irix-cc-64, specs/irix-cc-o32,
 	specs/irix-g++, specs/irix-g++-64, specs/linux-arm-g++, specs/linux-
@@ -6219,8 +6447,8 @@
 	lsb, specs/linux-pgcc, specs/lynxos-g++, specs/macx-g++, specs/macx-
 	mwerks, specs/macx-pbuilder, specs/macx-xlc, specs/netbsd-g++,
 	specs/openbsd-g++, specs/qnx-g++, specs/reliant-cds, specs/reliant-
-	cds-64, specs/sco-cc, specs/sco-g++, specs/solaris-cc, specs
-	/solaris-cc-64, specs/solaris-g++, specs/solaris-g++-64,
+	cds-64, specs/sco-cc, specs/sco-g++, specs/solaris-cc,
+	specs/solaris-cc-64, specs/solaris-g++, specs/solaris-g++-64,
 	specs/tru64-cxx, specs/tru64-g++, specs/unixware-cc,
 	specs/unixware-g++, specs/win32-borland, specs/win32-g++,
 	specs/win32-icc, specs/win32-msvc, specs/win32-msvc.net,
@@ -16470,21 +16698,21 @@
 	* lib/LICENSE.short, lib/configure.py, lib/sipdistutils.py,
 	lib/siputils.py, specs/aix-g++, specs/aix-g++-64, specs/aix-xlc,
 	specs/aix-xlc-64, specs/darwin-g++, specs/freebsd-g++,
-	specs/freebsd-g++34, specs/freebsd-g++40, specs/freebsd-icc, specs
-	/hpux-acc, specs/hpux-acc-64, specs/hpux-acc-o64, specs/hpux-g++,
-	specs/hpux-g++-64, specs/hpuxi-acc, specs/hpuxi-acc-32, specs/hpuxi-
-	acc-64, specs/hurd-g++, specs/irix-cc, specs/irix-cc-64,
-	specs/irix-g++, specs/irix-g++-64, specs/linux-cxx, specs/linux-
-	ecc-64, specs/linux-g++, specs/linux-g++-32, specs/linux-g++-64,
-	specs/linux-icc, specs/linux-kcc, specs/linux-kylix, specs/linux-
-	pgcc, specs/lynxos-g++, specs/macx-g++, specs/macx-mwerks, specs
-	/macx-pbuilder, specs/macx-xcode, specs/macx-xlc, specs/netbsd-g++,
-	specs/openbsd-g++, specs/qnx-g++, specs/sco-cc, specs/sco-g++, specs
-	/solaris-cc, specs/solaris-cc-64, specs/solaris-g++,
-	specs/solaris-g++-64, specs/tru64-cxx, specs/tru64-g++, specs
-	/unixware-cc, specs/unixware-g++, specs/win32-borland,
-	specs/win32-g++, specs/win32-icc, specs/win32-msvc,
-	specs/win32-msvc.net, specs/win32-msvc2005:
+	specs/freebsd-g++34, specs/freebsd-g++40, specs/freebsd-icc,
+	specs/hpux-acc, specs/hpux-acc-64, specs/hpux-acc-o64,
+	specs/hpux-g++, specs/hpux-g++-64, specs/hpuxi-acc, specs/hpuxi-
+	acc-32, specs/hpuxi-acc-64, specs/hurd-g++, specs/irix-cc,
+	specs/irix-cc-64, specs/irix-g++, specs/irix-g++-64, specs/linux-
+	cxx, specs/linux-ecc-64, specs/linux-g++, specs/linux-g++-32,
+	specs/linux-g++-64, specs/linux-icc, specs/linux-kcc, specs/linux-
+	kylix, specs/linux-pgcc, specs/lynxos-g++, specs/macx-g++,
+	specs/macx-mwerks, specs/macx-pbuilder, specs/macx-xcode,
+	specs/macx-xlc, specs/netbsd-g++, specs/openbsd-g++, specs/qnx-g++,
+	specs/sco-cc, specs/sco-g++, specs/solaris-cc, specs/solaris-cc-64,
+	specs/solaris-g++, specs/solaris-g++-64, specs/tru64-cxx,
+	specs/tru64-g++, specs/unixware-cc, specs/unixware-g++,
+	specs/win32-borland, specs/win32-g++, specs/win32-icc,
+	specs/win32-msvc, specs/win32-msvc.net, specs/win32-msvc2005:
 	Updated the spec files from Qt v4.1. Added support for the $$()
 	method of accessing environment variables in qmake spec files.
 	sipdistutils.py fix from Giovanni. Changes to the build system for
@@ -16609,20 +16837,21 @@
 	siplib/siplib.sbf, siplib/threads.c, specs/aix-g++,
 	specs/aix-g++-64, specs/aix-xlc, specs/aix-xlc-64, specs/bsdi-g++,
 	specs/cygwin-g++, specs/darwin-g++, specs/dgux-g++,
-	specs/freebsd-g++, specs/freebsd-g++34, specs/freebsd-icc, specs
-	/hpux-acc, specs/hpux-acc-64, specs/hpux-acc-o64, specs/hpux-cc,
-	specs/hpux-g++, specs/hpux-g++-64, specs/hpuxi-acc-32, specs/hpuxi-
-	acc-64, specs/hurd-g++, specs/irix-cc, specs/irix-cc-64, specs/irix-
-	cc-o32, specs/irix-g++, specs/linux-cxx, specs/linux-ecc-64,
-	specs/linux-g++, specs/linux-g++-64, specs/linux-icc, specs/linux-
-	kcc, specs/linux-kylix, specs/linux-pgcc, specs/lynxos-g++,
-	specs/macx-g++, specs/macx-mwerks, specs/macx-pbuilder, specs/macx-
-	xlc, specs/netbsd-g++, specs/openbsd-g++, specs/qnx-g++, specs
-	/reliant-cds, specs/reliant-cds-64, specs/sco-cc, specs/sco-g++,
-	specs/solaris-cc, specs/solaris-cc-64, specs/solaris-g++,
-	specs/solaris-g++-64, specs/tru64-cxx, specs/tru64-g++, specs
-	/unixware-cc, specs/unixware-g++, specs/win32-borland,
-	specs/win32-g++, specs/win32-icc, specs/win32-msvc,
-	specs/win32-msvc.net, specs/win32-msvc2005, specs/win32-watcom:
+	specs/freebsd-g++, specs/freebsd-g++34, specs/freebsd-icc,
+	specs/hpux-acc, specs/hpux-acc-64, specs/hpux-acc-o64, specs/hpux-
+	cc, specs/hpux-g++, specs/hpux-g++-64, specs/hpuxi-acc-32,
+	specs/hpuxi-acc-64, specs/hurd-g++, specs/irix-cc, specs/irix-cc-64,
+	specs/irix-cc-o32, specs/irix-g++, specs/linux-cxx, specs/linux-
+	ecc-64, specs/linux-g++, specs/linux-g++-64, specs/linux-icc,
+	specs/linux-kcc, specs/linux-kylix, specs/linux-pgcc,
+	specs/lynxos-g++, specs/macx-g++, specs/macx-mwerks, specs/macx-
+	pbuilder, specs/macx-xlc, specs/netbsd-g++, specs/openbsd-g++,
+	specs/qnx-g++, specs/reliant-cds, specs/reliant-cds-64, specs/sco-
+	cc, specs/sco-g++, specs/solaris-cc, specs/solaris-cc-64,
+	specs/solaris-g++, specs/solaris-g++-64, specs/tru64-cxx,
+	specs/tru64-g++, specs/unixware-cc, specs/unixware-g++,
+	specs/win32-borland, specs/win32-g++, specs/win32-icc,
+	specs/win32-msvc, specs/win32-msvc.net, specs/win32-msvc2005,
+	specs/win32-watcom:
 	Initial import of sip from CVS
 	[1fd77e66a56d]

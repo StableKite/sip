@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Riverbank Computing Limited
+# Copyright (c) 2023, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of SIP is licensed for use under the terms of the SIP License
@@ -21,9 +21,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from ply.lex import TOKEN
-
 from ..specification import CodeBlock
+
+from .ply.lex import TOKEN
 
 
 # The lexer states.
@@ -192,9 +192,14 @@ def t_DIRECTIVE(t):
 def t_code_END(t):
     r'%End'
 
-    t.type = 'CODE_BLOCK'
-    t.value = t.lexer.pm.code_block
+    code_block = t.lexer.pm.code_block
     t.lexer.pm.code_block = None
+
+    # Ignore any indentation preceding the # %End.
+    code_block.text = code_block.text.rstrip(' \t')
+
+    t.type = 'CODE_BLOCK'
+    t.value = code_block
     t.lexer.begin('INITIAL')
 
     return t

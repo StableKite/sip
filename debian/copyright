@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Contact: pyqt@riverbankcomputing.com
 Files-Excluded: doc/html
-                sipbuild/generator/parser/parsetab.py
+                sipbuild/generator/parser/ply
 
 Files: *
 Copyright: 2015-2023 Riverbank Computing Limited <info@riverbankcomputing.com>

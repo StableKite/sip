@@ -5,11 +5,13 @@ Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Dmitry Shachnev <mitya57@debian.org>
 Build-Depends: debhelper-compat (= 13),
                dh-python (>= 5.20211213),
+               dh-sequence-sphinxdoc,
                python3-all,
+               python3-doc,
                python3-packaging,
                python3-ply,
-               python3-setuptools
-Build-Depends-Indep: dh-sequence-sphinxdoc, python3-doc, python3-sphinx
+               python3-setuptools,
+               python3-sphinx
 Rules-Requires-Root: no
 Standards-Version: 4.6.2
 Homepage: https://riverbankcomputing.com/software/sip/intro

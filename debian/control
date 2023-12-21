@@ -22,7 +22,7 @@ Testsuite: autopkgtest-pkg-python
 Package: python3-sipbuild
 Architecture: all
 Section: python
-Depends: python3-setuptools, ${misc:Depends}, ${python3:Depends}
+Depends: python3-ply, python3-setuptools, ${misc:Depends}, ${python3:Depends}
 Description: Python bindings generator for C/C++ libraries — the build system
  SIP is a collection of tools that makes it very easy to create Python bindings
  for C and C++ libraries.

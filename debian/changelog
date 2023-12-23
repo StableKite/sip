@@ -1,4 +1,4 @@
-sip6 (6.8.1+dfsg-1) UNRELEASED; urgency=medium
+sip6 (6.8.1+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
   * Use system ply module instead of the bundled one.
@@ -6,7 +6,7 @@ sip6 (6.8.1+dfsg-1) UNRELEASED; urgency=medium
   * Merge Build-Depends-Indep into Build-Depends.
   * Add support for nodoc build profile.
 
- -- Dmitry Shachnev <mitya57@debian.org>  Wed, 20 Dec 2023 21:50:26 +0300
+ -- Dmitry Shachnev <mitya57@debian.org>  Sat, 23 Dec 2023 14:45:49 +0300
 
 sip6 (6.7.12+dfsg-1) unstable; urgency=medium
 

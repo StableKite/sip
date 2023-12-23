@@ -5,13 +5,13 @@ Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Dmitry Shachnev <mitya57@debian.org>
 Build-Depends: debhelper-compat (= 13),
                dh-python (>= 5.20211213),
-               dh-sequence-sphinxdoc,
+               dh-sequence-sphinxdoc <!nodoc>,
                python3-all,
-               python3-doc,
+               python3-doc <!nodoc>,
                python3-packaging,
                python3-ply,
                python3-setuptools,
-               python3-sphinx
+               python3-sphinx <!nodoc>
 Rules-Requires-Root: no
 Standards-Version: 4.6.2
 Homepage: https://riverbankcomputing.com/software/sip/intro
@@ -48,6 +48,7 @@ Description: Python bindings generator for C/C++ libraries — command line tool
   - sip-wheel
 
 Package: sip6-doc
+Build-Profiles: <!nodoc>
 Architecture: all
 Section: doc
 Depends: ${misc:Depends}, ${sphinxdoc:Depends}

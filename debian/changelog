@@ -4,6 +4,7 @@ sip6 (6.8.1+dfsg-1) UNRELEASED; urgency=medium
   * Use system ply module instead of the bundled one.
   * Make python3-sipbuild package arch-independent (it is pure Python now).
   * Merge Build-Depends-Indep into Build-Depends.
+  * Add support for nodoc build profile.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Wed, 20 Dec 2023 21:50:26 +0300
 

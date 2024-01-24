@@ -1,4 +1,55 @@
+2024-01-24  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/pyproject.py:
+	Tweaked an error message to suggest a sip limitation rather than a
+	user error.
+	[661d29ad51f2] [6.8.2] <6.8-maint>
+
+2024-01-02  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, rb-product.toml:
+	Removed the product file.
+	[772490fd8f17] <6.8-maint>
+
+2023-12-31  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgignore, NEWS:
+	Updated .hgignore.
+	[20f03aa06465] <6.8-maint>
+
+2023-12-23  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* sipbuild/argument_parser.py, sipbuild/project.py:
+	Make sure the --deprecations-as-errors help only appears for build
+	tools.
+	[bd1697bf879c] <6.8-maint>
+
+	* NEWS, doc/command_line_tools.rst, sipbuild/abstract_project.py,
+	sipbuild/argument_parser.py, sipbuild/exceptions.py:
+	Added the --deprecations-are-errors command line option to all build
+	tools.
+	[ed335481a1a1] <6.8-maint>
+
+2023-12-22  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/parser/parser_manager.py,
+	sipbuild/generator/parser/rules.py:
+	Deprecated SIP_SSIZE_T and other internal or unused directives.
+	[3e5ee832ba87] <6.8-maint>
+
 2023-12-12  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/generator/outputs/api.py,
+	sipbuild/generator/outputs/code.py,
+	sipbuild/generator/outputs/extracts.py,
+	sipbuild/generator/outputs/pyi.py:
+	All generated files are UTF-8 encoded rather than using the platform
+	default.
+	[8a93542bb346] <6.8-maint>
+
+	* .hgtags:
+	Added tag 6.8.1 for changeset d6da922b80f7
+	[8cbbcec6660f] <6.8-maint>
 
 	* sipbuild/generator/outputs/code.py:
 	Fixed the generation of try/catch blocks.

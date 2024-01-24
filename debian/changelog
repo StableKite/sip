@@ -2,6 +2,7 @@ sip6 (6.8.2+dfsg-1) UNRELEASED; urgency=medium
 
   * New upstream release.
   * Document --deprecations-are-errors flag in the manpages.
+  * Bump copyright years.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Wed, 24 Jan 2024 22:46:52 +0300
 

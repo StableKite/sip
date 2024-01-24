@@ -4,11 +4,11 @@ Files-Excluded: doc/html
                 sipbuild/generator/parser/ply
 
 Files: *
-Copyright: 2015-2023 Riverbank Computing Limited <info@riverbankcomputing.com>
+Copyright: 2015-2024 Riverbank Computing Limited <info@riverbankcomputing.com>
 License: SIP or GPL-2 or GPL-3
 
 Files: debian/*
-Copyright: 2021-2023 Dmitry Shachnev <mitya57@debian.org>
+Copyright: 2021-2024 Dmitry Shachnev <mitya57@debian.org>
 License: GPL-2 or GPL-3
 
 License: SIP

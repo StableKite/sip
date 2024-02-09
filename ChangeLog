@@ -1,4 +1,45 @@
+2024-02-08  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/project.py:
+	Fixed the handling of deprecated ABI versions.
+	[479061814d26] [6.8.3] <6.8-maint>
+
+2024-02-07  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* NEWS, sipbuild/exceptions.py, sipbuild/generator/specification.py,
+	sipbuild/project.py:
+	Deprecated support for ABI v13.0 and v12.8 and older.
+	[48d3d52a94c2] <6.8-maint>
+
+	* NEWS, doc/specification_files.rst,
+	sipbuild/generator/parser/rules.py,
+	sipbuild/generator/specification.py:
+	Deprecated the 'throw' specifier.
+	[16ae61f2d877] <6.8-maint>
+
+	* NEWS, sipbuild/generator/outputs/code.py:
+	Further 'noexcept' fixes.
+	[8bbe6d2a8143] <6.8-maint>
+
+	* sipbuild/generator/outputs/code.py,
+	sipbuild/generator/parser/rules.py,
+	sipbuild/generator/specification.py:
+	Fixed the handling of 'noexcept' and 'throw()'.
+	[64f2d5d2a2e0] <6.8-maint>
+
+	* sipbuild/generator/specification.py:
+	Use auto() in the definition of enums in the specification.
+	[a5fb4acec8d4] <6.8-maint>
+
+	* NEWS, doc/specification_files.rst:
+	Removed some Python v2 slots from the documentation.
+	[d16387c66d71] <6.8-maint>
+
 2024-01-24  Phil Thompson  <phil@riverbankcomputing.com>
+
+	* .hgtags:
+	Added tag 6.8.2 for changeset 661d29ad51f2
+	[38e13817d62d] <6.8-maint>
 
 	* NEWS, sipbuild/pyproject.py:
 	Tweaked an error message to suggest a sip limitation rather than a

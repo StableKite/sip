@@ -6109,7 +6109,7 @@ def _handling_exceptions(bindings, throw_args):
 
     # Handle any exceptions if there was no throw specifier, or a non-empty
     # throw specifier.
-    return bindings.exceptions and (throw_args is None or len(throw_args.arguments) != 0)
+    return bindings.exceptions and (throw_args is None or throw_args.arguments is not None)
 
 
 def _try(sf, bindings, throw_args):
@@ -6226,7 +6226,7 @@ f'''
 def _throw_specifier(bindings, throw_args):
     """ Return a throw specifier. """
 
-    return ' noexcept' if bindings.exceptions and throw_args is not None and len(throw_args.arguments) == 0 else ''
+    return ' noexcept' if bindings.exceptions and throw_args is not None and throw_args.arguments is None else ''
 
 
 def _constructor_call(sf, spec, bindings, klass, ctor, error_flag,

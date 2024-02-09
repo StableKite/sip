@@ -2797,6 +2797,7 @@ def p_opt_exceptions(p):
 
     if p[1] == 'throw':
         p[0] = p[3]
+        p.parser.pm.deprecated(p, 1)
     elif p[1] == 'noexcept':
         p[0] = ThrowArguments()
     else:
@@ -2807,7 +2808,7 @@ def p_opt_exception_list(p):
     """opt_exception_list : exception_list
         | empty"""
 
-    p[0] = ThrowArguments(arguments=[]) if p[1] is None else p[1]
+    p[0] = ThrowArguments() if p[1] is None else p[1]
 
 
 def p_exception_list(p):

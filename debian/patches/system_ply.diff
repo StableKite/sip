@@ -9,10 +9,10 @@ Forwarded: not-needed
  2 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/sipbuild/generator/parser/parser_manager.py b/sipbuild/generator/parser/parser_manager.py
-index df3a6a2..19a669a 100644
+index 8d3cb13..5c2c9c8 100644
 --- a/sipbuild/generator/parser/parser_manager.py
 +++ b/sipbuild/generator/parser/parser_manager.py
-@@ -45,7 +45,7 @@ from ..utils import (argument_as_str, cached_name, find_iface_file,
+@@ -27,7 +27,7 @@ from ..utils import (argument_as_str, cached_name, find_iface_file,
  from . import rules
  from . import tokens
  from .annotations import InvalidAnnotation, validate_annotation_value
@@ -22,10 +22,10 @@ index df3a6a2..19a669a 100644
  
  class ParserManager:
 diff --git a/sipbuild/generator/parser/tokens.py b/sipbuild/generator/parser/tokens.py
-index 0e8ac8d..ff33e35 100644
+index 81bc941..725c881 100644
 --- a/sipbuild/generator/parser/tokens.py
 +++ b/sipbuild/generator/parser/tokens.py
-@@ -23,7 +23,7 @@
+@@ -5,7 +5,7 @@
  
  from ..specification import CodeBlock
  

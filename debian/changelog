@@ -1,6 +1,7 @@
 sip6 (6.8.4-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Update debian/watch to fetch tarballs from GitHub.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Fri, 21 Jun 2024 22:18:16 +0300
 

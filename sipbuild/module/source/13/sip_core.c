@@ -1,22 +1,13 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
+
 /*
  * The core sip module code.
  *
- * Copyright (c) 2023 Riverbank Computing Limited <info@riverbankcomputing.com>
- *
- * This file is part of SIP.
- *
- * This copy of SIP is licensed for use under the terms of the SIP License
- * Agreement.  See the file LICENSE for more details.
- *
- * This copy of SIP may also used under the terms of the GNU General Public
- * License v2 or v3 as published by the Free Software Foundation which can be
- * found in the files LICENSE-GPL2 and LICENSE-GPL3 included in this package.
- *
- * SIP is supplied WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
  */
 
 
+/* Remove when Python v3.12 is no longer supported. */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <datetime.h>
@@ -32,12 +23,6 @@
 #include "sip_enum.h"
 
 #include "sip_core.h"
-
-
-/* There doesn't seem to be a standard way of checking for C99 support. */
-#if !defined(va_copy)
-#define va_copy(d, s)   ((d) = (s))
-#endif
 
 
 /*
@@ -2313,7 +2298,7 @@ static PyObject *buildObject(PyObject *obj, const char *fmt, va_list va)
             break;
 
         case '=':
-            el = PyLong_FromUnsignedLong(va_arg(va, size_t));
+            el = PyLong_FromSize_t(va_arg(va, size_t));
             break;
 
         case 'N':
@@ -4935,6 +4920,8 @@ static int parsePass2(PyObject *self, int selfarg, PyObject *sipArgs,
 
                 if (flags & FMT_AP_TRANSFER_THIS)
                     owner = va_arg(va, PyObject **);
+                else
+                    owner = NULL;
 
                 if (flags & FMT_AP_NO_CONVERTORS)
                 {
@@ -4961,7 +4948,7 @@ static int parsePass2(PyObject *self, int selfarg, PyObject *sipArgs,
                     if (iserr)
                         return FALSE;
 
-                    if (flags & FMT_AP_TRANSFER_THIS && *p != NULL)
+                    if (owner != NULL && *p != NULL)
                         *owner = arg;
                 }
 
@@ -9495,6 +9482,10 @@ static PyObject *slot_richcompare(PyObject *self, PyObject *arg, int op)
     case Py_GE:
         st = ge_slot;
         break;
+
+    default:
+        /* Suppress a compiler warning. */
+        st = -1;
     }
 
     /* It might not exist if not all the above have been implemented. */

@@ -4,3 +4,4 @@ code_generator/parser.h
 sip.egg-info/PKG-INFO
 sip.egg-info/SOURCES.txt
 sip.egg-info/entry_points.txt
+sipbuild/generator/parser/ply/

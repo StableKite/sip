@@ -10,6 +10,7 @@ sip6 (6.8.4-1) UNRELEASED; urgency=medium
     - Bump python3-setuptools required version to 64.
     - Depend on python3-setuptools-scm and pybuild-plugin-pyproject.
     - Depend on python3-myst-parser and python3-sphinx-rtd-theme for the docs.
+  * Update the command to build the Sphinx docs.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Fri, 21 Jun 2024 22:18:16 +0300
 

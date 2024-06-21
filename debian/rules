@@ -13,4 +13,4 @@ execute_after_dh_auto_install:
 	mv debian/python3-sipbuild/usr/bin debian/sip-tools/usr/bin
 
 execute_before_dh_sphinxdoc:
-	python3 -m sphinx doc debian/sip6-doc/usr/share/doc/sip6-doc/html
+	python3 -m sphinx docs debian/sip6-doc/usr/share/doc/sip6-doc/html

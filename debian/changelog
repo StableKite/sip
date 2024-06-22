@@ -1,4 +1,4 @@
-sip6 (6.8.4-1) UNRELEASED; urgency=medium
+sip6 (6.8.5-1) UNRELEASED; urgency=medium
 
   * New upstream release.
   * Update debian/watch to fetch tarballs from GitHub.

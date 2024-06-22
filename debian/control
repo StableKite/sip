@@ -22,7 +22,7 @@ Standards-Version: 4.6.2
 Homepage: https://github.com/Python-SIP/sip
 Vcs-Git: https://salsa.debian.org/python-team/packages/sip6.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/sip6
-Testsuite: autopkgtest-pkg-python
+Testsuite: autopkgtest-pkg-pybuild
 
 Package: python3-sipbuild
 Architecture: all

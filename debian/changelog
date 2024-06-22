@@ -16,6 +16,7 @@ sip6 (6.8.5-1) UNRELEASED; urgency=medium
     - Add a patch to make them use current Python version, not default one.
     - Add a patch to include sipbuild/module/source in the build tree.
     - Build-depend on python3-all-dev.
+  * Also run upstream tests in autopkgtest using pybuild.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Fri, 21 Jun 2024 22:18:16 +0300
 

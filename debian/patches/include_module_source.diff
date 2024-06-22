@@ -1,0 +1,18 @@
+From: Dmitry Shachnev <mitya57@debian.org>
+Date: Sat, 22 Jun 2024 22:29:30 +0300
+Subject: Include sipbuild/module/source directory in the build tree
+
+Forwarded: https://github.com/Python-SIP/sip/pull/28
+---
+ MANIFEST.in | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/MANIFEST.in b/MANIFEST.in
+index 376d67a..18c14bc 100644
+--- a/MANIFEST.in
++++ b/MANIFEST.in
+@@ -3,3 +3,4 @@ exclude .readthedocs.yaml
+ prune docs
+ prune examples
+ prune test
++graft sipbuild/module/source

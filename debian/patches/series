@@ -1,3 +1,4 @@
 intersphinx_local.diff
 system_ply.diff
 tests_python_version.diff
+include_module_source.diff

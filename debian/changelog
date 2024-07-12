@@ -1,6 +1,9 @@
 sip6 (6.8.6-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Drop patches:
+    - tests_python_version.diff (applied upstream)
+    - include_module_source.diff (problem solved differently)
 
  -- Dmitry Shachnev <mitya57@debian.org>  Fri, 12 Jul 2024 22:54:35 +0300
 

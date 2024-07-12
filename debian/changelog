@@ -4,6 +4,7 @@ sip6 (6.8.6-1) UNRELEASED; urgency=medium
   * Drop patches:
     - tests_python_version.diff (applied upstream)
     - include_module_source.diff (problem solved differently)
+  * Refresh intersphinx_local.diff.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Fri, 12 Jul 2024 22:54:35 +0300
 

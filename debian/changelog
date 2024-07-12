@@ -1,3 +1,9 @@
+sip6 (6.8.6-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+
+ -- Dmitry Shachnev <mitya57@debian.org>  Fri, 12 Jul 2024 22:54:35 +0300
+
 sip6 (6.8.5-1) unstable; urgency=medium
 
   * New upstream release.

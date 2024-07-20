@@ -9,7 +9,7 @@ Build-Depends: debhelper-compat (= 13),
                python3-all-dev,
                python3-setuptools
 Rules-Requires-Root: no
-Standards-Version: 4.6.2
+Standards-Version: 4.7.0
 Homepage: https://github.com/Python-SIP/sip
 Vcs-Git: https://salsa.debian.org/python-team/packages/pyqt6-sip.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/pyqt6-sip

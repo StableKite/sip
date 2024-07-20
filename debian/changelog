@@ -4,6 +4,7 @@ pyqt6-sip (13.8.0-1) UNRELEASED; urgency=medium
   * Update debian/copyright.
     - Relicense the packaging to match the new upstream license.
   * Update Homepage URL for move to GitHub.
+  * Bump Standards-Version to 4.7.0, no changes needed.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Sat, 20 Jul 2024 20:21:25 +0300
 

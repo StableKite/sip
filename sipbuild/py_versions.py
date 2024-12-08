@@ -4,4 +4,4 @@
 
 
 # The oldest supported minor version of Python v3.
-OLDEST_SUPPORTED_MINOR = 8
+OLDEST_SUPPORTED_MINOR = 9

@@ -3,6 +3,8 @@ sip6 (6.9.0-1) UNRELEASED; urgency=medium
   * New upstream release.
   * Refresh patches for the new release.
   * Do not ship parsetab.py in a versioned (python3.13) directory.
+  * Make dh_python3 generate a dependency on python3-setuptools, not on
+    python3-pkg-resources (closes: #1083771).
 
  -- Dmitry Shachnev <mitya57@debian.org>  Sun, 08 Dec 2024 17:15:55 +0300
 

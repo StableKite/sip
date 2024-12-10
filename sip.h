@@ -14,8 +14,8 @@
 #include <Python.h>
 
 /* Sanity check on the Python version. */
-#if PY_VERSION_HEX < 0x03080000
-#error "This version of PyQt6.sip requires Python v3.8 or later"
+#if PY_VERSION_HEX < 0x03090000
+#error "This version of PyQt6.sip requires Python v3.9 or later"
 #endif
 
 
@@ -35,12 +35,17 @@ extern "C" {
 
 /* The version of the ABI. */
 #define SIP_ABI_MAJOR_VERSION       13
-#define SIP_ABI_MINOR_VERSION       8
+#define SIP_ABI_MINOR_VERSION       9
 #define SIP_MODULE_PATCH_VERSION    0
 
 
 /*
  * The change history of the ABI.
+ *
+ * v13.9
+ *  - Python v3.9 or later is required.
+ *  - Added a new implementation of sipDeprecated() that takes an optional
+ *    supplementary message.
  *
  * v13.8
  *  - Added the 'I' conversion character to the argument and result parsers.
@@ -77,8 +82,8 @@ extern "C" {
 
 
 /* The version of the code generator. */
-#define SIP_VERSION                 0x60806
-#define SIP_VERSION_STR             "6.8.6"
+#define SIP_VERSION                 0x60900
+#define SIP_VERSION_STR             "6.9.0"
 
 /* These are all dependent on the user-specified name of the sip module. */
 #define _SIP_MODULE_FQ_NAME         "PyQt6.sip"
@@ -1425,7 +1430,7 @@ typedef struct _sipAPIDef {
     PyObject *(*api_is_py_method_12_8)(sip_gilstate_t *gil, char *pymc,
             sipSimpleWrapper **sipSelfp, const char *cname, const char *mname);
     sipExceptionHandler (*api_next_exception_handler)(void **statep);
-    void (*unused_private_2)(void);
+    int (*api_deprecated_13_9)(const char *classname, const char *method, const char *message);
     void (*unused_private_3)(void);
     void (*unused_private_4)(void);
     void (*unused_private_5)(void);

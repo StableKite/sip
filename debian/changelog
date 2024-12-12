@@ -2,6 +2,7 @@ sip6 (6.9.1-1) UNRELEASED; urgency=medium
 
   * New upstream release.
   * Refresh intersphinx_local.diff.
+  * Bump required setuptools version to 69.5, following upstream.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Thu, 12 Dec 2024 14:01:23 +0300
 

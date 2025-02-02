@@ -3,7 +3,7 @@
 /*
  * The SIP module interface.
  *
- * Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+ * Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
  */
 
 
@@ -35,12 +35,15 @@ extern "C" {
 
 /* The version of the ABI. */
 #define SIP_ABI_MAJOR_VERSION       13
-#define SIP_ABI_MINOR_VERSION       9
-#define SIP_MODULE_PATCH_VERSION    1
+#define SIP_ABI_MINOR_VERSION       10
+#define SIP_MODULE_PATCH_VERSION    0
 
 
 /*
  * The change history of the ABI.
+ *
+ * v13.10
+ *  - Added SIP_ABI_VERSION as a module attribute.
  *
  * v13.9
  *  - Python v3.9 or later is required.
@@ -82,8 +85,8 @@ extern "C" {
 
 
 /* The version of the code generator. */
-#define SIP_VERSION                 0x60901
-#define SIP_VERSION_STR             "6.9.1"
+#define SIP_VERSION                 0x60a00
+#define SIP_VERSION_STR             "6.10.0"
 
 /* These are all dependent on the user-specified name of the sip module. */
 #define _SIP_MODULE_FQ_NAME         "PyQt6.sip"

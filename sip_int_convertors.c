@@ -3,7 +3,7 @@
 /*
  * The implementation of the Python object to C/C++ integer convertors.
  *
- * Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+ * Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
  */
 
 

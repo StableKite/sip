@@ -5,7 +5,7 @@
  * C++ classes that provide a thread interface to interact properly with the
  * Python threading infrastructure.
  *
- * Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+ * Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
  */
 
 

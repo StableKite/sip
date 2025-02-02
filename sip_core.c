@@ -3,7 +3,7 @@
 /*
  * The core sip module code.
  *
- * Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+ * Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
  */
 
 
@@ -884,6 +884,14 @@ const sipAPIDef *sip_init_library(PyObject *mod_dict)
     obj = PyUnicode_FromString(SIP_VERSION_STR);
 
     if (sip_dict_set_and_discard(mod_dict, "SIP_VERSION_STR", obj) < 0)
+        return NULL;
+
+    /* Add the SIP ABI version number. */
+    obj = PyLong_FromLong((SIP_ABI_MAJOR_VERSION << 16) +
+            (SIP_ABI_MINOR_VERSION << 8) +
+            SIP_MODULE_PATCH_VERSION);
+
+    if (sip_dict_set_and_discard(mod_dict, "SIP_ABI_VERSION", obj) < 0)
         return NULL;
 
     /* Add the methods. */

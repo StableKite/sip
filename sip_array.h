@@ -3,7 +3,7 @@
 /*
  * This file defines the API for the array type.
  *
- * Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+ * Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
  */
 
 

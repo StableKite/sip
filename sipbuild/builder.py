@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
 
 
 from abc import abstractmethod
@@ -210,8 +210,6 @@ class Builder(AbstractBuilder):
 
         project = self.project
 
-        abi_major_version, _ = project.abi_version.split('.')
-
         # Get the list of directories to search for .sip files.
         sip_include_dirs = list(project.sip_include_dirs)
 
@@ -228,10 +226,6 @@ class Builder(AbstractBuilder):
             sip_include_dirs.append(
                     os.path.join(project.target_dir,
                             project.get_bindings_dir()))
-
-            # Generate the sip.h file for the shared sip module.
-            copy_sip_h(abi_major_version, project.build_dir,
-                    project.sip_module, version_info=project.version_info)
 
         # Generate the code for each set of bindings.
         api_files = []
@@ -258,6 +252,12 @@ class Builder(AbstractBuilder):
 
             project.buildables.append(buildable)
 
+        if project.sip_module:
+            # Generate the sip.h file for the shared sip module now that we
+            # know the target ABI..
+            copy_sip_h(project.build_abi, project.build_dir,
+                    project.sip_module, version_info=project.version_info)
+
         # Create __init__.py if required.
         if project.dunder_init:
             package_dir = project.get_package_dir()
@@ -275,7 +275,7 @@ class Builder(AbstractBuilder):
             # Include sip.pyi if any of the bindings generate a .pyi file.
             for bindings in project.bindings.values():
                 if bindings.pep484_pyi:
-                    copy_sip_pyi(abi_major_version, project.build_dir)
+                    copy_sip_pyi(project.build_abi, project.build_dir)
 
                     installable = Installable('sip_pyi',
                             target_subdir=package_dir)

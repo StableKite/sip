@@ -39,7 +39,17 @@ Annotations can have one of the following types:
     Python scope.
 
 *string*
-    The value is a double quoted string.
+    The value is a double quoted string.  The value is interpreted as a
+    sequence of ``;``-separated fields.  Each field may contain a
+    ``:``-separated selector:value pair.  The selector is the name of either a
+    platform (defined by the :directive:`%Platforms` directive) or a feature
+    (defined by the :directive:`%Feature` directive).  If the selector refers
+    to the current platform or to an enabled feature then the corresponding
+    value is used as the value of the annotation.  The selector may be preceded
+    by ``!`` to invert the selection.  The selector of each field is
+    evaluated in turn until a value is found to be selected.  ``;`` and ``:``
+    may be escaped using a leading ``\\``.  Normally a string annotation is a
+    simple string.
 
 The following example shows argument and function annotations::
 
@@ -404,6 +414,11 @@ Class Annotations
     of annotating all the class's constructors, function and methods as being
     deprecated.
 
+    .. versionchanged:: 6.10
+
+        If the target ABI does not support the optional string value then the
+        value is ignored.  In earlier versions an error was raised.
+
 
 .. class-annotation:: FileExtension
 
@@ -716,6 +731,11 @@ Function Annotations
     This optional string annotation is used to specify that the constructor or
     function is deprecated.  Any string is appended to the deprecation warning
     and is usually used to suggest an appropriate alternative.
+
+    .. versionchanged:: 6.10
+
+        If the target ABI does not support the optional string value then the
+        value is ignored.  In earlier versions an error was raised.
 
 
 .. function-annotation:: DisallowNone

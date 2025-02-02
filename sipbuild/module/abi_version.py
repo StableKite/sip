@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
 
 
 import os
@@ -12,86 +12,54 @@ from ..exceptions import UserException
 _module_source_dir = os.path.join(os.path.dirname(__file__), 'source')
 
 
-def get_module_source_dir(abi_major_version):
-    """ Return the name of the directory containing the latest source of the
-    sip module that implements the given ABI version.
+def get_latest_version(abi_major_version=None):
+    """ Return the latest minor version for a major version (if given)
+    otherwise return the latest major version.
     """
 
-    return os.path.join(_module_source_dir, abi_major_version)
+    _, latest = get_source_version_range(abi_major_version)
+
+    return latest
 
 
-def get_sip_module_version(abi_major_version):
-    """ Return the version number of the latest implementation of the sip
-    module with the given ABI as a string.
+def get_module_source_dir(abi_version):
+    """ Return the name of the directory containing the source of the sip
+    module that implements the given ABI version.
     """
 
-    abi_minor_version = patch_version = None
+    major_version, minor_version = abi_version
 
-    # Read the version from the header file shared with the code generator.
-    with open(os.path.join(get_module_source_dir(abi_major_version), 'sip.h.in')) as vf:
-        for line in vf:
-            parts = line.strip().split()
-            if len(parts) == 3 and parts[0] == '#define':
-                name = parts[1]
-                value = parts[2]
-
-                if name == 'SIP_ABI_MINOR_VERSION':
-                    abi_minor_version = value
-                elif name == 'SIP_MODULE_PATCH_VERSION':
-                    patch_version = value
-
-    # These are internal errors and should never happen.
-    if abi_minor_version is None:
-        raise ValueError(
-                f"'SIP_ABI_MINOR_VERSION' not found for ABI {abi_major_version}")
-
-    if patch_version is None:
-        raise ValueError(
-                f"'SIP_MODULE_PATCH_VERSION' not found for ABI {abi_major_version}")
-
-    return f'{abi_major_version}.{abi_minor_version}.{patch_version}'
+    return os.path.join(_module_source_dir, str(major_version),
+            str(minor_version))
 
 
-def resolve_abi_version(abi_version, module=True):
-    """ Return a valid ABI version or the latest if none was given. """
+def get_source_version_range(abi_major_version):
+    """ Return a 2-tuple of the earliest and latest minor versions, for a
+    particular major version, for which source code is available.
+    """
 
-    # Get the major and minimum minor version of what we need.
-    if abi_version:
-        parts = abi_version.split('.')
-        abi_major_version = parts[0]
+    source_dir = _module_source_dir
 
-        if not os.path.isdir(get_module_source_dir(abi_major_version)):
-            raise UserException(
-                    f"'{abi_version}' is not a supported ABI version")
+    if abi_major_version is not None:
+        source_dir = os.path.join(source_dir, str(abi_major_version))
 
-        if len(parts) == 1:
-            minimum_minor_version = 0
-        else:
-            try:
-                minimum_minor_version = int(parts[1])
-            except ValueError:
-                minimum_minor_version = None
+    subdirs = sorted(os.listdir(source_dir), key=int)
 
-            if len(parts) > 2 or minimum_minor_version is None:
-                raise UserException(
-                        f"'{abi_version}' is not a valid ABI version")
-    else:
-        abi_major_version = sorted(os.listdir(_module_source_dir), key=int)[-1]
-        # v13.0 is deprecated so explicitly exclude it to avoid a later
-        # deprecation warning.
-        minimum_minor_version = 1 if abi_major_version == '13' else 0
+    return int(subdirs[0]), int(subdirs[-1])
 
-    # Get the minor version of what we actually have.
-    module_version = get_sip_module_version(abi_major_version)
-    _, abi_minor_version, _ = module_version.split('.')
 
-    # Check we meet the minimum requirement.
-    if int(abi_minor_version) < minimum_minor_version:
-        raise UserException(f"'{abi_version}' is not a supported ABI version")
+def parse_abi_version(abi_version):
+    """ Return a 2-tuple of the valid major ABI version and the valid minor ABI
+    version (or None if it was omitted).  Both values are integers.
+    """
 
-    if module:
-        # Return the module's version.
-        return f'{abi_major_version}.{abi_minor_version}'
+    try:
+        parts = [int(p) for p in abi_version.split('.')]
+        nr_parts = len(parts)
 
-    # Return the required version.
-    return f'{abi_major_version}.{minimum_minor_version}'
+        if nr_parts > 2:
+            raise ValueError()
+    except ValueError:
+        raise UserException(f"'{abi_version}' is not a valid ABI version")
+
+    return parts[0], parts[1] if nr_parts == 2 else None

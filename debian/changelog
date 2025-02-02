@@ -1,6 +1,7 @@
 pyqt6-sip (13.10.0-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Update copyright years.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Sun, 02 Feb 2025 22:12:32 +0300
 

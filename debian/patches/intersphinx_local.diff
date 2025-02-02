@@ -7,10 +7,10 @@ Subject: Use local intersphinx inventory.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/docs/conf.py b/docs/conf.py
-index 8c7412c..7a65c71 100644
+index 4c56130..561e690 100644
 --- a/docs/conf.py
 +++ b/docs/conf.py
-@@ -20,7 +20,7 @@ version = 'v6.9.1'
+@@ -20,7 +20,7 @@ version = 'v6.10.0'
  # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
  
  extensions = ['myst_parser', 'sphinx.ext.intersphinx']

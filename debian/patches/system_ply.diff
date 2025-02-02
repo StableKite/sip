@@ -11,10 +11,10 @@ Forwarded: not-needed
  2 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/sipbuild/generator/parser/parser_manager.py b/sipbuild/generator/parser/parser_manager.py
-index d50f0f6..00bbf3d 100644
+index 0f1d771..202c243 100644
 --- a/sipbuild/generator/parser/parser_manager.py
 +++ b/sipbuild/generator/parser/parser_manager.py
-@@ -27,7 +27,7 @@ from ..utils import (abi_has_deprecated_message, argument_as_str, cached_name,
+@@ -28,7 +28,7 @@ from ..utils import (argument_as_str, cached_name, find_iface_file,
  from . import rules
  from . import tokens
  from .annotations import InvalidAnnotation, validate_annotation_value
@@ -23,7 +23,7 @@ index d50f0f6..00bbf3d 100644
  
  class ParserManager:
      """ This object manages the actual lexer and parser objects providing them
-@@ -44,7 +44,7 @@ class ParserManager:
+@@ -45,7 +45,7 @@ class ParserManager:
          self._lexer.pm = self
  
          # Create the parser.
@@ -33,7 +33,7 @@ index d50f0f6..00bbf3d 100644
  
          # This is a hack to give p_error() access to the current parser object.
 diff --git a/sipbuild/generator/parser/tokens.py b/sipbuild/generator/parser/tokens.py
-index 81bc941..725c881 100644
+index ddb1aaa..282c6dd 100644
 --- a/sipbuild/generator/parser/tokens.py
 +++ b/sipbuild/generator/parser/tokens.py
 @@ -5,7 +5,7 @@

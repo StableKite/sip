@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
 
 
 import os
@@ -146,9 +146,13 @@ class Bindings(Configurable):
 
         # Parse the input file.
         spec, modules, sip_files = parse(self.sip_file, SIP_VERSION, encoding,
-                project.abi_version, self.tags, self.disabled_features,
+                project.target_abi, self.tags, self.disabled_features,
                 self.protected_is_public, self._sip_include_dirs,
                 project.sip_module)
+
+        # Update the target ABI for the project.
+        if project.target_abi is None or project.target_abi < spec.target_abi:
+            project.target_abi = spec.target_abi
 
         # Resolve the types.
         resolve(spec, modules)
@@ -232,7 +236,7 @@ class Bindings(Configurable):
                 buildable.installables.append(installable)
         else:
             buildable.sources.extend(
-                    copy_nonshared_sources(project.abi_version.split('.')[0],
+                    copy_nonshared_sources(project.build_abi,
                             buildable.build_dir))
 
         buildable.include_dirs.extend(self.include_dirs)

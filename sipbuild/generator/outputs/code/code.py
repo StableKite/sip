@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
 
 
 import os
@@ -17,8 +17,7 @@ from ...specification import (AccessSpecifier, Argument, ArgumentType,
         ArrayArgument, CodeBlock, DocstringSignature, GILAction, IfaceFileType,
         KwArgs, MappedType, PyQtMethodSpecifier, PySlot, QualifierType,
         Transfer, ValueType, WrappedClass, WrappedEnum)
-from ...utils import (abi_has_deprecated_message, abi_version_check,
-        find_method, py_as_int, same_signature)
+from ...utils import find_method, py_as_int, same_signature
 
 from ..formatters import (fmt_argument_as_cpp_type, fmt_argument_as_name,
         fmt_class_as_scoped_name, fmt_copying, fmt_enum_as_cpp_type,
@@ -241,9 +240,9 @@ f'''
 ''')
 
     # These are dependent on the specific ABI version.
-    if spec.abi_version >= (13, 0):
+    if spec.target_abi >= (13, 0):
         # ABI v13.9 and later
-        if spec.abi_version >= (13, 9):
+        if spec.target_abi >= (13, 9):
             sf.write(
 f'''#define sipDeprecated               sipAPI_{module_name}->api_deprecated_13_9
 ''')
@@ -253,13 +252,13 @@ f'''#define sipDeprecated               sipAPI_{module_name}->api_deprecated
 ''')
                     
         # ABI v13.6 and later.
-        if spec.abi_version >= (13, 6):
+        if spec.target_abi >= (13, 6):
             sf.write(
 f'''#define sipPyTypeDictRef            sipAPI_{module_name}->api_py_type_dict_ref
 ''')
 
         # ABI v13.1 and later.
-        if spec.abi_version >= (13, 1):
+        if spec.target_abi >= (13, 1):
             sf.write(
 f'''#define sipNextExceptionHandler     sipAPI_{module_name}->api_next_exception_handler
 ''')
@@ -273,7 +272,7 @@ f'''#define sipIsEnumFlag               sipAPI_{module_name}->api_is_enum_flag
 ''')
     else:
         # ABI v12.16 and later
-        if spec.abi_version >= (12, 16):
+        if spec.target_abi >= (12, 16):
             sf.write(
 f'''#define sipDeprecated               sipAPI_{module_name}->api_deprecated_12_16
 ''')
@@ -283,13 +282,13 @@ f'''#define sipDeprecated               sipAPI_{module_name}->api_deprecated
 ''')
             
         # ABI v12.13 and later.
-        if spec.abi_version >= (12, 13):
+        if spec.target_abi >= (12, 13):
             sf.write(
 f'''#define sipPyTypeDictRef            sipAPI_{module_name}->api_py_type_dict_ref
 ''')
 
         # ABI v12.9 and later.
-        if spec.abi_version >= (12, 9):
+        if spec.target_abi >= (12, 9):
             sf.write(
 f'''#define sipNextExceptionHandler     sipAPI_{module_name}->api_next_exception_handler
 ''')
@@ -313,7 +312,7 @@ f'''#define sipSetNewUserTypeHandler    sipAPI_{module_name}->api_set_new_user_t
 #define sipVisitSlot                sipAPI_{module_name}->api_visit_slot
 ''')
 
-    if spec.abi_version >= (12, 8):
+    if spec.target_abi >= (12, 8):
         # ABI v12.8 and later.
         sf.write(
 f'''#define sipIsPyMethod               sipAPI_{module_name}->api_is_py_method_12_8
@@ -490,7 +489,7 @@ def _module_code(spec, bindings, project, py_debug, buildable):
     # If there should be a Qt support API then generate stubs values for the
     # optional parts.  These should be undefined in %ModuleCode if a C++
     # implementation is provided.
-    if spec.abi_version < (13, 0) and _module_supports_qt(spec):
+    if spec.target_abi < (13, 0) and _module_supports_qt(spec):
         sf.write(
 '''
 #define sipQtCreateUniversalSignal          0
@@ -572,7 +571,7 @@ void sipVEH_{module_name}_{virtual_error_handler.name}(sipSimpleWrapper *{self_n
 static sipInitExtenderDef initExtenders[] = {
 ''')
 
-        first_field = '-1, ' if spec.abi_version < (13, 0) else ''
+        first_field = '-1, ' if spec.target_abi < (13, 0) else ''
 
         for klass in module.proxies:
             if len(klass.ctors) != 0:
@@ -707,7 +706,7 @@ static sipPySlotDef slots_{enum_name}[] = {{
         cpp_name = _get_normalised_cached_name(enum.cached_fq_cpp_name)
         py_name = _get_normalised_cached_name(enum.py_name)
 
-        if spec.abi_version >= (13, 0):
+        if spec.target_abi >= (13, 0):
             base_type = 'SIP_ENUM_' + enum.base_type.name
             nr_members = len(enum.members)
 
@@ -731,7 +730,7 @@ f'    {{{{-1, SIP_NULLPTR, SIP_NULLPTR, {sip_type}, sipNameNr_{cpp_name}, SIP_NU
     if len(needed_enums) != 0:
         sf.write('};\n')
 
-    if spec.abi_version >= (13, 0):
+    if spec.target_abi >= (13, 0):
         nr_enum_members = -1
     else:
         nr_enum_members = _enum_member_table(sf, spec)
@@ -977,7 +976,7 @@ PyObject *sipExportedExceptions_{module_name}[{module.nr_exceptions + 1}];
             _exception_handler(sf, spec)
 
     # Generate any Qt support API.
-    if spec.abi_version < (13, 0) and _module_supports_qt(spec):
+    if spec.target_abi < (13, 0) and _module_supports_qt(spec):
         sf.write(
 f'''
 
@@ -1012,14 +1011,14 @@ f'''
 /* This defines this module. */
 sipExportedModuleDef sipModuleAPI_{module_name} = {{
     SIP_NULLPTR,
-    {spec.abi_version[1]},
+    {spec.target_abi[1]},
     sipNameNr_{_get_normalised_cached_name(module.fq_py_name)},
     0,
     sipStrings_{module_name},
     {imports_table},
 ''')
 
-    if spec.abi_version < (13, 0):
+    if spec.target_abi < (13, 0):
         qt_api = _optional_ptr(_module_supports_qt(spec), '&qtAPI')
         sf.write(f'    {qt_api},\n')
 
@@ -1073,7 +1072,7 @@ f'''    {module.nr_typedefs},
     SIP_NULLPTR,
 ''')
 
-    if spec.abi_version < (13, 0):
+    if spec.target_abi < (13, 0):
         # The unused version support.
         sf.write(
 '''    SIP_NULLPTR,
@@ -1149,7 +1148,7 @@ sip_qt_metacast_func sip_{module_name}_qt_metacast;
     # Generate any initialisation code.
     sf.write_code(module.initialisation_code)
 
-    abi_major, abi_minor = spec.abi_version
+    abi_major, abi_minor = spec.target_abi
 
     sf.write(
 f'''    /* Export the module and publish it's API. */
@@ -1770,7 +1769,7 @@ def _py_objects(sf, spec):
             no_intro = False
 
         py_name = _cached_name_ref(variable.py_name)
-        cpp_name = variable.fq_cpp_name.as_cpp
+        cpp_name = _scoped_variable_name(spec, variable)
 
         sf.write(f'    PyDict_SetItemString(sipModuleDict, {py_name}, {cpp_name});\n')
 
@@ -1813,13 +1812,12 @@ def _types_inline(sf, spec):
             dict_name = f'(PyObject *)sipTypeAsPyTypeObject({_gto_name(variable.scope)})'
 
         py_name = _cached_name_ref(variable.py_name)
+        ptr = '&' + _scoped_variable_name(spec, variable)
 
         if variable.type.is_const:
             type_name = fmt_argument_as_cpp_type(spec, variable.type,
                     plain=True, no_derefs=True)
-            ptr = f'const_cast<{type_name} *>(&{variable.fq_cpp_name.as_cpp})'
-        else:
-            ptr = '&' + variable.fq_cpp_name.as_cpp
+            ptr = f'const_cast<{type_name} *>({ptr})'
 
         sf.write(f'    sipAddTypeInstance({dict_name}, {py_name}, {ptr}, {_gto_name(variable.type.definition)});\n')
 
@@ -1844,7 +1842,7 @@ def _class_instances(sf, spec, scope=None):
             continue
 
         ti_name = _cached_name_ref(variable.py_name)
-        ti_ptr = '&' + variable.fq_cpp_name.as_cpp
+        ti_ptr = '&' + _scoped_variable_name(spec, variable)
         ti_type = '&' + _gto_name(variable.type.definition)
         ti_flags = '0'
 
@@ -1949,7 +1947,7 @@ def _int_instances(sf, spec, scope=None):
 
     instances = []
 
-    if spec.abi_version >= (13, 0):
+    if spec.target_abi >= (13, 0):
         # Named enum members are handled as int variables but must be placed at
         # the start of the table.  Note we use the sorted table of needed types
         # rather than the unsorted table of all enums.
@@ -1981,7 +1979,7 @@ def _int_instances(sf, spec, scope=None):
         instances.append((ii_name, ii_val))
 
     # Anonymous enum members are handled as int variables.
-    if spec.abi_version >= (13, 0) or scope is None:
+    if spec.target_abi >= (13, 0) or scope is None:
         for enum in spec.enums:
             if _py_scope(enum.scope) is not scope or enum.module is not spec.module:
                 continue
@@ -2226,13 +2224,13 @@ f'''    {mapped_type_type} *sipPtr = sipMalloc(sizeof ({mapped_type_type}));
         need_state = _is_used_in_code(mapped_type.release_code, 'sipState')
 
         if not spec.c_bindings:
-            arg_3 = ', void *' if spec.abi_version >= (13, 0) else ''
+            arg_3 = ', void *' if spec.target_abi >= (13, 0) else ''
             sf.write(f'extern "C" {{static void release_{mapped_type_name}(void *, int{arg_3});}}\n')
 
         arg_2 = ' sipState' if spec.c_bindings or need_state else ''
         sf.write(f'static void release_{mapped_type_name}(void *sipCppV, int{arg_2}')
 
-        if spec.abi_version >= (13, 0):
+        if spec.target_abi >= (13, 0):
             user_state = _use_in_code(mapped_type.release_code, 'sipUserState')
             sf.write(', void *' + user_state)
 
@@ -2284,7 +2282,7 @@ f'''static PyObject *convertFrom_{mapped_type_name}(void *sipCppV, PyObject *{xf
 
     id_int = 'SIP_NULLPTR'
 
-    if spec.abi_version >= (13, 0):
+    if spec.target_abi >= (13, 0):
         if _int_instances(sf, spec, scope=mapped_type):
             id_int = 'intInstances_' + mapped_type_name
 
@@ -2311,7 +2309,7 @@ sipMappedTypeDef sipTypeDef_{mapped_type.iface_file.module.py_name}_{mapped_type
     {{
 ''')
 
-    if spec.abi_version < (13, 0):
+    if spec.target_abi < (13, 0):
         sf.write(
 '''        -1,
         SIP_NULLPTR,
@@ -2347,7 +2345,7 @@ f'''        SIP_NULLPTR,
         {cod_nrmethods}, {cod_methods},
 ''')
 
-    if spec.abi_version < (13, 0):
+    if spec.target_abi < (13, 0):
         cod_enummembers = 'SIP_NULLPTR' if cod_nrenummembers == 0 else 'enummembers_' + mapped_type_name
 
         sf.write(
@@ -2541,7 +2539,7 @@ def _convert_to_definitions(sf, spec, scope):
     sip_is_err = _use_in_code(convert_to_type_code, 'sipIsErr', spec=spec)
     xfer = _use_in_code(convert_to_type_code, 'sipTransferObj', spec=spec)
 
-    if spec.abi_version >= (13, 0):
+    if spec.target_abi >= (13, 0):
         need_us_arg = True
         need_us_val = (spec.c_bindings or _type_needs_user_state(scope_type))
     else:
@@ -2711,7 +2709,7 @@ f'''    sipPy = sipGetReference(sipPySelf, {self_key});
         if variable_type in (ArgumentType.CLASS, ArgumentType.MAPPED) and len(variable.type.derefs) == 0:
             sf.write('&')
 
-    sf.write(_variable_member(variable))
+    sf.write(_variable_member(spec, variable))
 
     if needs_new and not spec.c_bindings:
         sf.write(')')
@@ -2969,7 +2967,7 @@ f'''
 
 ''')
 
-    member = _variable_member(variable)
+    member = _variable_member(spec, variable)
 
     if variable_type in (ArgumentType.PYOBJECT, ArgumentType.PYTUPLE, ArgumentType.PYLIST, ArgumentType.PYDICT, ArgumentType.PYCALLABLE, ArgumentType.PYSLICE, ArgumentType.PYTYPE, ArgumentType.PYBUFFER, ArgumentType.PYENUM):
         sf.write(
@@ -3029,15 +3027,15 @@ f'''
 ''')
 
 
-def _variable_member(variable):
+def _variable_member(spec, variable):
     """ Return the member variable of a class. """
 
     if variable.is_static:
-        scope = variable.scope.iface_file.fq_cpp_name.as_cpp + '::'
+        scope = _scoped_variable_name(spec, variable)
     else:
-        scope = 'sipCpp->'
+        scope = 'sipCpp->' + variable.fq_cpp_name.base_name
 
-    return scope + variable.fq_cpp_name.base_name
+    return scope
 
 
 def _variable_to_cpp(spec, variable, has_state):
@@ -3217,7 +3215,7 @@ def _py_slot(sf, spec, bindings, member, scope=None):
         ret_type = 'Py_ssize_t '
         ret_value = '0'
     elif is_hash_return_slot(member.py_slot):
-        if spec.abi_version >= (13, 0):
+        if spec.target_abi >= (13, 0):
             ret_type = 'Py_hash_t '
             ret_value = '0'
         else:
@@ -3285,18 +3283,19 @@ f'''    if (!PyObject_TypeCheck(sipSelf, sipTypeAsPyTypeObject(sip{prefix}_{fq_c
 ''')
 
         if not is_number_slot(member.py_slot):
-            as_cpp = fq_cpp_name.as_cpp
             gto_name = _gto_name(scope)
 
             if isinstance(scope, WrappedClass):
+                cpp_name = _scoped_class_name(spec, scope)
                 sf.write(
-f'''    {as_cpp} *sipCpp = reinterpret_cast<{as_cpp} *>(sipGetCppPtr((sipSimpleWrapper *)sipSelf, {gto_name}));
+f'''    {cpp_name} *sipCpp = reinterpret_cast<{cpp_name} *>(sipGetCppPtr((sipSimpleWrapper *)sipSelf, {gto_name}));
 
     if (!sipCpp)
 ''')
             else:
+                cpp_name = fq_cpp_name.as_cpp
                 sf.write(
-f'''    {as_cpp} sipCpp = static_cast<{as_cpp}>(sipConvertToEnum(sipSelf, {gto_name}));
+f'''    {cpp_name} sipCpp = static_cast<{cpp_name}>(sipConvertToEnum(sipSelf, {gto_name}));
 
     if (PyErr_Occurred())
 ''')
@@ -3990,7 +3989,7 @@ def _virtual_catcher(sf, spec, bindings, klass, virtual_overload, virt_nr):
         const_cast_sw = ''
         const_cast_tail = ''
 
-    abi_12_8_arg = f'{const_cast_sw}&sipPySelf{const_cast_tail}, ' if spec.abi_version >= (12, 8) else ''
+    abi_12_8_arg = f'{const_cast_sw}&sipPySelf{const_cast_tail}, ' if spec.target_abi >= (12, 8) else ''
 
     klass_py_name_ref = _cached_name_ref(klass.py_name) if overload.is_abstract else 'SIP_NULLPTR'
     member_py_name_ref = _cached_name_ref(overload.common.py_name)
@@ -5579,7 +5578,7 @@ static sipPySlotDef slots_{klass_name}[] = {{
     # The attributes tables.
     nr_methods = _class_method_table(sf, spec, bindings, klass)
 
-    if spec.abi_version >= (13, 0):
+    if spec.target_abi >= (13, 0):
         nr_enum_members = -1
     else:
         nr_enum_members = _enum_member_table(sf, spec, scope=klass)
@@ -5691,7 +5690,7 @@ static sipPySlotDef slots_{klass_name}[] = {{
     container_fields = []
     class_fields = []
 
-    if spec.abi_version < (13, 0):
+    if spec.target_abi < (13, 0):
         base_fields.append('-1')
         base_fields.append('SIP_NULLPTR')
 
@@ -6268,7 +6267,7 @@ def _constructor_call(sf, spec, bindings, klass, ctor, error_flag,
     if ctor.deprecated is not None:
         # Note that any temporaries will leak if an exception is raised.
 
-        if abi_has_deprecated_message(spec):
+        if _abi_has_deprecated_message(spec):
             str_deprecated_message = f'"{ctor.deprecated}"' if ctor.deprecated else 'SIP_NULLPTR'
             sf.write(f'            if (sipDeprecated({_cached_name_ref(klass.py_name)}, SIP_NULLPTR, {str_deprecated_message}) < 0)\n')
         else:
@@ -6451,7 +6450,7 @@ def _member_function(sf, spec, bindings, klass, member, original_klass):
             if overload.access_specifier is not AccessSpecifier.PRIVATE:
                 need_args = True
 
-                if spec.abi_version >= (13, 0) or not overload.is_static:
+                if spec.target_abi >= (13, 0) or not overload.is_static:
                     need_self = True
 
                     if overload.is_abstract:
@@ -6522,7 +6521,7 @@ def _member_function(sf, spec, bindings, klass, member, original_klass):
             #
             # Note that we would like to rename 'sipSelfWasArg' to
             # 'sipExplicitScope' but it is part of the public API.
-            if spec.abi_version >= (13, 0):
+            if spec.target_abi >= (13, 0):
                 sipself_test = f'!PyObject_TypeCheck(sipSelf, sipTypeAsPyTypeObject({_gto_name(klass)}))'
             else:
                 sipself_test = '!sipSelf'
@@ -7109,7 +7108,7 @@ f'''            if (!sipOrigSelf)
         error_return = '-1' if is_void_return_slot(py_slot) or is_int_return_slot(py_slot) or is_ssize_return_slot(py_slot) or is_hash_return_slot(py_slot) else 'SIP_NULLPTR'
 
         # Note that any temporaries will leak if an exception is raised.
-        if abi_has_deprecated_message(spec):
+        if _abi_has_deprecated_message(spec):
             str_deprecated_message = f'"{overload.deprecated}"' if overload.deprecated else 'SIP_NULLPTR'
             sf.write(f'            if (sipDeprecated({scope_py_name_ref}, {_cached_name_ref(overload.common.py_name)}, {str_deprecated_message}) < 0)\n')
         else:
@@ -7536,7 +7535,8 @@ def _get_binary_slot_call(spec, scope, overload, operator, dereferenced):
         if overload.is_abstract:
             slot_call += f'sipCpp{dereference}operator{operator}('
         else:
-            slot_call += f'sipCpp{dereference}{scope.iface_file.fq_cpp_name.as_cpp}::operator{operator}('
+            cpp_name = _scoped_class_name(spec, scope)
+            slot_call += f'sipCpp{dereference}{cpp_name}::operator{operator}('
 
     slot_call += _get_slot_arg(spec, overload, 0)
     slot_call += ')'
@@ -7563,7 +7563,7 @@ def _arg_parser(sf, spec, scope, py_signature, ctor=None, overload=None):
         scope = None
 
     # For ABI v13 and later static methods use self for the type object.
-    if spec.abi_version >= (13, 0):
+    if spec.target_abi >= (13, 0):
         handle_self = (scope is not None and overload is not None and overload.common.py_slot is None)
     else:
         handle_self = (scope is not None and overload is not None and overload.common.py_slot is None and not overload.is_static)
@@ -8082,6 +8082,21 @@ def _get_normalised_cached_name(cached_name):
 
     # Handle C++ and Python scopes.
     return cached_name.name.replace(':', '_').replace('.', '_')
+
+
+def _scoped_variable_name(spec, variable):
+    """ Return a scoped variable name as a string.  This should be used
+    whenever the scope may be the instantiation of a template which specified
+    /NoTypeName/.
+    """
+
+    scope = variable.scope
+    fq_cpp_name = variable.fq_cpp_name
+
+    if scope is None:
+        return fq_cpp_name.as_cpp
+
+    return _scoped_class_name(spec, scope) + '::' + fq_cpp_name.base_name
 
 
 def _scoped_class_name(spec, klass):
@@ -8681,10 +8696,8 @@ def _enum_class_scope(spec, enum):
 
     if enum.is_protected:
         scope_s = 'sip' + enum.scope.iface_file.fq_cpp_name.as_word
-    elif enum.scope.is_protected:
-        scope_s = _scoped_class_name(spec, enum.scope)
     else:
-        scope_s = enum.scope.iface_file.fq_cpp_name.as_cpp
+        scope_s = _scoped_class_name(spec, enum.scope)
 
     return scope_s
 
@@ -8741,7 +8754,7 @@ def _user_state_suffix(spec, type):
     user state.
     """
 
-    return 'US' if spec.abi_version >= (13, 0) and _type_needs_user_state(type) else ''
+    return 'US' if spec.target_abi >= (13, 0) and _type_needs_user_state(type) else ''
 
 
 def _exception_handler(sf, spec):
@@ -8862,22 +8875,33 @@ f'''            if ({index_arg} < 0 || {index_arg} >= sipCpp->{klass.len_cpp_nam
 ''')
 
 
+def _abi_version_check(spec, min_12, min_13):
+    """ Return True if the ABI version meets minimum version requirements. """
+
+    return spec.target_abi >= min_13 or (min_12 <= spec.target_abi < (13, 0))
+
+
 def _abi_has_next_exception_handler(spec):
     """ Return True if the ABI implements sipNextExceptionHandler(). """
 
-    return abi_version_check(spec, (12, 9), (13, 1))
+    return _abi_version_check(spec, (12, 9), (13, 1))
+
+def _abi_has_deprecated_message(spec):
+    """ Return True if the ABI implements sipDeprecated() with a message. """
+
+    return _abi_version_check(spec, (12, 16), (13, 9))
 
 def _abi_has_working_char_conversion(spec):
     """ Return True if the ABI has working char to/from a Python integer
     converters (ie. char is not assumed to be signed).
     """
 
-    return abi_version_check(spec, (12, 15), (13, 8))
+    return _abi_version_check(spec, (12, 15), (13, 8))
 
 def _abi_supports_array(spec):
     """ Return True if the ABI supports sip.array. """
 
-    return abi_version_check(spec, (12, 11), (13, 4))
+    return _abi_version_check(spec, (12, 11), (13, 4))
 
 def _cached_name_ref(cached_name, as_nr=False):
     """ Return a reference to a cached name. """

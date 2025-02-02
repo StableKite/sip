@@ -1,5 +1,6 @@
-sip6 (6.9.1-2) UNRELEASED; urgency=medium
+sip6 (6.10.0-1) UNRELEASED; urgency=medium
 
+  * New upstream release.
   * Pass write_tables=False to yacc to fix runtime warnings.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Fri, 13 Dec 2024 12:18:51 +0300

@@ -1,4 +1,4 @@
-sip6 (6.10.0-1) UNRELEASED; urgency=medium
+sip6 (6.10.0-1) unstable; urgency=medium
 
   * New upstream release.
   * Refresh patches for the new release.
@@ -6,7 +6,7 @@ sip6 (6.10.0-1) UNRELEASED; urgency=medium
   * Document the --abi-version option in the manpages.
   * Update debian/copyright.
 
- -- Dmitry Shachnev <mitya57@debian.org>  Fri, 13 Dec 2024 12:18:51 +0300
+ -- Dmitry Shachnev <mitya57@debian.org>  Sun, 02 Feb 2025 22:17:03 +0300
 
 sip6 (6.9.1-1) unstable; urgency=medium
 

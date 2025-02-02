@@ -4,7 +4,7 @@
  * This module implements a hash table class for mapping C/C++ addresses to the
  * corresponding wrapped Python object.
  *
- * Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+ * Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
  */
 
 

@@ -1,6 +1,7 @@
 sip6 (6.11.0-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Refresh intersphinx_local.diff.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Thu, 22 May 2025 00:05:25 +0300
 

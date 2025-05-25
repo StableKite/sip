@@ -6,6 +6,12 @@ sip6 (6.11.1-1) UNRELEASED; urgency=medium
 
  -- Dmitry Shachnev <mitya57@debian.org>  Thu, 22 May 2025 00:05:25 +0300
 
+sip6 (6.10.0-2) unstable; urgency=medium
+
+  * Backport upstream patch to support enum base types (refs: #1088101).
+
+ -- Dmitry Shachnev <mitya57@debian.org>  Sun, 25 May 2025 20:56:41 +0300
+
 sip6 (6.10.0-1) unstable; urgency=medium
 
   * New upstream release.

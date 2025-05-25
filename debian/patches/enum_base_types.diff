@@ -1,0 +1,361 @@
+From: Phil Thompson <phil@riverbankcomputing.com>
+Date: Sun, 25 May 2025 18:22:15 +0100
+Subject: Support for C++11 enum base types
+
+Support was added for C++11 enum base types.  At the moment this is limited
+to base types no larger than `int`s.  Prior to this support all enums were
+assumed to be `int` which breaks on big-endian systems.
+
+Resolves #75
+
+(cherry picked from commit 766cb683a98df9e3fa7c1509cbebfe10fa8fa744)
+---
+ docs/other_topics.rst                       | 18 ++++++------
+ docs/specification_files.rst                |  5 +++-
+ sipbuild/generator/outputs/code/code.py     | 42 ++++++++++++++++++++++++----
+ sipbuild/generator/parser/parser_manager.py |  6 ++--
+ sipbuild/generator/parser/rules.py          | 32 ++++++++++++++++++---
+ sipbuild/generator/resolver/resolver.py     | 43 +++++++++++++++++++++++++++--
+ sipbuild/generator/specification.py         |  3 ++
+ 7 files changed, 127 insertions(+), 22 deletions(-)
+
+diff --git a/docs/other_topics.rst b/docs/other_topics.rst
+index 9104d7f..f5f8928 100644
+--- a/docs/other_topics.rst
++++ b/docs/other_topics.rst
+@@ -1,13 +1,13 @@
+ Other Topics
+ ============
+ 
+-Wrapping Enums
+---------------
++Wrapping Enums using ABI v12
++----------------------------
+ 
+-SIP wraps C/C++ enums using a dedicated Python type and implements behaviour
+-that mimics the C/C++ behaviour regarding the visibility of the enum's members.
+-In other words, an enum's members have the same visibility as the enum itself.
+-For example::
++When using ABI v12 SIP wraps C/C++ named enums using a dedicated Python type
++and implements behaviour that mimics the C/C++ behaviour regarding the
++visibility of the enum's members.  In other words, an enum's members have the
++same visibility as the enum itself.  For example::
+ 
+     class MyClass
+     {
+@@ -35,8 +35,10 @@ this, SIP makes the members of traditional C/C++ enums visible from the scope
+ of the enum as well.
+ 
+ It is recommended that Python code should always specify the enum scope when
+-referencing an enum member.  A future version of SIP will remove support for
+-the traditional behaviour.
++referencing an enum member.
++
++When using ABI v13 SIP uses the :mod:`enum` module to wrap all C/C++ named
++enums.
+ 
+ 
+ .. _ref-object-ownership:
+diff --git a/docs/specification_files.rst b/docs/specification_files.rst
+index dce839a..fd5b330 100644
+--- a/docs/specification_files.rst
++++ b/docs/specification_files.rst
+@@ -203,10 +203,13 @@ file.
+     *mapped-type-template* :: = **template** **<** *type-list* **>**
+             *mapped-type*
+ 
+-    *enum* ::= **enum** [*enum-key*] [*name*] [*enum-annotations*] **{** {*enum-line*} **};**
++    *enum* ::= **enum** [*enum-key*] [*name*] [**:** *enum-base*]
++            [*enum-annotations*] **{** {*enum-line*} **};**
+ 
+     *enum-key* ::= [**class** | **struct**]
+ 
++    *enum-base* ::= *base-type*
++
+     *enum-line* ::= [:directive:`%If` | *name* [*enum-annotations*] **,**
+ 
+     *function* ::= *typed-name* **(** [*argument-list*] **)** [**noexcept**]
+diff --git a/sipbuild/generator/outputs/code/code.py b/sipbuild/generator/outputs/code/code.py
+index 997e3c3..1530486 100644
+--- a/sipbuild/generator/outputs/code/code.py
++++ b/sipbuild/generator/outputs/code/code.py
+@@ -5353,6 +5353,9 @@ def _call_args(sf, spec, cpp_signature, py_signature):
+         indirection = ''
+         nr_derefs = len(arg.derefs)
+ 
++        # The argument may be surrounded by something type-specific.
++        prefix = suffix = ''
++
+         if arg.type in (ArgumentType.ASCII_STRING, ArgumentType.LATIN1_STRING, ArgumentType.UTF8_STRING, ArgumentType.SSTRING, ArgumentType.USTRING, ArgumentType.STRING, ArgumentType.WSTRING):
+             if nr_derefs > (0 if arg.is_out else 1) and not arg.is_reference:
+                 indirection = '&'
+@@ -5371,6 +5374,10 @@ def _call_args(sf, spec, cpp_signature, py_signature):
+             if nr_derefs == 1:
+                 indirection = '&'
+ 
++            if _arg_is_small_enum(arg):
++                prefix = 'static_cast<' + fmt_enum_as_cpp_type(arg.definition) + '>('
++                suffix = ')'
++
+         # See if we need to cast a Python void * to the correct C/C++ pointer
+         # type.  Note that we assume that the arguments correspond and are just
+         # different types.
+@@ -5394,12 +5401,12 @@ def _call_args(sf, spec, cpp_signature, py_signature):
+             else:
+                 sf.write(f'reinterpret_cast<{arg_cpp_type_name} *>({arg_name})')
+         else:
+-            sf.write(indirection)
++            sf.write(prefix + indirection)
+ 
+             if arg.array is ArrayArgument.ARRAY_SIZE:
+                 sf.write(f'({arg_cpp_type_name})')
+ 
+-            sf.write(arg_name)
++            sf.write(arg_name + suffix)
+ 
+ 
+ def _get_named_value_decl(spec, scope, type, name):
+@@ -5452,6 +5459,8 @@ def _argument_variable(sf, spec, scope, arg, arg_nr):
+     saved_is_reference = arg.is_reference
+     saved_is_const = arg.is_const
+ 
++    use_typename = True
++
+     if arg.type in (ArgumentType.ASCII_STRING, ArgumentType.LATIN1_STRING, ArgumentType.UTF8_STRING, ArgumentType.SSTRING, ArgumentType.USTRING, ArgumentType.STRING, ArgumentType.WSTRING):
+         if not arg.is_reference:
+             if nr_derefs == 2:
+@@ -5465,6 +5474,10 @@ def _argument_variable(sf, spec, scope, arg, arg_nr):
+     else:
+         arg.derefs = []
+ 
++        if _arg_is_small_enum(arg):
++            arg.type = ArgumentType.INT
++            use_typename = False
++
+     # Array sizes are always Py_ssize_t.
+     if arg.array is ArrayArgument.ARRAY_SIZE:
+         arg.type = ArgumentType.SSIZE
+@@ -5475,7 +5488,7 @@ def _argument_variable(sf, spec, scope, arg, arg_nr):
+         arg.is_const = False
+ 
+     modified_arg_cpp_type = fmt_argument_as_cpp_type(spec, arg,
+-            scope=scope_iface_file)
++            scope=scope_iface_file, use_typename=use_typename)
+ 
+     sf.write(f'        {modified_arg_cpp_type} {arg_name}')
+ 
+@@ -5492,8 +5505,14 @@ def _argument_variable(sf, spec, scope, arg, arg_nr):
+         if arg.type in (ArgumentType.CLASS, ArgumentType.MAPPED) and (nr_derefs == 0 or arg.is_reference):
+             sf.write(f'&{arg_name}def')
+         else:
++            if _arg_is_small_enum(arg):
++                sf.write('static_cast<int>(')
++
+             sf.write(fmt_value_list_as_cpp_expression(spec, arg.default_value))
+ 
++            if _arg_is_small_enum(arg):
++                sf.write(')')
++
+     sf.write(';\n')
+ 
+     # Some types have supporting variables.
+@@ -7496,9 +7515,16 @@ def _get_slot_arg(spec, overload, arg_nr):
+ 
+     arg = overload.py_signature.args[arg_nr]
+ 
+-    dereference = '*' if arg.type in (ArgumentType.CLASS, ArgumentType.MAPPED) and len(arg.derefs) == 0 else ''
++    prefix = suffix = ''
++
++    if arg.type in (ArgumentType.CLASS, ArgumentType.MAPPED):
++        if len(arg.derefs) == 0:
++            prefix = '*'
++    elif _arg_is_small_enum(arg):
++        prefix = 'static_cast<' + fmt_enum_as_cpp_type(arg.definition) + '>('
++        suffix = ')'
+ 
+-    return dereference + fmt_argument_as_name(spec, arg, arg_nr)
++    return prefix + fmt_argument_as_name(spec, arg, arg_nr) + suffix
+ 
+ 
+ # A map of operators and their complements.
+@@ -8993,6 +9019,12 @@ def _optional_ptr(is_ptr, name):
+     return name if is_ptr else 'SIP_NULLPTR'
+ 
+ 
++def _arg_is_small_enum(arg):
++    """ Return True if an argument refers to a small C++11 enum. """
++
++    return arg.type is ArgumentType.ENUM and arg.definition.enum_base_type is not None
++
++
+ # The map of slots to C++ names.
+ _SLOT_NAME_MAP = {
+     PySlot.ADD:         'operator+',
+diff --git a/sipbuild/generator/parser/parser_manager.py b/sipbuild/generator/parser/parser_manager.py
+index 202c243..8bdc35f 100644
+--- a/sipbuild/generator/parser/parser_manager.py
++++ b/sipbuild/generator/parser/parser_manager.py
+@@ -565,7 +565,8 @@ class ParserManager:
+         if self.parsing_virtual or len(scope.dealloc_code) != 0:
+             scope.needs_shadow = True
+ 
+-    def add_enum(self, p, symbol, cpp_name, is_scoped, annotations, members):
++    def add_enum(self, p, symbol, cpp_name, is_scoped, enum_base_type,
++            annotations, members):
+         """ Create a new enum and add it to the current scope. """
+ 
+         if self.scope_access_specifier is AccessSpecifier.PRIVATE:
+@@ -616,7 +617,8 @@ class ParserManager:
+ 
+         w_enum = WrappedEnum(base_type, fq_cpp_name, self.module_state.module,
+                 cached_fq_cpp_name=cached_fq_cpp_name, is_scoped=is_scoped,
+-                py_name=py_name, scope=self.scope)
++                enum_base_type=enum_base_type, py_name=py_name,
++                scope=self.scope)
+ 
+         if self.scope_access_specifier is AccessSpecifier.PROTECTED:
+             if not self._protected_is_public:
+diff --git a/sipbuild/generator/parser/rules.py b/sipbuild/generator/parser/rules.py
+index 85090e1..ca9e0e3 100644
+--- a/sipbuild/generator/parser/rules.py
++++ b/sipbuild/generator/parser/rules.py
+@@ -2186,28 +2186,52 @@ _ENUM_MEMBER_ANNOTATIONS = (
+ 
+ 
+ def p_enum_decl(p):
+-    "enum_decl : enum opt_enum_key opt_name opt_annos '{' opt_enum_body '}' ';'"
++    "enum_decl : enum opt_enum_key opt_name opt_enum_base opt_annos '{' opt_enum_body '}' ';'"
+ 
+     pm = p.parser.pm
+ 
+     if pm.skipping:
+         return
+ 
+-    pm.check_annotations(p, 4, "enum", _ENUM_ANNOTATIONS)
++    pm.check_annotations(p, 5, "enum", _ENUM_ANNOTATIONS)
+ 
+-    pm.add_enum(p, 1, p[3], p[2], p[4], p[6])
++    pm.add_enum(p, 1, p[3], p[2], p[4], p[5], p[7])
+ 
+ 
+ def p_opt_enum_key(p):
+     """opt_enum_key : class
+         | struct
+-        | union
+         | empty"""
+ 
++    pm = p.parser.pm
++
++    if pm.skipping:
++        return
++
++    if p[1] is not None:
++        pm.cpp_only(p, 1, "enum keys")
++
+     # Return True if the enum is scoped.
+     p[0] = p[1] is not None
+ 
+ 
++def p_opt_enum_base(p):
++    """opt_enum_base : ':' base_type
++        | empty"""
++
++    pm = p.parser.pm
++
++    if pm.skipping:
++        return
++
++    if len(p) == 3:
++        pm.cpp_only(p, 1, "enum bases")
++
++        p[0] = p[2]
++    else:
++        p[0] = None
++
++
+ def p_opt_enum_body(p):
+     """opt_enum_body : enum_body
+         | empty"""
+diff --git a/sipbuild/generator/resolver/resolver.py b/sipbuild/generator/resolver/resolver.py
+index e4211f0..2d7dde2 100644
+--- a/sipbuild/generator/resolver/resolver.py
++++ b/sipbuild/generator/resolver/resolver.py
+@@ -196,8 +196,9 @@ def _resolve_module(spec, mod, error_log, final_checks, seen=None):
+     for imported_mod in mod.imports:
+         _resolve_module(spec, imported_mod, error_log, final_checks, seen=seen)
+ 
+-    # Resolve typedefs, variables and global functions.
++    # Resolve typedefs, enums, variables and global functions.
+     _resolve_typedefs(spec, mod, error_log)
++    _resolve_enums(spec, error_log)
+     _resolve_variables(spec, mod, error_log)
+     _resolve_scope_overloads(spec, mod.overloads, error_log, final_checks)
+ 
+@@ -920,7 +921,6 @@ def _resolve_scope_overloads(spec, overloads, error_log, final_checks,
+                     break
+ 
+         if isinstance(scope, WrappedClass):
+-
+             if scope.deprecated and not overload.deprecated :
+                 overload.deprecated = scope.deprecated
+ 
+@@ -928,6 +928,45 @@ def _resolve_scope_overloads(spec, overloads, error_log, final_checks,
+                 scope.is_abstract = True
+ 
+ 
++# The supported enum base types.  Note that we use the STRING types and the
++# BYTE types because there is no opportunity to apply the /PyInt/ annotation
++# and there can be no confusion about context.  We still need the BYTE types
++# because /PyInt/ could have been specified in a typedef.
++_ENUM_BASE_TYPES = (
++    ArgumentType.STRING,
++    ArgumentType.SSTRING,
++    ArgumentType.USTRING,
++    ArgumentType.BYTE,
++    ArgumentType.SBYTE,
++    ArgumentType.UBYTE,
++    ArgumentType.SHORT,
++    ArgumentType.USHORT,
++    ArgumentType.INT,
++    ArgumentType.UINT,
++)
++
++def _resolve_enums(spec, error_log):
++    """ Resolve the base types for all the enums. """
++
++    for enum in spec.enums:
++        base_type = enum.enum_base_type
++
++        if base_type is None:
++            continue
++
++        _resolve_type(spec, enum.module, enum.scope, base_type, error_log)
++
++        # The current ABI implementations only support enums no larger than an
++        # int.
++        if base_type.type not in _ENUM_BASE_TYPES or len(base_type.derefs) != 0:
++            error_log.log(f"unsupported enum base type",
++                    source_location=base_type.source_location)
++
++        # The default is int.
++        if base_type.type is ArgumentType.INT:
++            enum.enum_base_type = None
++
++
+ def _resolve_variables(spec, mod, error_log):
+     """ Resolve the data types for the variables of a module. """
+ 
+diff --git a/sipbuild/generator/specification.py b/sipbuild/generator/specification.py
+index 57376ba..d0c1ea2 100644
+--- a/sipbuild/generator/specification.py
++++ b/sipbuild/generator/specification.py
+@@ -1666,6 +1666,9 @@ class WrappedEnum:
+     # The defining module.
+     module: Module
+ 
++    # The C++11 enum base type.
++    enum_base_type: Optional[Argument] = None
++
+     # The cached fully qualified C++ name.
+     cached_fq_cpp_name: Optional[CachedName] = None
+ 

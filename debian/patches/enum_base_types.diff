@@ -1,16 +1,61 @@
 From: Phil Thompson <phil@riverbankcomputing.com>
-Date: Sat, 24 May 2025 17:04:25 +0100
-Subject: Support enum base types
+Date: Sun, 25 May 2025 18:22:15 +0100
+Subject: Support for C++11 enum base types
 
+Support was added for C++11 enum base types.  At the moment this is limited
+to base types no larger than `int`s.  Prior to this support all enums were
+assumed to be `int` which breaks on big-endian systems.
+
+Resolves #75
+
+(cherry picked from commit 766cb683a98df9e3fa7c1509cbebfe10fa8fa744)
 ---
+ docs/other_topics.rst                       | 18 ++++++------
  docs/specification_files.rst                |  5 +++-
- sipbuild/generator/outputs/code/code.py     | 42 +++++++++++++++++++++++----
+ sipbuild/generator/outputs/code/code.py     | 42 ++++++++++++++++++++++++----
  sipbuild/generator/parser/parser_manager.py |  6 ++--
  sipbuild/generator/parser/rules.py          | 32 ++++++++++++++++++---
- sipbuild/generator/resolver/resolver.py     | 44 +++++++++++++++++++++++++++--
+ sipbuild/generator/resolver/resolver.py     | 43 +++++++++++++++++++++++++++--
  sipbuild/generator/specification.py         |  3 ++
- 6 files changed, 118 insertions(+), 14 deletions(-)
+ 7 files changed, 127 insertions(+), 22 deletions(-)
 
+diff --git a/docs/other_topics.rst b/docs/other_topics.rst
+index 9104d7f..f5f8928 100644
+--- a/docs/other_topics.rst
++++ b/docs/other_topics.rst
+@@ -1,13 +1,13 @@
+ Other Topics
+ ============
+ 
+-Wrapping Enums
+---------------
++Wrapping Enums using ABI v12
++----------------------------
+ 
+-SIP wraps C/C++ enums using a dedicated Python type and implements behaviour
+-that mimics the C/C++ behaviour regarding the visibility of the enum's members.
+-In other words, an enum's members have the same visibility as the enum itself.
+-For example::
++When using ABI v12 SIP wraps C/C++ named enums using a dedicated Python type
++and implements behaviour that mimics the C/C++ behaviour regarding the
++visibility of the enum's members.  In other words, an enum's members have the
++same visibility as the enum itself.  For example::
+ 
+     class MyClass
+     {
+@@ -35,8 +35,10 @@ this, SIP makes the members of traditional C/C++ enums visible from the scope
+ of the enum as well.
+ 
+ It is recommended that Python code should always specify the enum scope when
+-referencing an enum member.  A future version of SIP will remove support for
+-the traditional behaviour.
++referencing an enum member.
++
++When using ABI v13 SIP uses the :mod:`enum` module to wrap all C/C++ named
++enums.
+ 
+ 
+ .. _ref-object-ownership:
 diff --git a/docs/specification_files.rst b/docs/specification_files.rst
 index dce839a..fd5b330 100644
 --- a/docs/specification_files.rst
@@ -120,15 +165,15 @@ index 997e3c3..1530486 100644
  
 -    dereference = '*' if arg.type in (ArgumentType.CLASS, ArgumentType.MAPPED) and len(arg.derefs) == 0 else ''
 +    prefix = suffix = ''
- 
--    return dereference + fmt_argument_as_name(spec, arg, arg_nr)
++
 +    if arg.type in (ArgumentType.CLASS, ArgumentType.MAPPED):
 +        if len(arg.derefs) == 0:
 +            prefix = '*'
 +    elif _arg_is_small_enum(arg):
 +        prefix = 'static_cast<' + fmt_enum_as_cpp_type(arg.definition) + '>('
 +        suffix = ')'
-+
+ 
+-    return dereference + fmt_argument_as_name(spec, arg, arg_nr)
 +    return prefix + fmt_argument_as_name(spec, arg, arg_nr) + suffix
  
  
@@ -232,7 +277,7 @@ index 85090e1..ca9e0e3 100644
      """opt_enum_body : enum_body
          | empty"""
 diff --git a/sipbuild/generator/resolver/resolver.py b/sipbuild/generator/resolver/resolver.py
-index e4211f0..5ec6194 100644
+index e4211f0..2d7dde2 100644
 --- a/sipbuild/generator/resolver/resolver.py
 +++ b/sipbuild/generator/resolver/resolver.py
 @@ -196,8 +196,9 @@ def _resolve_module(spec, mod, error_log, final_checks, seen=None):
@@ -242,7 +287,7 @@ index e4211f0..5ec6194 100644
 -    # Resolve typedefs, variables and global functions.
 +    # Resolve typedefs, enums, variables and global functions.
      _resolve_typedefs(spec, mod, error_log)
-+    _resolve_enums(spec, mod, error_log)
++    _resolve_enums(spec, error_log)
      _resolve_variables(spec, mod, error_log)
      _resolve_scope_overloads(spec, mod.overloads, error_log, final_checks)
  
@@ -254,7 +299,7 @@ index e4211f0..5ec6194 100644
              if scope.deprecated and not overload.deprecated :
                  overload.deprecated = scope.deprecated
  
-@@ -928,6 +928,46 @@ def _resolve_scope_overloads(spec, overloads, error_log, final_checks,
+@@ -928,6 +928,45 @@ def _resolve_scope_overloads(spec, overloads, error_log, final_checks,
                  scope.is_abstract = True
  
  
@@ -275,27 +320,26 @@ index e4211f0..5ec6194 100644
 +    ArgumentType.UINT,
 +)
 +
-+def _resolve_enums(spec, mod, error_log):
-+    """ Resolve the base types for the enums of a module. """
++def _resolve_enums(spec, error_log):
++    """ Resolve the base types for all the enums. """
 +
 +    for enum in spec.enums:
-+        if enum.module is mod:
-+            base_type = enum.enum_base_type
++        base_type = enum.enum_base_type
 +
-+            if base_type is None:
-+                continue
++        if base_type is None:
++            continue
 +
-+            _resolve_type(spec, enum.module, enum.scope, base_type, error_log)
++        _resolve_type(spec, enum.module, enum.scope, base_type, error_log)
 +
-+            # The current ABI implementations only support enums no larger than
-+            # an int.
-+            if base_type.type not in _ENUM_BASE_TYPES or len(base_type.derefs) != 0:
-+                error_log.log(f"unsupported enum base type",
-+                        source_location=base_type.source_location)
++        # The current ABI implementations only support enums no larger than an
++        # int.
++        if base_type.type not in _ENUM_BASE_TYPES or len(base_type.derefs) != 0:
++            error_log.log(f"unsupported enum base type",
++                    source_location=base_type.source_location)
 +
-+            # The default is int.
-+            if base_type.type is ArgumentType.INT:
-+                enum.enum_base_type = None
++        # The default is int.
++        if base_type.type is ArgumentType.INT:
++            enum.enum_base_type = None
 +
 +
  def _resolve_variables(spec, mod, error_log):

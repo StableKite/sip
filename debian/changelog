@@ -2,6 +2,7 @@ sip6 (6.12.0-1) UNRELEASED; urgency=medium
 
   * New upstream release.
   * Drop enum_base_types.diff, included in the new release.
+  * Refresh intersphinx_local.diff.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Tue, 03 Jun 2025 19:11:50 +0300
 

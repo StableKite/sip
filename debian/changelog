@@ -2,6 +2,7 @@ pyqt6-sip (13.10.2-1) UNRELEASED; urgency=medium
 
   * New upstream release.
   * Bump required setuptools version to 75.8.1, following upstream.
+  * Bump Standards-Version to 4.7.2, no changes needed.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Thu, 05 Jun 2025 23:51:24 +0300
 

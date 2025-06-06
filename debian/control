@@ -7,7 +7,7 @@ Build-Depends: debhelper-compat (= 13),
                dh-python,
                pybuild-plugin-pyproject,
                python3-all-dev,
-               python3-setuptools (>= 69.5)
+               python3-setuptools (>= 75.8.1)
 Rules-Requires-Root: no
 Standards-Version: 4.7.0
 Homepage: https://github.com/Python-SIP/sip

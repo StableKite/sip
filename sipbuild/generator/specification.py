@@ -1516,6 +1516,9 @@ class WrappedClass:
     # Set if /ExportDerived/ was specified.
     export_derived: bool = False
 
+    # Set if /ExportDerivedLocally/ was specified.
+    export_derived_locally: bool = False
+
     # Set if /External/ was specified.
     external: bool = False
 
@@ -1635,6 +1638,9 @@ class WrappedClass:
 
     # The %TypeCode.
     type_code: list[CodeBlock] = field(default_factory=list)
+
+    # The %TypeDerivedCode.
+    type_derived_code: list[CodeBlock] = field(default_factory=list)
 
     # The %TypeHintCode.
     type_hint_code: Optional[CodeBlock] = None

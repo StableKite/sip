@@ -3399,7 +3399,7 @@ def _class_functions(sf, spec, bindings, klass, py_debug):
 
     # Any shadow code.
     if klass.has_shadow:
-        if not klass.export_derived:
+        if not (klass.export_derived or klass.export_derived_locally):
             _shadow_class_declaration(sf, spec, bindings, klass)
 
         _shadow_code(sf, spec, bindings, klass)
@@ -4833,7 +4833,7 @@ def _get_parse_result_format(arg, spec, result_is_reference=False,
     if arg.type is ArgumentType.PYOBJECT:
         return 'O'
 
-    if arg.type in (ArgumentType.PYTUPLE, ArgumentType.PYLIST, ArgumentType.PYDICT, ArgumentType.SLICE, ArgumentType.PYTYPE):
+    if arg.type in (ArgumentType.PYTUPLE, ArgumentType.PYLIST, ArgumentType.PYDICT, ArgumentType.PYSLICE, ArgumentType.PYTYPE):
         return 'N' if arg.allow_none else 'T'
 
     if arg.type is ArgumentType.PYBUFFER:
@@ -5075,6 +5075,10 @@ def _module_api(sf, spec, bindings):
         if klass.iface_file.module is module:
             _class_api(sf, spec, klass)
 
+            if klass.export_derived_locally:
+                sf.write_code(klass.iface_file.type_header_code)
+                _shadow_class_declaration(sf, spec, bindings, klass)
+
         if klass.export_derived:
             sf.write_code(klass.iface_file.type_header_code)
             _shadow_class_declaration(sf, spec, bindings, klass)
@@ -5223,6 +5227,8 @@ class sip{klass_name} : public {_scoped_class_name(spec, klass)}
 {{
 public:
 ''')
+
+    sf.write_code(klass.type_derived_code)
 
     # Define a shadow class for any protected classes we have.
     for protected_klass in spec.classes:
@@ -7375,7 +7381,9 @@ def _get_slot_call(spec, scope, overload, dereferenced):
         return f'(*sipCpp)[{_get_slot_arg(spec, overload, 0)}]'
 
     if py_slot in (PySlot.INT, PySlot.FLOAT):
-        return '*sipCpp'
+        cpp_type = fmt_argument_as_cpp_type(spec,
+                overload.cpp_signature.result)
+        return cpp_type + '(*sipCpp)'
 
     if py_slot is PySlot.ADD:
         return _get_number_slot_call(spec, overload, '+')
@@ -8566,7 +8574,7 @@ def _module_docstring(sf, module):
     if module.docstring is not None:
         sf.write(
 f'''
-"PyDoc_STRVAR(doc_mod_{module.py_name}, "{_docstring_text(module.docstring)}");
+PyDoc_STRVAR(doc_mod_{module.py_name}, "{_docstring_text(module.docstring)}");
 ''')
 
 

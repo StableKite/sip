@@ -4,6 +4,7 @@ sip6 (6.13.0-1) UNRELEASED; urgency=medium
   * Add --sbom option to sip-distinfo.1.
   * Refresh intersphinx_local.diff.
   * Install docs/releases.md as upstream changelog.
+  * Drop ‘Rules-Requires-Root: no’, it became default in dpkg 1.22.13.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Wed, 08 Oct 2025 00:04:59 +0300
 

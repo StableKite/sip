@@ -65,6 +65,14 @@ file is \fBDIR\fP\&.  This option must be specified.
 used to specify a particular version of a package project\(aqs \fBsip\fP
 module.  This option may be specified multiple times.
 .TP
+.B \-\-sbom FILE
+Added in version 6.13.
+
+.sp
+\fBFILE\fP is copied to the \fBsboms\fP subdirectory of the
+\fB\&.dist\-info\fP directory as defined in PEP 770.  \fBFILE\fP may be a
+glob\-style pattern.  This option may be specified multiple times.
+.TP
 .B \-\-wheel\-tag TAG
 \fBTAG\fP is written as the \fBTag\fP in the \fBWHEEL\fP file in the
 \fB\&.dist\-info\fP directory.

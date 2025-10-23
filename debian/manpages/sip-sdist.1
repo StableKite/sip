@@ -16,6 +16,12 @@ Display a help message.
 .B \-V, \-\-version
 Display the SIP version number.
 .TP
+.B \-\-abi\-version M[.N]
+The version number of the ABI of the \fBsip\fP module to target is
+\fBM.N\fP\&.  By default the latest major version is used.  If the minor
+version is not specified then the latest minor version of the major version
+is used.
+.TP
 .B \-\-deprecations\-are\-errors
 The use of any deprecated feature is handled as an error rather than a
 warning.

@@ -3,6 +3,7 @@ sip6 (6.14.0-1) UNRELEASED; urgency=medium
   * New upstream release.
   * Drop composite_modules.diff, included in the new release.
   * Refresh intersphinx_local.diff.
+  * Add --abi-version option to sip-sdist.1.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Thu, 23 Oct 2025 21:33:39 +0300
 

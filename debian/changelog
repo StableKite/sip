@@ -1,6 +1,7 @@
 pyqt6-sip (13.10.2-2) UNRELEASED; urgency=medium
 
   * Drop ‘Rules-Requires-Root: no’, it became default in dpkg 1.22.13.
+  * Update debian/watch to version 5.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Fri, 24 Oct 2025 13:49:41 +0300
 

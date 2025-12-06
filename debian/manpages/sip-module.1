@@ -25,6 +25,12 @@ The major version number of the ABI implemented by the \fBsip\fP module is
 as a minimum minor version rather than the exact minor version to be used.
 By default the very latest version is used.
 .TP
+.B \-\-option NAME
+The \fBsip\fP module will be built using the \fBNAME\fP configuration
+option.  See the \fB%SipModuleConfiguration\fP \%<#\:std-directive-SipModuleConfiguration> directive for a list
+of possible options and their meanings.  This option may be specified
+multiple times.
+.TP
 .B \-\-project NAME
 The name of the project as it would appear on PyPI is \fBNAME\fP\&.  By default
 the name is derived from the fully qualified name of the \fBsip\fP

@@ -13,14 +13,14 @@ from ..python_slots import (is_hash_return_slot, is_int_return_slot,
         is_void_return_slot, is_zero_arg_slot)
 from ..scoped_name import ScopedName
 from ..specification import (AccessSpecifier, Argument, ArgumentType,
-        ArrayArgument, ClassKey, Constructor, IfaceFileType, MappedType,
+        ArrayArgument, ClassKey, Constructor, IfaceFileType, IndexedClassList, MappedType,
         Member, PyQtMethodSpecifier, PySlot, Signature, Transfer, ValueType,
         VirtualHandler, VirtualOverload, VisibleMember, WrappedClass)
 from ..templates import (encoded_template_name, same_template_signature,
         template_code, template_code_blocks, template_expansions)
 from ..utils import (append_iface_file, argument_as_str, cached_name,
-        find_iface_file, find_method, same_argument_type, same_base_type,
-        same_signature, search_typedefs)
+        fast_contains, find_iface_file, find_method, same_argument_type,
+        same_base_type, same_signature, search_typedefs)
 
 
 def resolve(spec, modules):
@@ -75,7 +75,7 @@ def resolve(spec, modules):
     # each class and re-order the list of classes so that no class appears
     # before a super class or an enclosing scope class.
     reversed_classes = reversed(spec.classes)
-    spec.classes = []
+    spec.classes = IndexedClassList()
 
     for klass in reversed_classes:
         # Ignore undefined classes.
@@ -643,7 +643,8 @@ def _set_mro(spec, klass, error_log, seen=None):
     """
 
     # See if it has already been done.
-    if klass in spec.classes:
+    if fast_contains(spec.classes.by_fq_cpp_name(klass.iface_file.fq_cpp_name),
+                     klass):
         return
 
     # Initialise the detection of recursive hierarchies.
@@ -668,7 +669,7 @@ def _set_mro(spec, klass, error_log, seen=None):
         seen.append(klass)
 
         for superklass in klass.superclasses:
-            if superklass in seen:
+            if fast_contains(seen, superklass):
                 error_log.log(
                         "recursive class hierarchy detected: '{0}' and '{1}'".format(
                                 klass.iface_file.fq_cpp_name,
@@ -735,9 +736,9 @@ def _set_mro(spec, klass, error_log, seen=None):
                 klass.supertype = klass.iface_file.module.default_supertype
 
         if klass.supertype is not None:
-            # If the super-type ends with 'sip.wrapper' then assume it is the
+            # If the super-type ends with '.wrapper' then assume it is the
             # default.
-            if klass.supertype.name.endswith('sip.wrapper'):
+            if klass.supertype.name.endswith('.wrapper'):
                 klass.supertype = None
 
         if klass.supertype is not None and klass.iface_file.module is spec.module:
@@ -1444,6 +1445,10 @@ _STRING_TYPES = (ArgumentType.ASCII_STRING, ArgumentType.LATIN1_STRING,
 def _resolve_variable_type(spec, variable, error_log):
     """ Resolve the type of a variable. """
 
+    if variable.scope is None:
+        if variable.get_code is not None or variable.set_code is not None:
+            error_log.log("%GetCode or %SetCode cannot be specified for global variables")
+
     bad_type = True
     variable_type = variable.type
 
@@ -1480,14 +1485,11 @@ def _resolve_variable_type(spec, variable, error_log):
         else:
             set_s = " and %SetCode"
 
-        error_log.log(
-                "'{0}' has an unsupported type - provide %GetCode{1}".format(
-                    variable.fq_cpp_name, set_s))
+        error_log.log(f"'{variable.fq_cpp_name}' has an unsupported type - provide %GetCode{set_s}")
  
-    if variable_type.type is not ArgumentType.CLASS and variable.access_code is not None:
-        error_log.log(
-                "'{0}' has %AccessCode but isn't a class instance".format(
-                    variable.fq_cpp_name))
+    if variable.access_code is not None:
+        if variable_type.type is not ArgumentType.CLASS:
+            error_log.log(f"'{variable.fq_cpp_name}' has %AccessCode but isn't a class instance")
 
     if variable.scope is not None:
         _iface_file_is_used(variable.scope.iface_file.used, variable_type)
@@ -1964,7 +1966,14 @@ def _search_mapped_types(spec, mod, type, scoped_name=None):
         type.definition = scoped_name
         type.type = ArgumentType.DEFINED
 
-    for mapped_type in spec.mapped_types:
+    if type.type is ArgumentType.TEMPLATE:
+        name = type.definition.cpp_name
+    elif type.type in (ArgumentType.STRUCT, ArgumentType.UNION, ArgumentType.DEFINED, ArgumentType.NONE):
+        name = type.definition
+    else:
+        assert False, f"_search_mapped_types got {type.type}"
+
+    for mapped_type in spec.mapped_types.by_readable_base_name(name.readable_base_name):
         if same_base_type(mapped_type.type, type):
             break
     else:
@@ -2035,14 +2044,11 @@ def _merged_type_hints(type_hints, defaults):
 def _search_enums(spec, scoped_name, type):
     """ Search the enums for a name and resolve the type. """
 
-    for enum in spec.enums:
-        if enum.fq_cpp_name is None:
-            continue
-
-        if enum.fq_cpp_name == scoped_name:
-            type.type = ArgumentType.ENUM
-            type.definition = enum
-            break
+    enum = spec.enums.by_fq_cpp_name(scoped_name)
+    if enum is None:
+        return
+    type.type = ArgumentType.ENUM
+    type.definition = enum
 
 
 def _search_classes(spec, mod, scoped_name, type):
@@ -2050,19 +2056,17 @@ def _search_classes(spec, mod, scoped_name, type):
     type.
     """
 
-    for klass in spec.classes:
+    for klass in spec.classes.by_fq_cpp_name(scoped_name):
         # Ignore an external class unless it was declared in the same module as
         # the name is being used.
         if klass.external and klass.iface_file.module is not mod:
             continue
 
-        if klass.iface_file.fq_cpp_name == scoped_name:
-            type.type = ArgumentType.CLASS
-            type.definition = klass
-            type.type_hints = _merged_type_hints(type.type_hints,
-                    klass.type_hints)
-
-            break
+        type.type = ArgumentType.CLASS
+        type.definition = klass
+        type.type_hints = _merged_type_hints(type.type_hints,
+                klass.type_hints)
+        break
 
 
 def _iface_files_are_used_by_signature(used, signature, need_types=False):

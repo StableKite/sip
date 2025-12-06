@@ -1,4 +1,4 @@
-sip6 (6.15.0-1) UNRELEASED; urgency=medium
+sip6 (6.15.0-1) unstable; urgency=medium
 
   * New upstream release.
   * Build-depend on python3-pytest for the tests.

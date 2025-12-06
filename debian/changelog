@@ -4,6 +4,7 @@ sip6 (6.15.0-1) UNRELEASED; urgency=medium
   * Build-depend on python3-pytest for the tests.
   * Document the --option flag in sip-module(1).
   * Refresh patches for the new release.
+  * Make blhc ignore the messages from setuptools builder.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Sat, 06 Dec 2025 19:48:25 +0300
 

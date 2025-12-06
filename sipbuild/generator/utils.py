@@ -4,7 +4,8 @@
 
 
 from .scoped_name import ScopedName
-from .specification import ArgumentType, CachedName, IfaceFile, IfaceFileType
+from .specification import (ArgumentType, CachedName, IfaceFile, IfaceFileType,
+        IndexedCachedNameList)
 
 
 def append_iface_file(iface_file_list, iface_file):
@@ -15,7 +16,7 @@ def append_iface_file(iface_file_list, iface_file):
         return
 
     # Don't bother if it is already there.
-    if iface_file in iface_file_list:
+    if fast_contains(iface_file_list, iface_file):
         return
 
     iface_file_list.append(iface_file)
@@ -130,18 +131,25 @@ def cached_name(spec, name):
 
     # Get the line of the cache for the length of this name creating it if
     # necessary.
-    line = spec.name_cache.setdefault(len(name), [])
+    line = spec.name_cache.setdefault(len(name), IndexedCachedNameList())
 
     # See if the name has already been cached.
-    for nd in line:
-        if nd.name == name:
-            return nd
+    if nd := line.by_name(name):
+        return nd
 
     # Create a new entry.
     nd = CachedName(name)
     line.append(nd)
 
     return nd
+
+
+def fast_contains(container, element):
+    """ Check whether container contains element by identity (using operator
+    'is' instead of '==').
+    """
+
+    return any(x is element for x in container)
 
 
 def find_iface_file(spec, mod, fq_cpp_name, iface_file_type, error_logger,
@@ -472,10 +480,8 @@ def search_typedefs(spec, cpp_name, type):
     fq_cpp_name = ScopedName(cpp_name)
     fq_cpp_name.make_absolute()
 
-    for typedef in spec.typedefs:
-        if typedef.fq_cpp_name == fq_cpp_name:
-            break
-    else:
+    typedef = spec.typedefs.by_fq_cpp_name(fq_cpp_name)
+    if not typedef:
         return
 
     # Update the type.

@@ -1745,8 +1745,10 @@ For example::
             [, all_raise_py_exception = [True | False]]
             [, call_super_init = [True | False]]
             [, default_VirtualErrorHandler = *name*]
+            [, gil_use = ["Used" | "NotUsed"]]
             [, keyword_arguments = ["None" | "All" | "Optional"]]
             [, language = *string*]
+            [, multi_interpreter_support = ["NotSupported" | "Supported" | "PerInterpreterGILSupported"]]
             [, py_ssize_t_clean = [True | False]]
             [, use_argument_names = [True | False]]
             [, use_limited_api = [True | False]])
@@ -1777,12 +1779,24 @@ re-implementation of any virtual C++ function raises a Python exception.  If no
 handler is specified for a virtual C++ function then ``PyErr_Print()`` is
 called.
 
+``gil_use`` specifies whether or not the module uses the GIL.  It is ignored
+unless the ABI used is v14 or later.  The default value is ``"Used"``.
+
 ``keyword_arguments`` specifies the default level of support for Python keyword
 arguments.  See the :fanno:`KeywordArgs` annotation for an explaination of the
 possible values and their effect.
 
 ``language`` specifies the implementation language of the library being
 wrapped.  Its value is either ``"C++"`` (the default) or ``"C"``.
+
+``multi_interpreter_support`` specifies the module's support for multiple
+interpreters.  ``"NotSupported"`` means that the module does not support being
+imported by subinterpreters. ``"Supported"`` means that the module supports
+being imported by subinterpreters but only when each subinterpreter shares the
+main interpreter's GIL.  ``"PerInterpreterGILSupported"`` means that the module
+supports being imported by subinterpreters, even when each subinterpreter has
+its own GIL.  It is ignored unless the ABI used is v14 or later.  The default
+value is ``"NotSupported"``.
 
 ``py_ssize_t_clean`` specifies that the generated code should include ``#define
 PY_SSIZE_T_CLEAN`` before any ``#include <Python.h>``.
@@ -2151,6 +2165,40 @@ PyObject \*sipPyType
 .. seealso:: :directive:`%AccessCode`, :directive:`%GetCode`
 
 
+.. directive:: %SipModuleConfiguration
+
+:directive:`%SipModuleConfiguration`
+------------------------------------
+
+.. parsed-literal::
+    %SipModuleConfiguration {*option* *option* ...}
+
+This directive is used (by ABI v14 and later) to specify how the :mod:`sip`
+module should be configured.  The possible options are as follows:
+
+BrokenTypeNames
+    The module part of the fully qualified name of :mod:`sip` module types
+    (e.g. :class:`sip.simplewrapper`) is always just ``sip`` even if the module
+    is part of a package.
+
+CustomEnums
+    Traditional enums (i.e. non-scoped enums) are implemented as a custom
+    Python type.
+
+PyEnums
+    All enums (i.e. including scoped enums) are implemented using the standard
+    ``Enum`` and related Python types.
+
+For example::
+
+    // Configure ABI v14 to behave like v12.
+    %SipModuleConfiguration {BrokenTypeNames CustomEnums}
+
+    // Configure ABI v14 to behave like v13.  This is also the default
+    // configuration.
+    %SipModuleConfiguration {PyEnums}
+
+
 .. directive:: %Timeline
 
 :directive:`%Timeline`
@@ -2172,9 +2220,13 @@ then the latest version will be enabled automatically.
 The :directive:`%Timeline` directive can be used any number of times in a
 module to allow multiple libraries to be wrapped in the same module.
 
-SIP automatically defines a timeline containing all versions of SIP.  The name
-of the version is ``SIP_`` followed by the individual parts of the version
-number separated by an underscore.  SIP v5.0.1 is therefore ``SIP_5_0_1``.
+SIP automatically defines pseudo-timelines.  The ``SIP`` pseudo-timeline
+containing all versions of SIP.  The name of a version is ``SIP_`` followed by
+the individual parts of the version number separated by an underscore.  SIP
+v6.10.1 is therefore ``SIP_6_10_1``.
+
+The ``SIP_ABI`` pseudo-timeline containing all major versions of the SIP ABI.
+The name of a version is ``SIP_ABI_`` followed by the ABI major version number.
 
 If a particular version is enabled then SIP will automatically generate a
 corresponding C preprocessor symbol for use by handwritten code.  The symbol is
@@ -2192,7 +2244,11 @@ For example::
     void foo(int = 0);
     %End
 
-    %If (- SIP_4_13)
+    %If (- SIP_6_10)
+    void bar();
+    %End
+
+    %If (SIP_ABI_13 -)
     void bar();
     %End
 

@@ -340,7 +340,7 @@ file.
             **long** | **unsigned long** |
             **long long** | **unsigned long long** |
             **float** | **double** |
-            **bool** |
+            **bool** | **_Bool** |
             **void** |
             **Py_hash_t** |
             **Py_ssize_t** |
@@ -385,7 +385,8 @@ Additional SIP Types
 --------------------
 
 SIP supports a number of additional data types that can be used in Python
-signatures.
+signatures.  In all cases, when values of these types are returned by a
+callable **a new reference must be returned**.
 
 .. sip-type:: SIP_PYBUFFER
 

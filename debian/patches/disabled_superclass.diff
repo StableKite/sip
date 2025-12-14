@@ -1,0 +1,26 @@
+From: Phil Thompson <phil@riverbankcomputing.com>
+Date: Sat, 13 Dec 2025 22:45:54 +0000
+Subject: Bug fixes
+
+- A super-class of a disabled class was not ignored if it was disabled
+  itself.
+
+(cherry picked from commit 79da3321082f17d594b29c22dd94e58276d5d23e)
+---
+ sipbuild/generator/parser/rules.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/sipbuild/generator/parser/rules.py b/sipbuild/generator/parser/rules.py
+index 8b9b429..7f3993d 100644
+--- a/sipbuild/generator/parser/rules.py
++++ b/sipbuild/generator/parser/rules.py
+@@ -1986,6 +1986,9 @@ def p_simple_superclass(p):
+ 
+     pm = p.parser.pm
+ 
++    if pm.skipping:
++        return
++
+     # Handle templates.
+     if len(p) == 5:
+         if pm.parsing_template:

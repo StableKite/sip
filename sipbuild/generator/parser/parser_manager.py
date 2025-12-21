@@ -1056,7 +1056,10 @@ class ParserManager:
                 break
 
         # Check the classes.
-        for cd in self.spec.classes.by_scope_and_py_name(self.scope, py_name):
+        for cd in self.spec.classes:
+            if cd.scope is not self.scope:
+                continue
+
             # A class will have already been added to the scope and this will
             # tell us to ignore it.
             if cd is ignore:
@@ -1065,7 +1068,8 @@ class ParserManager:
             if cd.external:
                 continue
 
-            clash("a class or namespace")
+            if cd.py_name.name == py_name:
+                clash("a class or namespace")
 
         if self.scope is None:
             # Check the exceptions.

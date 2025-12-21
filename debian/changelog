@@ -1,4 +1,4 @@
-sip6 (6.15.1-1) UNRELEASED; urgency=medium
+sip6 (6.15.1-1) unstable; urgency=medium
 
   * New upstream release.
   * Drop disabled_superclass.diff, included in the new release.

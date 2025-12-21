@@ -96,7 +96,7 @@ static void sip_import_component_module(PyObject *d, const char *name)
 ''')
 
     g_module_docstring(sf, module)
-    g_module_init_start(sf, spec)
+    backend.g_module_init_start(sf)
     backend.g_module_definition(sf)
 
     sf.write(
@@ -928,31 +928,6 @@ def g_type_init_body(backend, sf, bindings, klass):
     sf.write(
 '''
     return SIP_NULLPTR;
-''')
-
-
-def g_module_init_start(sf, spec):
-    """ Generate the start of the Python module initialisation function. """
-
-    if spec.is_composite or spec.c_bindings:
-        extern_c = ''
-        arg_type = 'void'
-    else:
-        extern_c = 'extern "C" '
-        arg_type = ''
-
-    module_name = spec.module.py_name
-
-    sf.write(
-f'''
-
-/* The Python module initialisation function. */
-#if defined(SIP_STATIC_MODULE)
-{extern_c}PyObject *PyInit_{module_name}({arg_type})
-#else
-PyMODINIT_FUNC PyInit_{module_name}({arg_type})
-#endif
-{{
 ''')
 
 
@@ -2677,12 +2652,13 @@ def _static_function(backend, sf, bindings, member, scope=None):
 
     if scope is None:
         overloads = spec.module.overloads
+        scope_py = None
     else:
         overloads = scope.overloads
-        scope = py_scope(scope)
+        scope_py = py_scope(scope)
 
-        if scope is not None:
-            member_name = scope.iface_file.fq_cpp_name.as_word + '_' + member_name
+        if scope_py is not None:
+            member_name = scope_py.iface_file.fq_cpp_name.as_word + '_' + member_name
 
     sf.write('\n\n')
 
@@ -2701,7 +2677,7 @@ def _static_function(backend, sf, bindings, member, scope=None):
     else:
         kw_fw_decl = kw_decl = ''
 
-    if scope is None:
+    if scope_py is None:
         if not spec.c_bindings:
             sf.write(f'extern "C" {{static PyObject *func_{member_name}({backend.get_py_method_args(is_impl=False, is_module_fn=True)}{kw_fw_decl});}}\n')
 

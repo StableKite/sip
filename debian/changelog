@@ -1,6 +1,7 @@
 sip6 (6.15.1-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Drop disabled_superclass.diff, included in the new release.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Sun, 21 Dec 2025 12:13:20 +0300
 

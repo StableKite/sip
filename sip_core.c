@@ -160,9 +160,7 @@ static sipWrapperType sipWrapper_Type = {
             0,              /* am_await */
             0,              /* am_aiter */
             0,              /* am_anext */
-#if PY_VERSION_HEX >= 0x030a0000
             0,              /* am_send */
-#endif
         },
         {
             0,              /* nb_add */
@@ -7364,9 +7362,7 @@ static PyObject *sip_api_is_py_method_12_8(sip_gilstate_t *gil, char *pymc,
     if (sipInterpreter == NULL)
         return NULL;
 
-#ifdef WITH_THREAD
     *gil = PyGILState_Ensure();
-#endif
 
     /* Only read this when we have the GIL. */
     sipSelf = *sipSelfp;
@@ -7498,17 +7494,13 @@ static PyObject *sip_api_is_py_method_12_8(sip_gilstate_t *gil, char *pymc,
             PyErr_Print();
         }
 
-#ifdef WITH_THREAD
         PyGILState_Release(*gil);
-#endif
     }
 
     return reimp;
 
 release_gil:
-#ifdef WITH_THREAD
     PyGILState_Release(*gil);
-#endif
     return NULL;
 }
 
@@ -9678,9 +9670,7 @@ sipWrapperType sipSimpleWrapper_Type = {
             0,              /* am_await */
             0,              /* am_aiter */
             0,              /* am_anext */
-#if PY_VERSION_HEX >= 0x030a0000
             0,              /* am_send */
-#endif
         },
         {
             0,              /* nb_add */

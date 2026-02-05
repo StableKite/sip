@@ -2,6 +2,7 @@ pyqt6-sip (13.11.0-1) UNRELEASED; urgency=medium
 
   * New upstream release.
   * Drop ‘Priority: optional’, it became default in dpkg 1.22.12.
+  * Bump Standards-Version to 4.7.3.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Thu, 05 Feb 2026 11:58:26 +0300
 

@@ -1,7 +1,9 @@
-// The SIP implementation of the py_enums_module test module.
+// The SIP implementation of the v12_enums_module test module.
 
 
-%Module(name=py_enums_module)
+%Module(name=v12_enums_module)
+
+%SipModuleConfiguration {CustomEnums}
 
 
 %ModuleHeaderCode
@@ -14,25 +16,11 @@ enum NamedEnum {
     NamedMember = 20
 };
 
+int operator+(NamedEnum e, int incr);
+bool operator==(NamedEnum e, int v);
+
 enum class ScopedEnum {
     ScopedMember = 30
-};
-
-
-enum EnumBase {
-    EnumBaseMember = 100
-};
-
-enum FlagBase {
-    FlagBaseMember = 110
-};
-
-enum IntEnumBase {
-    IntEnumBaseMember = 120
-};
-
-enum IntFlagBase {
-    IntFlagBaseMember = 130
 };
 
 
@@ -83,6 +71,12 @@ public:
 %End
 
 
+%ModuleCode
+int operator+(NamedEnum e, int incr) {return (int)e + incr;}
+bool operator==(NamedEnum e, int v) {return (int)e == v;}
+%End
+
+
 enum {
     AnonMember
 };
@@ -91,25 +85,11 @@ enum NamedEnum {
     NamedMember
 };
 
+int operator+(NamedEnum e, int incr);
+bool operator==(NamedEnum e, int v);
+
 enum class ScopedEnum {
     ScopedMember
-};
-
-
-enum EnumBase /BaseType=Enum/ {
-    EnumBaseMember
-};
-
-enum FlagBase /BaseType=Flag/ {
-    FlagBaseMember
-};
-
-enum IntEnumBase /BaseType=IntEnum/ {
-    IntEnumBaseMember
-};
-
-enum IntFlagBase /BaseType=IntFlag/ {
-    IntFlagBaseMember
 };
 
 

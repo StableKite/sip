@@ -1,0 +1,188 @@
+// The SIP implementation of the v13_enums_module test module.
+
+
+%Module(name=v13_enums_module)
+
+%SipModuleConfiguration {PyEnums}
+
+
+%ModuleHeaderCode
+
+enum {
+    AnonMember = 10
+};
+
+enum NamedEnum {
+    NamedMember = 20
+};
+
+int operator+(NamedEnum e, int incr);
+bool operator==(NamedEnum e, int v);
+
+enum class ScopedEnum {
+    ScopedMember = 30
+};
+
+
+enum EnumBase {
+    EnumBaseMember = 100
+};
+
+enum FlagBase {
+    FlagBaseMember = 110
+};
+
+enum IntEnumBase {
+    IntEnumBaseMember = 120
+};
+
+enum IntFlagBase {
+    IntFlagBaseMember = 130
+};
+
+
+class EnumClass {
+public:
+    EnumClass() : named_overload(false) {}
+    virtual ~EnumClass() {}
+
+    enum {
+        ClassAnonMember = 40
+    };
+
+    enum ClassNamedEnum {
+        ClassNamedMember = 50
+    };
+
+    ClassNamedEnum named_get() {
+        return named_virt();
+    }
+    virtual ClassNamedEnum named_virt() {
+        return ClassNamedMember;
+    }
+    static void named_set(ClassNamedEnum) {}
+    ClassNamedEnum named_var;
+
+    enum ClassNamedEnum2 {
+        ClassNamedMember2 = 60
+    };
+
+    void named_overload_set(ClassNamedEnum2) {named_overload = false;}
+    void named_overload_set(ClassNamedEnum) {named_overload = true;}
+    bool named_overload;
+
+    enum class ClassScopedEnum {
+        ClassScopedMember = 70
+    };
+
+    ClassScopedEnum scoped_get() {
+        return scoped_virt();
+    }
+    virtual ClassScopedEnum scoped_virt() {
+        return ClassScopedEnum::ClassScopedMember;
+    }
+    static void scoped_set(ClassScopedEnum) {}
+    ClassScopedEnum scoped_var;
+
+    enum ClassTypedEnum : unsigned char {
+        ClassTypedMember = 0xff
+    };
+
+    ClassTypedEnum typed_get() {
+        return typed_virt();
+    }
+
+    virtual ClassTypedEnum typed_virt() {
+        return ClassTypedEnum::ClassTypedMember;
+    }
+
+    static void typed_set(ClassTypedEnum) {}
+    ClassTypedEnum typed_var;
+};
+
+%End
+
+
+%ModuleCode
+int operator+(NamedEnum e, int incr) {return (int)e + incr;}
+bool operator==(NamedEnum e, int v) {return (int)e == v;}
+%End
+
+
+enum {
+    AnonMember
+};
+
+enum NamedEnum {
+    NamedMember
+};
+
+int operator+(NamedEnum e, int incr);
+bool operator==(NamedEnum e, int v);
+
+enum class ScopedEnum {
+    ScopedMember
+};
+
+
+enum EnumBase /BaseType=Enum/ {
+    EnumBaseMember
+};
+
+enum FlagBase /BaseType=Flag/ {
+    FlagBaseMember
+};
+
+enum IntEnumBase /BaseType=IntEnum/ {
+    IntEnumBaseMember
+};
+
+enum IntFlagBase /BaseType=IntFlag/ {
+    IntFlagBaseMember
+};
+
+
+class EnumClass {
+public:
+    EnumClass();
+    virtual ~EnumClass();
+
+    enum {
+        ClassAnonMember
+    };
+
+    enum ClassNamedEnum {
+        ClassNamedMember
+    };
+
+    ClassNamedEnum named_get();
+    virtual ClassNamedEnum named_virt();
+    static void named_set(ClassNamedEnum);
+    ClassNamedEnum named_var;
+
+    enum ClassNamedEnum2 {
+        ClassNamedMember2
+    };
+
+    void named_overload_set(ClassNamedEnum2);
+    void named_overload_set(ClassNamedEnum);
+    bool named_overload;
+
+    enum class ClassScopedEnum {
+        ClassScopedMember
+    };
+
+    ClassScopedEnum scoped_get();
+    virtual ClassScopedEnum scoped_virt();
+    static void scoped_set(ClassScopedEnum);
+    ClassScopedEnum scoped_var;
+
+    enum ClassTypedEnum : unsigned char {
+        ClassTypedMember
+    };
+
+    ClassTypedEnum typed_get();
+    virtual ClassTypedEnum typed_virt();
+    static void typed_set(ClassTypedEnum);
+    ClassTypedEnum typed_var;
+};

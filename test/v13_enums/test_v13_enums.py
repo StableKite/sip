@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2026 Phil Thompson <phil@riverbankcomputing.com>
 
 
 from enum import Enum, Flag, IntEnum, IntFlag
@@ -8,9 +8,7 @@ from enum import Enum, Flag, IntEnum, IntFlag
 import pytest
 
 
-# TODO
-#cfg_enabled_for = [13, 14]
-cfg_enabled_for = [13]
+cfg_enabled_for = [13, 14]
 
 
 @pytest.fixture(scope='module')
@@ -62,6 +60,19 @@ def scoped_members(module):
     return ScopedEnumClass()
 
 
+@pytest.fixture
+def typed_members(module):
+    """ A fixture that creates the instance of a test class with valid typed
+    enum members.
+    """
+
+    class TypedEnumClass(module.EnumClass):
+        def typed_virt(self):
+            return module.EnumClass.ClassTypedEnum.ClassTypedMember
+
+    return TypedEnumClass()
+
+
 # The following test anonymous enums.
 
 def test_module_anon_type(module):
@@ -102,11 +113,27 @@ def test_IntFlag_BaseType(module):
 
 # The following test named enums.
 
+def test_module_named_enum_attrs(module):
+    assert module.NamedEnum.__module__ == 'v13_enums_module'
+    assert module.NamedEnum.__name__ == 'NamedEnum'
+    assert module.NamedEnum.__qualname__ == 'NamedEnum'
+
+def test_class_named_enum_attrs(module):
+    assert module.EnumClass.ClassNamedEnum.__module__ == 'v13_enums_module'
+    assert module.EnumClass.ClassNamedEnum.__name__ == 'ClassNamedEnum'
+    assert module.EnumClass.ClassNamedEnum.__qualname__ == 'EnumClass.ClassNamedEnum'
+
 def test_module_named_type(module):
     assert issubclass(module.NamedEnum, Enum)
 
 def test_module_named_value(module):
     assert module.NamedEnum.NamedMember.value == 20
+
+def test_enum_operator_add(module):
+    assert module.NamedEnum.NamedMember + 10 == 30
+
+def test_enum_operator_eq(module):
+    assert module.NamedEnum.NamedMember == 20
 
 def test_class_named_type(module):
     assert issubclass(module.EnumClass.ClassNamedEnum, Enum)
@@ -168,3 +195,23 @@ def test_scoped_set_member(module, scoped_members):
 
 def test_scoped_var_member(module, scoped_members):
     scoped_members.scoped_var = module.EnumClass.ClassScopedEnum.ClassScopedMember
+
+
+# The following test typed enums.
+
+def test_class_typed_type(module):
+    assert issubclass(module.EnumClass.ClassTypedEnum, Enum)
+
+def test_class_typed_value(module):
+    assert module.EnumClass.ClassTypedEnum.ClassTypedMember.value == 0xff
+
+def test_typed_get_member(module, typed_members, virtual_hook):
+    assert typed_members.typed_get() is module.EnumClass.ClassTypedEnum.ClassTypedMember
+    virtual_hook.reraise()
+
+def test_typed_set_member(module, typed_members):
+    typed_members.typed_set(
+            module.EnumClass.ClassTypedEnum.ClassTypedMember)
+
+def test_typed_var_member(module, typed_members):
+    typed_members.typed_var = module.EnumClass.ClassTypedEnum.ClassTypedMember

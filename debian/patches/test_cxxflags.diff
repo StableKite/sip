@@ -1,0 +1,24 @@
+From: Dmitry Shachnev <mitya57@debian.org>
+Date: Tue, 10 Mar 2026 14:09:05 +0300
+Subject: test: Amend CXXFLAGS instead of overwriting them
+
+Forwarded: https://github.com/Python-SIP/sip/pull/104
+---
+ test/conftest.py | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/test/conftest.py b/test/conftest.py
+index 749ad67..38563d2 100644
+--- a/test/conftest.py
++++ b/test/conftest.py
+@@ -292,7 +292,9 @@ def _build_test_module(sip_file, test_dir, abi_version, package, exceptions,
+                 f.write(f'tags = [{tags_s}]\n')
+ 
+     # Configure the C++11 support.
+-    os.environ['CXXFLAGS'] = '-std=c++11'
++    cxxflags = os.environ.get('CXXFLAGS', '')
++    if '-std=c++11' not in cxxflags:
++        os.environ['CXXFLAGS'] = f'{cxxflags} -std=c++11'
+ 
+     # Build and move the test module.
+     _build_module(module_name, package,

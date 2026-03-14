@@ -2,7 +2,7 @@ Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Contact: pyqt@riverbankcomputing.com
 
 Files: *
-Copyright: 2024-2025 Phil Thompson <phil@riverbankcomputing.com>
+Copyright: 2024-2026 Phil Thompson <phil@riverbankcomputing.com>
 License: BSD-2-clause
 
 Files: sipbuild/generator/parser/ply/*
@@ -24,7 +24,7 @@ Copyright: 2015-2023 Riverbank Computing Limited
 License: SIP or GPL-2 or GPL-3
 
 Files: debian/*
-Copyright: 2021-2025 Dmitry Shachnev <mitya57@debian.org>
+Copyright: 2021-2026 Dmitry Shachnev <mitya57@debian.org>
 License: BSD-2-clause
 
 License: BSD-2-clause

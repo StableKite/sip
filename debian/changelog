@@ -3,6 +3,7 @@ sip6 (6.15.2-1) UNRELEASED; urgency=medium
   * New upstream release.
   * Refresh debian/patches/intersphinx_local.diff.
   * Add a patch to not overwrite CXXFLAGS in the tests.
+  * Backport upstream patch to fix stack smashing when running tests.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Mon, 09 Mar 2026 18:37:05 +0300
 

@@ -1,0 +1,50 @@
+From: Phil Thompson <phil@riverbankcomputing.com>
+Date: Sat, 14 Mar 2026 15:47:26 +0000
+Subject: Fixed the handling of virtuals that return enums with a non-int base
+ type
+
+(cherry picked from commit 7b9e5a72ed44981aa06655fbeb8bbaf7c1ee8d5b)
+---
+ sipbuild/generator/outputs/code/snippets.py | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/sipbuild/generator/outputs/code/snippets.py b/sipbuild/generator/outputs/code/snippets.py
+index 8c0f619..a49a338 100644
+--- a/sipbuild/generator/outputs/code/snippets.py
++++ b/sipbuild/generator/outputs/code/snippets.py
+@@ -3893,7 +3893,14 @@ f'''
+     sf.write(')\n{\n')
+ 
+     if result_is_returned:
+-        result_plain_decl = fmt_argument_as_cpp_type(spec, result, plain=True)
++        decl = fmt_argument_as_cpp_type(spec, result, plain=True)
++
++        if _arg_is_v13_typed_enum(spec, result):
++            result_plain_decl = 'int'
++            result_cast = '(' + decl + ')'
++        else:
++            result_plain_decl = decl
++            result_cast = ''
+ 
+         if result_instance_code is not None:
+             sf.write(
+@@ -3995,8 +4002,8 @@ f'''
+ 
+         if result_is_returned:
+             sf.write(
+-'''
+-    return sipRes;
++f'''
++    return {result_cast}sipRes;
+ ''')
+ 
+         sf.write('}\n')
+@@ -4097,7 +4104,7 @@ f'    PyObject *sipResObj = sipCallMethod({context}SIP_NULLPTR, sipMethod, ')
+ 
+         sf.write(
+ f'''
+-    return {result_ref}sipRes;
++    return {result_cast}{result_ref}sipRes;
+ ''')
+ 
+     sf.write('}\n')

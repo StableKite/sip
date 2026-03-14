@@ -1,4 +1,4 @@
-sip6 (6.15.2-1) UNRELEASED; urgency=medium
+sip6 (6.15.2-1) unstable; urgency=medium
 
   * New upstream release.
   * Refresh debian/patches/intersphinx_local.diff.
@@ -8,7 +8,7 @@ sip6 (6.15.2-1) UNRELEASED; urgency=medium
   * Drop ‘Priority: optional’, it became default in dpkg 1.22.12.
   * Bump Standards-Version to 4.7.3, no changes needed.
 
- -- Dmitry Shachnev <mitya57@debian.org>  Mon, 09 Mar 2026 18:37:05 +0300
+ -- Dmitry Shachnev <mitya57@debian.org>  Sat, 14 Mar 2026 20:58:38 +0300
 
 sip6 (6.15.1-1) unstable; urgency=medium
 

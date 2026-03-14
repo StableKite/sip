@@ -6,6 +6,7 @@ sip6 (6.15.2-1) UNRELEASED; urgency=medium
   * Backport upstream patch to fix stack smashing when running tests.
   * Bump copyright years.
   * Drop ‘Priority: optional’, it became default in dpkg 1.22.12.
+  * Bump Standards-Version to 4.7.3, no changes needed.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Mon, 09 Mar 2026 18:37:05 +0300
 

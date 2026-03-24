@@ -1,4 +1,4 @@
-sip6 (6.15.3-1) UNRELEASED; urgency=medium
+sip6 (6.15.3-1) unstable; urgency=medium
 
   * New upstream release.
   * Drop patches, included in the new release:

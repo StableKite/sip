@@ -1,4 +1,2 @@
 intersphinx_local.diff
 system_ply.diff
-test_cxxflags.diff
-fix_stack_smashing.diff

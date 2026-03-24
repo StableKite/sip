@@ -1,6 +1,9 @@
 sip6 (6.15.3-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Drop patches, included in the new release:
+    - test_cxxflags.diff
+    - fix_stack_smashing.diff
 
  -- Dmitry Shachnev <mitya57@debian.org>  Tue, 24 Mar 2026 16:13:36 +0300
 

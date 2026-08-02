@@ -7,15 +7,15 @@ Subject: Use local intersphinx inventory.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/docs/conf.py b/docs/conf.py
-index 4f184f5..260c17b 100644
+index 219f91b..15c2c87 100644
 --- a/docs/conf.py
 +++ b/docs/conf.py
-@@ -20,7 +20,7 @@ version = 'v6.15.2'
+@@ -23,7 +23,7 @@ version = 'v6.16.0'
  # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
  
  extensions = ['myst_parser', 'sphinx.ext.intersphinx']
 -intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 +intersphinx_mapping = {'python': ('/usr/share/doc/python3-doc/html', None)}
  
- #templates_path = ['_templates']
+ suppress_warnings = ['duplicate_declaration.c']
  exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']

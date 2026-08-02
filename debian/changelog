@@ -1,6 +1,7 @@
 sip6 (6.16.0-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Refresh patches for the new release.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Sun, 02 Aug 2026 21:03:49 +0300
 

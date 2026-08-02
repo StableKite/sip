@@ -3,6 +3,8 @@ sip6 (6.16.0-1) UNRELEASED; urgency=medium
   * New upstream release.
   * Refresh patches for the new release.
   * Bump versions of build-dependencies per docs/requirements.in.
+  * Update to debhelper compat level 14.
+    - Remove explicit ${*:Depends} declarations.
 
  -- Dmitry Shachnev <mitya57@debian.org>  Sun, 02 Aug 2026 21:03:49 +0300
 

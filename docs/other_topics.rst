@@ -40,6 +40,9 @@ referencing an enum member.
 When using ABI v13 SIP uses the :mod:`enum` module to wrap all C/C++ named
 enums.
 
+When using ABI v14 the behaviour can be configured using the
+:directive:`%SipModuleConfiguration` directive.
+
 
 .. _ref-object-ownership:
 
@@ -71,7 +74,7 @@ avoid crashes (where both Python and C++ call the destructor) and memory leaks
 This applies equally to C structures where the structure is returned to the
 heap using the :c:func:`free` function.
 
-See also :c:func:`sipTransferTo()` and :c:func:`sipTransferBack()`.
+See also :c:func:`sipTransferTo` and :c:func:`sipTransferBack`.
 
 
 .. _ref-types-metatypes:
@@ -111,30 +114,13 @@ by importing modules.
 
 If you want to use your own meta-type or super-type then they must be
 sub-classed from one of the SIP provided types.  Your types must be registered
-using :c:func:`sipRegisterPyType()`.  This is normally done in code specified
+using :c:func:`sipRegisterPyType`.  This is normally done in code specified
 using the :directive:`%InitialisationCode` directive.
 
 .. note::
 
     It is not possible to define new super-types or meta-types if the limited
-    Python API is enabled.
-
-
-.. _ref-lazy-type-attributes:
-
-Lazy Type Attributes
---------------------
-
-Instead of populating a wrapped type's dictionary with its attributes (or
-descriptors for those attributes) SIP only creates objects for those attributes
-when they are actually needed.  This is done to reduce the memory footprint and
-start up time when used to wrap large libraries with hundreds of classes and
-tens of thousands of attributes.
-
-SIP allows you to extend the handling of lazy attributes to your own attribute
-types by allowing you to register an attribute getter handler (using
-:c:func:`sipRegisterAttributeGetter()`).  This will be called just before a
-type's dictionary is accessed for the first time.
+    Python API is enabled and ABIs v12 or v13 are targeted.
 
 
 Support for Python's Buffer Interface
@@ -171,27 +157,29 @@ where this is an issue.
 
 .. _ref-gil:
 
-The Python Global Interpreter Lock
-----------------------------------
+The Python Global Interpreter Lock (or Free-threading)
+------------------------------------------------------
 
-Python's Global Interpretor Lock (GIL) must be acquired before calls can be
-made to the Python API.  It should also be released when a potentially
-blocking call to C/C++ library is made in order to allow other Python threads
-to be executed.  In addition, some C/C++ libraries may implement their own
-locking strategies that conflict with the GIL causing application deadlocks.
-SIP provides ways of specifying when the GIL is released and acquired to
+Python's GIL must be acquired (or, in the context of free-threading, a thread
+state attached) before calls can be made to the Python API.  It should also be
+released (or detached) when a potentially blocking call to C/C++ library is
+made in order to allow other Python threads to be executed.  In addition, some
+C/C++ libraries may implement their own locking strategies that conflict with
+the GIL causing application deadlocks.  SIP provides ways of specifying when
+the GIL is released (or thread state detached) and acquired (or attached) to
 ensure that locking problems can be avoided.
 
-SIP always ensures that the GIL is acquired before making calls to the Python
-API.  By default SIP does not release the GIL when making calls to the C/C++
-library being wrapped.  The :fanno:`ReleaseGIL` annotation can be used to
-override this behaviour when required.
+SIP always ensures that the GIL is acquired (or thread state attached) before
+making calls to the Python API.  By default SIP does not release the GIL (or
+attached thread state) when making calls to the C/C++ library being wrapped.
+The :fanno:`ReleaseGIL` annotation can be used to override this behaviour when
+required.
 
 If the ``release-gil`` key is set to ``true`` in the bindings-specific section
 of the ``pyproject.toml`` file then (for that set of bindings) then the default
-behaviour is changed and SIP releases the GIL every time is makes calls to the
-C/C++ library being wrapped.  The :fanno:`HoldGIL` annotation can be used to
-override this behaviour when required.
+behaviour is changed and SIP releases the GIL (or attached thread state) every
+time is makes calls to the C/C++ library being wrapped.  The :fanno:`HoldGIL`
+annotation can be used to override this behaviour when required.
 
 
 .. _ref-subclass-convertors:
@@ -277,7 +265,7 @@ that instance is a sub-class of the convertor's base class.  The convertor is
 passed a pointer to the instance cast to the base class.  The convertor then,
 if possible, casts that pointer to an instance of a sub-class of its original
 class.  It also returns a pointer to the corresponding
-:ref:`generated type structure <ref-type-structures>`.
+:ref:`generated type specification <ref-type-specs>`.
 
 It is possible for a convertor to switch to another convertor.  This can avoid
 duplication of convertor code where there is multiple inheritance.
@@ -308,4 +296,4 @@ type ``F``.  The following steps are taken:
   Rather than possibly duplicating the required code in both convertors the
   ``C`` convertor switches to the ``B`` convertor.  It does this by casting the
   pointer it is trying to convert to ``B`` and returns ``B``'s
-  :ref:`generated type structure <ref-type-structures>`.
+  :ref:`generated type specification <ref-type-specs>`.

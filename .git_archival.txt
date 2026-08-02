@@ -1,3 +1,3 @@
-node: b7a14f4ae72d5eab4e4823dbfa2fb63e56910348
-node-date: 2026-03-24T11:51:06Z
-describe-name: 6.15.3
+node: 07ca2f8fb253b11c73b5425f11a45e8f4641b6a6
+node-date: 2026-08-02T12:12:27+01:00
+describe-name: 6.16.0

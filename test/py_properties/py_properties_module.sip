@@ -1,7 +1,8 @@
 // The SIP implementation of the py_properties_module test module.
 
 
-%Module(name=py_properties_module)
+%Module(name=py_properties_module, gil_use="NotUsed",
+        multi_interpreter_support="PerInterpreterGILSupported")
 
 
 %ModuleHeaderCode
@@ -33,5 +34,9 @@ public:
 
     int get_int_val() const;
     void set_int_val(int int_val);
-    %Property(name=int_val, get=get_int_val, set=set_int_val)
+    %Property(name=int_val, get=get_int_val, set=set_int_val) {
+        %Docstring
+property
+        %End
+    };
 };

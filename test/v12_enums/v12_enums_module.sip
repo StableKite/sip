@@ -1,7 +1,8 @@
 // The SIP implementation of the v12_enums_module test module.
 
 
-%Module(name=v12_enums_module)
+%Module(name=v12_enums_module, gil_use="NotUsed",
+        multi_interpreter_support="PerInterpreterGILSupported")
 
 %SipModuleConfiguration {CustomEnums}
 
@@ -72,7 +73,7 @@ public:
 
 
 %ModuleCode
-int operator+(NamedEnum e, int incr) {return (int)e + incr;}
+int operator+(NamedEnum e, int incr) {return (int)e + 10 * incr;}
 bool operator==(NamedEnum e, int v) {return (int)e == v;}
 %End
 

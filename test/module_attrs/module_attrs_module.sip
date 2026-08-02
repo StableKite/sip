@@ -1,7 +1,8 @@
 // The SIP implementation of the module_attrs_module test module.
 
 
-%Module(name=module_attrs_module)
+%Module(name=module_attrs_module, gil_use="NotUsed",
+        multi_interpreter_support="PerInterpreterGILSupported")
 
 
 %ModuleHeaderCode
@@ -29,7 +30,7 @@ char char_latin1_attr = 0xa3;
 char char_utf8_attr = 'A';
 signed char schar_attr = 10;
 unsigned char uchar_attr = 10;
-wchar_t wchar_attr = L'β';
+wchar_t wchar_attr = L'\x03b2';
 char *string_attr = NULL;
 const char *string_attr_const = "str";
 char *string_ascii_attr = NULL;
@@ -37,7 +38,7 @@ const char *string_ascii_attr_const = "str";
 char *string_latin1_attr = NULL;
 const char *string_latin1_attr_const = "\xa3\xa3";
 char *string_utf8_attr = NULL;
-const char *string_utf8_attr_const = "2H₂ + O₂ ⇌ 2H₂O";
+const char *string_utf8_attr_const = "2H\xe2\x82\x82 + O\xe2\x82\x82 \xe2\x87\x8c 2H\xe2\x82\x82O";
 signed char *sstring_attr = NULL;
 const signed char *sstring_attr_const = (signed char *)"str";
 unsigned char *ustring_attr = NULL;

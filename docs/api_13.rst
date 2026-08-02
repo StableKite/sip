@@ -1,8 +1,12 @@
-ABI v13 for Handwritten Code
+API v13 for Handwritten Code
 ============================
 
 In this section we describe the v13 of the ABI, provided by the :mod:`sip`
 module, that can be used by handwritten code in specification files.
+
+
+API Reference
+-------------
 
 .. c:macro:: SIP_ABI_MAJOR_VERSION
 
@@ -87,8 +91,8 @@ module, that can be used by handwritten code in specification files.
 .. c:macro:: SIP_VERSION
 
     This is a C preprocessor symbol that defines the SIP version number
-    represented as a 3 part hexadecimal number (e.g. v5.0.0 is represented as
-    ``0x050000``).
+    represented as a 3 part hexadecimal number (e.g. v6.0.0 is represented as
+    ``0x060000``).
 
 
 .. c:macro:: SIP_VERSION_STR
@@ -140,8 +144,8 @@ module, that can be used by handwritten code in specification files.
 
 .. c:type:: sipBufferInfoDef
 
-    This C structure is used with :c:func:`sipGetBufferInfo()` and
-    :c:func:`sipReleaseBufferInfo()` and encapsulates information provided by a
+    This C structure is used with :c:func:`sipGetBufferInfo` and
+    :c:func:`sipReleaseBufferInfo` and encapsulates information provided by a
     Python object that implements the buffer protocol.  The structure elements
     are as follows.
 
@@ -207,7 +211,7 @@ module, that can be used by handwritten code in specification files.
     ``f`` (float) [float]
         Convert a C/C++ ``float`` to a Python floating point number.
 
-    ``g`` (string/bytes) [char \*, :c:macro:`Py_ssize_t`]
+    ``g`` (string/bytes) [char \*, :c:type:`Py_ssize_t`]
         Convert a C/C++ character array and its length to a Python ``bytes``
         object.  If the array is ``NULL`` then the length is ignored and the
         result is ``Py_None``.
@@ -230,7 +234,7 @@ module, that can be used by handwritten code in specification files.
     ``o`` (long) [unsigned long long]
         Convert a C/C++ ``unsigned long long`` to a Python long.
 
-    ``r`` (wrapped instance) [*type* \*, :c:macro:`Py_ssize_t`, const :c:type:`sipTypeDef` \*]
+    ``r`` (wrapped instance) [*type* \*, :c:type:`Py_ssize_t`, const :c:type:`sipTypeDef` \*]
         Convert an array of C structures, C++ classes or mapped type instances
         to a Python tuple.  Note that copies of the array elements are made.
 
@@ -275,7 +279,7 @@ module, that can be used by handwritten code in specification files.
         Convert a named C/C++ ``enum`` to an instance of the corresponding
         Python named enum type.
 
-    ``G`` (unicode) [wchar_t \*, :c:macro:`Py_ssize_t`]
+    ``G`` (unicode) [wchar_t \*, :c:type:`Py_ssize_t`]
         Convert a C/C++ wide character array and its length to a Python unicode
         object.  If the array is ``NULL`` then the length is ignored and the
         result is ``Py_None``.
@@ -344,7 +348,7 @@ module, that can be used by handwritten code in specification files.
     :param obj:
         the Python object.
     :param td:
-        the C/C++ type's :ref:`generated type structure <ref-type-structures>`.
+        the C/C++ type's :ref:`generated type specification <ref-type-specs>`.
     :param flags:
         any combination of the :c:macro:`SIP_NOT_NONE` and
         :c:macro:`SIP_NO_CONVERTORS` flags.
@@ -401,7 +405,7 @@ module, that can be used by handwritten code in specification files.
     :param eval:
         the enumerated value to convert.
     :param td:
-        the enum's :ref:`generated type structure <ref-type-structures>`.
+        the enum's :ref:`generated type specification <ref-type-specs>`.
     :return:
         the Python object.
 
@@ -443,7 +447,7 @@ module, that can be used by handwritten code in specification files.
     :param cpp:
         the C/C++ instance.
     :param td:
-        the type's :ref:`generated type structure <ref-type-structures>`.
+        the type's :ref:`generated type specification <ref-type-specs>`.
     :param transferObj:
         this controls the ownership of the returned value.
     :return:
@@ -488,7 +492,7 @@ module, that can be used by handwritten code in specification files.
     :param cpp:
         the C/C++ instance.
     :param td:
-        the type's :ref:`generated type structure <ref-type-structures>`.
+        the type's :ref:`generated type specification <ref-type-specs>`.
     :param transferObj:
         this controls the ownership of the returned value.
     :return:
@@ -586,7 +590,7 @@ module, that can be used by handwritten code in specification files.
     :param obj:
         the Python object to convert.
     :param td:
-        the enum's :ref:`generated type structure <ref-type-structures>`.
+        the enum's :ref:`generated type specification <ref-type-specs>`.
     :return:
         the integer value.  An exception is raised if there was an error.
 
@@ -600,7 +604,7 @@ module, that can be used by handwritten code in specification files.
     :param obj:
         the Python object.
     :param td:
-        the type's :ref:`generated type structure <ref-type-structures>`.
+        the type's :ref:`generated type specification <ref-type-specs>`.
     :param transferObj:
         this controls any ownership changes to *obj*.
     :param flags:
@@ -625,7 +629,7 @@ module, that can be used by handwritten code in specification files.
     :param obj:
         the Python object.
     :param td:
-        the type's :ref:`generated type structure <ref-type-structures>`.
+        the type's :ref:`generated type specification <ref-type-specs>`.
     :param transferObj:
         this controls any ownership changes to *obj*.
     :param flags:
@@ -684,7 +688,7 @@ module, that can be used by handwritten code in specification files.
         the address of the start of the C/C++ array.
     :param td:
         an element's type's
-        :ref:`generated type structure <ref-type-structures>`.
+        :ref:`generated type specification <ref-type-specs>`.
     :param format:
         the format, as defined by the :mod:`struct` module, of an array
         element.
@@ -739,7 +743,7 @@ module, that can be used by handwritten code in specification files.
     instead.
 
     :param td:
-        the type's :ref:`generated type structure <ref-type-structures>`.  This
+        the type's :ref:`generated type specification <ref-type-specs>`.  This
         must refer to a class.
     :param enable:
         is non-zero if auto-conversion should be enabled for the type.  This is
@@ -763,24 +767,40 @@ module, that can be used by handwritten code in specification files.
         later on.  ``-1`` is returned if there was an error.
 
 
-.. cpp:enum:: sipEventType
+.. c:enum:: sipErrorState
 
-    This is the enum that defines the different event types.
+    This enum defines the different error states when parsing function
+    signatures.
+
+    .. c:enumerator:: sipErrorNone
+
+        There is no error.
+
+    .. c:enumerator:: sipErrorFail
+
+        There was an error and signature parsing should stop.
+
+    .. c:enumerator:: sipErrorContinue
+
+        There was an error but signature parsing should continue.
 
 
-.. cpp:enumerator:: sipEventWrappedInstance
+.. c:enum:: sipEventType
 
-    This event is triggered whenever a C/C++ instance that is created by C/C++
-    (and not by Python) is wrapped.  The handler is passed a ``void *`` which
-    is the address of the C/C++ instance.
+    This enum defines the different event types.
 
+    .. c:enumerator:: sipEventWrappedInstance
 
-.. cpp:enumerator:: sipEventCollectingWrapper
+        This event is triggered whenever a C/C++ instance that is created by
+        C/C++ (and not by Python) is wrapped.  The handler is passed a
+        ``void *`` which is the address of the C/C++ instance.
 
-    This event is triggered whenever a Python wrapper object is being garbage
-    collected.  The handler is passed a pointer to the
-    :c:type:`sipSimpleWrapper` object that is the Python wrapper object being
-    garbage collected.
+    .. c:enumerator:: sipEventCollectingWrapper
+
+        This event is triggered whenever a Python wrapper object is being
+        garbage collected.  The handler is passed a pointer to the
+        :c:type:`sipSimpleWrapper` object that is the Python wrapper object
+        being garbage collected.
 
 
 .. c:function:: int sipExportSymbol(const char *name, void *sym)
@@ -801,14 +821,15 @@ module, that can be used by handwritten code in specification files.
 
 .. c:function:: const sipTypeDef *sipFindType(const char *type)
 
-    This returns a pointer to the :ref:`generated type structure
-    <ref-type-structures>` corresponding to a C/C++ type.
+    This returns a pointer to the :ref:`generated type specification
+    <ref-type-specs>` corresponding to a C/C++ type.
 
     :param type:
         the C/C++ declaration of the type.
     :return:
-        the generated type structure.  This will not change and may be saved in
-        a static cache.  ``NULL`` is returned if the C/C++ type doesn't exist.
+        the generated type specification.  This will not change and may be
+        saved in a static cache.  ``NULL`` is returned if the C/C++ type
+        doesn't exist.
 
 
 .. c:function:: void *sipForceConvertToType(PyObject *obj, const sipTypeDef *td, PyObject *transferObj, int flags, int *state, int *iserr)
@@ -905,7 +926,7 @@ module, that can be used by handwritten code in specification files.
     :param buffer_info:
         if this is not ``NULL``, and the object implements the buffer protocol,
         then the buffer information is returned in this structure.  There
-        should be a corresponding call to :c:func:`sipReleaseBuffer`. 
+        should be a corresponding call to :c:func:`sipReleaseBufferInfo`. 
     :return:
         > 0 if the object supports the buffer protocol and the buffer
         information was returned (if requested).  0 if the object does not
@@ -990,7 +1011,7 @@ module, that can be used by handwritten code in specification files.
     :param obj:
         the Python object.
     :param td:
-        the :ref:`generated type structure <ref-type-structures>` corresponding
+        the :ref:`generated type specification <ref-type-specs>` corresponding
         to the C++ type of the mixin.
     :return:
         the address of the C++ instance
@@ -1004,7 +1025,7 @@ module, that can be used by handwritten code in specification files.
     :param cppptr:
         the pointer to the C/C++ instance.
     :param td:
-        the :ref:`generated type structure <ref-type-structures>` corresponding
+        the :ref:`generated type specification <ref-type-specs>` corresponding
         to the C/C++ type.
     :return:
         the Python object or ``NULL`` (and no exception is raised) if the
@@ -1333,7 +1354,7 @@ module, that can be used by handwritten code in specification files.
     ``f`` (float) [float \*]
         Convert a Python floating point number to a C/C++ ``float``.
 
-    ``g`` (bytes) [const char \*\*, :c:macro:`Py_ssize_t` \*]
+    ``g`` (bytes) [const char \*\*, :c:type:`Py_ssize_t` \*]
         Convert a Python ``bytes`` object to a C/C++ character array and its
         length.  If the Python object is ``Py_None`` then the array and length
         are ``NULL`` and zero respectively.
@@ -1391,7 +1412,7 @@ module, that can be used by handwritten code in specification files.
     ``F`` (wrapped enum) [:c:type:`sipTypeDef` \*, enum \*]
         Convert a Python named enum type to the corresponding C/C++ ``enum``.
 
-    ``G`` (string) [wchar_t \*\*, :c:macro:`Py_ssize_t` \*]
+    ``G`` (string) [wchar_t \*\*, :c:type:`Py_ssize_t` \*]
         Convert a Python ``str`` object to a C/C++ wide character array and its
         length.  If the Python object is ``Py_None`` then the array and length
         are ``NULL`` and zero respectively.
@@ -1402,12 +1423,11 @@ module, that can be used by handwritten code in specification files.
         combination of the following flags encoded as an ASCII character by
         adding ``0`` to the combined value:
 
-            0x01 disallows the conversion of ``Py_None`` to ``NULL``
+        0x01 disallows the conversion of ``Py_None`` to ``NULL``
 
-            0x02 implements the :fanno:`Factory` and :fanno:`TransferBack`
-                 annotations
+        0x02 implements the :fanno:`Factory` and :fanno:`TransferBack` annotations
 
-            0x04 returns a copy of the C/C++ instance.
+        0x04 returns a copy of the C/C++ instance.
 
     ``L`` (integer) [signed char \*]
         Convert a Python integer to a C/C++ ``signed char``.
@@ -1459,12 +1479,13 @@ module, that can be used by handwritten code in specification files.
 
 .. c:function:: PyObject *sipPyTypeDict(const PyTypeObject *py_type)
 
+    .. version-deprecated:: 13.6
+
     This provides access to a Python type object's ``tp_dict`` field and is
     typically used when the limited Python API is enabled.
 
     .. note::
-        This is deprecated in ABI v13.6 and must not be used with Python v3.12
-        and later.
+        This must not be used with Python v3.12 and later.
 
     :param py_type:
         the type object.
@@ -1473,6 +1494,8 @@ module, that can be used by handwritten code in specification files.
 
 
 .. c:function:: PyObject *sipPyTypeDictRef(PyTypeObject *py_type)
+
+    .. version-added:: 13.6
 
     This provides access to a Python type object's type dictionary and is
     typically used when the limited Python API is enabled.
@@ -1510,7 +1533,7 @@ module, that can be used by handwritten code in specification files.
     must then populate the type's dictionary with any lazy attributes.
 
     :param td:
-        the optional :ref:`generated type structure <ref-type-structures>` that
+        the optional :ref:`generated type specification <ref-type-specs>` that
         determines which types the getter will be called for.
     :param getter:
         the getter function.
@@ -1532,8 +1555,6 @@ module, that can be used by handwritten code in specification files.
 
         0 is returned if there was no error, otherwise -1 is returned.
 
-    See the section :ref:`ref-lazy-type-attributes` for more details.
-
 
 .. c:function:: int sipRegisterEventHandler(sipEventType type, const sipTypeDef *td, void *handler)
 
@@ -1543,7 +1564,7 @@ module, that can be used by handwritten code in specification files.
     :param type:
         the event type for which the handler is registered.
     :param td:
-        the generated type structure - the handler will only be invoked for
+        the generated type specification - the handler will only be invoked for
         Python object corresponding to this type or a sub-type.
     :param handler:
         the handler that is called when the event is triggered.
@@ -1571,7 +1592,7 @@ module, that can be used by handwritten code in specification files.
     replace a proxy by the object that is being proxied for.
 
     :param td:
-        the optional :ref:`generated type structure <ref-type-structures>` that
+        the optional :ref:`generated type specification <ref-type-specs>` that
         determines which type the resolver will be called for.
     :param resolver:
         the resolver function.
@@ -1621,7 +1642,7 @@ module, that can be used by handwritten code in specification files.
     :param cpp:
         the C/C++ instance.
     :param td:
-        the type's :ref:`generated type structure <ref-type-structures>`.
+        the type's :ref:`generated type specification <ref-type-specs>`.
     :param state:
         describes the state of the C/C++ instance.
     
@@ -1637,7 +1658,7 @@ module, that can be used by handwritten code in specification files.
     :param cpp:
         the C/C++ instance.
     :param td:
-        the type's :ref:`generated type structure <ref-type-structures>`.
+        the type's :ref:`generated type specification <ref-type-specs>`.
     :param state:
         describes the state of the C/C++ instance.
     :param user_state:
@@ -1653,20 +1674,6 @@ module, that can be used by handwritten code in specification files.
         the name of the typedef.
     :return:
         the value of the typedef or ``NULL`` if there was no such typedef.
-
-
-.. c:function:: void sipSetDestroyOnExit(int destroy)
-
-    When the Python interpreter exits it garbage collects those objects that it
-    can.  This means that any corresponding C++ instances and C structures
-    owned by Python are destroyed.  Unfortunately this happens in an
-    unpredictable order and so can cause memory faults within the wrapped
-    library.  Calling this function with a value of zero disables the automatic
-    destruction of C++ instances and C structures.
-
-    :param destroy:
-        non-zero if all C++ instances and C structures owned by Python should
-        be destroyed when the interpreter exits.  This is the default.
 
 
 .. c:function:: void sipSetTypeUserData(sipWrapperType *type, void *data)
@@ -1796,83 +1803,98 @@ module, that can be used by handwritten code in specification files.
 .. c:function:: PyTypeObject *sipTypeAsPyTypeObject(const sipTypeDef *td)
 
     This returns a pointer to the Python type object that SIP creates for a
-    :ref:`generated type structure <ref-type-structures>`.
+    :ref:`generated type specification <ref-type-specs>`.
 
     :param td:
-        the type structure.
+        the type specification.
     :return:
-        the Python type object.  If the type structure refers to a mapped type
-        then ``NULL`` will be returned.
+        the Python type object.  If the type specification refers to a mapped
+        type then ``NULL`` will be returned.
 
-    If the type structure refers to a C structure or C++ class then the
+    If the type specification refers to a C structure or C++ class then the
     Python type object may be safely cast to a :c:type:`sipWrapperType`.
+
+
+.. c:type:: sipTypeDef
+
+    This opaque C structure is the ABI's representation of a
+    :ref:`generated type specification <ref-type-specs>`.
 
 
 .. c:function:: const sipTypeDef *sipTypeFromPyTypeObject(PyTypeObject *py_type)
 
-    This returns the :ref:`generated type structure <ref-type-structures>` for
+    This returns the :ref:`generated type specification <ref-type-specs>` for
     a Python type object.
 
     :param py_type:
         the Python type object.
     :return:
-        the type structure or ``NULL`` if the Python type object doesn't
-        correspond to a type structure.
+        the type specification or ``NULL`` if the Python type object doesn't
+        correspond to a type specification.
+
+
+.. c:type:: sipTypeID
+
+    This is provided as an aid to porting handwritten code to API v14 and is
+    defined as a ``const`` pointer to :c:type:`sipTypeDef`.
 
 
 .. c:function:: int sipTypeIsClass(sipTypeDef *td)
 
-    This checks if a :ref:`generated type structure <ref-type-structures>`
+    This checks if a :ref:`generated type specification <ref-type-specs>`
     refers to a C structure or C++ class.
 
     :param td:
-        the type structure.
+        the type specification.
     :return:
-        a non-zero value if the type structure refers to a structure or class.
+        a non-zero value if the type specification refers to a structure or
+        class.
 
 
 .. c:function:: int sipTypeIsEnum(sipTypeDef *td)
 
-    This checks if a :ref:`generated type structure <ref-type-structures>`
+    This checks if a :ref:`generated type specification <ref-type-specs>`
     refers to a C-style named enum.
 
     :param td:
-        the type structure.
+        the type specification.
     :return:
-        a non-zero value if the type structure refers to a C-style named enum.
+        a non-zero value if the type specification refers to a C-style named
+        enum.
 
 
 .. c:function:: int sipTypeIsMapped(sipTypeDef *td)
 
-    This checks if a :ref:`generated type structure <ref-type-structures>`
+    This checks if a :ref:`generated type specification <ref-type-specs>`
     refers to a mapped type.
 
     :param td:
-        the type structure.
+        the type specification.
     :return:
-        a non-zero value if the type structure refers to a mapped type.
+        a non-zero value if the type specification refers to a mapped type.
 
 
 .. c:function:: int sipTypeIsNamespace(sipTypeDef *td)
 
-    This checks if a :ref:`generated type structure <ref-type-structures>`
+    This checks if a :ref:`generated type specification <ref-type-specs>`
     refers to a C++ namespace.
 
     :param td:
-        the type structure.
+        the type specification.
     :return:
-        a non-zero value if the type structure refers to a namespace.
+        a non-zero value if the type specification refers to a namespace.
 
 
 .. c:function:: int sipTypeIsScopedEnum(sipTypeDef *td)
 
-    This checks if a :ref:`generated type structure <ref-type-structures>`
+    This checks if a :ref:`generated type specification <ref-type-specs>`
     refers to a C++11 scoped enum.
 
     :param td:
-        the type structure.
+        the type specification.
     :return:
-        a non-zero value if the type structure refers to a C++11 scoped enum.
+        a non-zero value if the type specification refers to a C++11 scoped
+        enum.
 
 
 .. c:function:: const char *sipTypeName(const sipTypeDef *td)
@@ -1880,20 +1902,21 @@ module, that can be used by handwritten code in specification files.
     This returns the C/C++ name of a wrapped type.
 
     :param td:
-        the type's :ref:`generated type structure <ref-type-structures>`.
+        the type's :ref:`generated type specification <ref-type-specs>`.
     :return:
         the name of the C/C++ type.
 
 
 .. c:function:: const sipTypeDef *sipTypeScope(const sipTypeDef *td)
 
-    This returns the :ref:`generated type structure <ref-type-structures>` of
-    the enclosing scope of another generated type structure.
+    This returns the :ref:`generated type specification <ref-type-specs>` of
+    the enclosing scope of another generated type specification.
 
     :param td:
-        the type structure.
+        the type specification.
     :return:
-        the type structure of the scope or ``NULL`` if the type has no scope.
+        the type specification of the scope or ``NULL`` if the type has no
+        scope.
 
 
 .. c:function:: void *sipUnicodeData(PyObject *obj, int *char_size, Py_ssize_t *len)
@@ -2006,3 +2029,100 @@ module, that can be used by handwritten code in specification files.
 
     This is the type of a :c:type:`sipWrapperType` structure and is the C
     implementation of :class:`sip.wrappertype`.
+
+
+Version History
+---------------
+
+v13.12.0
+........
+
+- Added support for Python v3.15.
+- The format use to pickle wrapped types has changed so that it is more robust
+  and faster.  The legacy format can still be read and will be converted to the
+  new format when written.  Older versions of the sip module can already read
+  the new format.
+- Added definitions of ``sipTypeID`` and ``sipType_Invalid`` to aid porting to
+  ABI v14.
+- Fixed a bug with operators that take an enum as their first argument.
+
+
+v13.11.0
+........
+
+- Added support for Python v3.14.
+- Removed support for Python v3.9.
+
+
+v13.10
+......
+
+- Added the ``SIP_ABI_VERSION`` module attribute.
+
+
+v13.9
+.....
+
+- Added support for the ``/Deprecated/`` class and function annotations
+  accepting an optional string.
+- The buffer protocol support for byte objects was fixed. (Resolves `#36
+  <https://github.com/Python-SIP/sip/issues/36>`__)
+- Removed support for Python v3.8.
+
+
+v13.8
+.....
+
+- Conversions to and from ``char`` and Python integer objects on architectures
+  where ``char`` was unsigned (eg. Linux on ARM) have been fixed.  (Resolves
+  `#29 <https://github.com/Python-SIP/sip/issues/29>`__)
+
+
+v13.7
+.....
+
+- Relicensed under the BSD-2-Clause license.
+- Potential overflow problems on Windows 64 were fixed.  (Resolves `#14
+  <https://github.com/Python-SIP/sip/issues/14>`__)
+- C99 support is required.  ``_Bool``, ``stdbool.h`` and ``va_copy`` are
+  assumed to be available on all supported platforms.  (Resolves `#13
+  <https://github.com/Python-SIP/sip/issues/13>`__)
+- Added support for Python v3.13.
+- Removed support for Python v3.7.
+
+
+v13.6
+.....
+
+- Added support for Python v3.12.
+- Added c:func:`sipPyTypeDictRef` to the public API.
+- Deprecated :c:func:`sipPyTypeDict` in the public API.
+
+
+v13.5
+.....
+
+- A bug related to constructors with the :aanno:`Transfer` argument annotation
+  was fixed.
+- A garbage collection bug was fixed.
+
+
+v13.4
+.....
+
+- Added support for ``sip.array``.
+- Enums with unexpected values are supported by automatically creating
+  corresponding pseudo-members.
+
+
+v13.3
+.....
+
+- Added support for Python v3.11.
+- Removed support for Python v3.6.
+
+
+v13.2
+.....
+
+- Added support for enums with unsigned values.

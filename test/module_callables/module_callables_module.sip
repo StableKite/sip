@@ -1,7 +1,8 @@
 // The SIP implementation of the module_callables_module test module.
 
 
-%Module(name=module_callables_module)
+%Module(name=module_callables_module, gil_use="NotUsed",
+        multi_interpreter_support="PerInterpreterGILSupported")
 
 
 %ModuleHeaderCode
@@ -34,6 +35,16 @@ int module_sum_diff(int value_1, int value_2, int *diff_p)
     return value_1 + value_2;
 }
 
+const char *get_capsule_data(const void *data)
+{
+    return (const char *)data;
+}
+
+PyObject *create_capsule(const char *data, const char *name)
+{
+    return PyCapsule_New((void *)data, name, NULL);
+}
+
 PyObject *module_var_args(int ignore, PyObject *var_args)
 {
     (void)ignore;
@@ -57,6 +68,11 @@ int incr_all_kwd_args(int value, int incr=1)
 void module_void_ret_no_args();
 int module_doubler(int value);
 int module_sum_diff(int value_1, int value_2, int *diff_p);
+
+typedef void *CapsuleType /Capsule, NoTypeName/;
+const char *get_capsule_data(CapsuleType data);
+PyObject *create_capsule(const char *data, const char *name) /Factory/;
+
 SIP_PYTUPLE module_var_args(int ignore, ...);
 int incr_optional_kwd_args(int value, int incr=1) /KeywordArgs="Optional"/;
 int incr_all_kwd_args(int value, int incr=1) /KeywordArgs="All"/;

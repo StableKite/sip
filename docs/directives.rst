@@ -77,6 +77,10 @@ For example::
         %End
     };
 
+.. note::
+    This directive is not supported by ABI v14.  :directive:`%GetCode` should
+    be used instead.
+
 .. seealso:: :directive:`%GetCode`, :directive:`%SetCode`
 
 
@@ -662,9 +666,10 @@ The docstring of a function or method is made up of the concatenated docstrings
 specified for each of the overloads.
 
 .. note::
-    Specifying an explicit docstring will mean that SIP will generate less
-    informative exceptions (i.e. without a full signature) when it fails to
-    match a set of arguments to any function or method overload.
+    For ABIs prior to v14 specifying an explicit docstring will mean that SIP
+    will generate less informative exceptions (i.e. without a full signature)
+    when it fails to match a set of arguments to any function or method
+    overload.
 
 ``format`` may either be ``"raw"`` or ``"deindented"``.  If it is not specified
 then the value specified by any :directive:`%DefaultDocstringFormat` directive
@@ -1063,6 +1068,8 @@ This sub-directive is used in the declaration of a C++ class variable or C
 structure member to specify handwritten code to convert it to a Python object.
 It is usually used to handle types that SIP cannot deal with automatically.
 
+When targeting ABI v14 it can also be used with global variables.
+
 The following variables are made available to the handwritten code:
 
 *type* \*sipCpp
@@ -1272,9 +1279,12 @@ For example::
 
 This directive is used to specify handwritten code that is embedded in-line
 in the generated module initialisation code after the SIP module has been
-imported but before the module itself has been initialised.
+imported but before the module itself has been initialised.  In the case of ABI
+v14 (that implements multi-phase initialisation) this is at the start of the
+module's exec function.
 
-It is typically used to call :c:func:`sipRegisterPyType()`.
+It is typically used to call :c:func:`sipSetModuleUserState` and
+:c:func:`sipRegisterPyType`.
 
 For example::
 
@@ -1535,10 +1545,11 @@ rather than replaces the normally generated code, so it must not include code
 to return the C structure or C++ class instance to the heap.  The code is only
 called if ownership of the structure or class is with Python.
 
-The specified code must also handle the Python Global Interpreter Lock (GIL).
-If compatibility with SIP v3.x is required then the GIL must be released
-immediately before the C++ call and reacquired immediately afterwards as shown
-in this example fragment::
+The specified code must also handle the Python GIL (or attached thread state in
+the context of free-threading).  If compatibility with SIP v3.x is required
+then the GIL (or attached thread state) must be released immediately before the
+C++ call and reacquired immediately afterwards as shown in this example
+fragment::
 
     Py_BEGIN_ALLOW_THREADS
     sipCpp->foo();
@@ -1722,7 +1733,7 @@ then the pattern should instead be::
 .. parsed-literal::
     %MinimumABIVersion(version = "major[.minor]")
 
-.. versionadded:: 6.10
+.. version-added:: 6.10
 
 This directive is used to specify the exact major version number and the
 minimum minor version number of the ABI required to build the project.  It
@@ -1939,6 +1950,13 @@ being pickled.
 Both named and unnamed enums can be pickled automatically without providing any
 handwritten code.
 
+.. note::
+    When using ABI v12.18 (and earlier) or ABI v13.11 (and earlier) a different
+    (legacy) pickle format was used.  The legacy format could be unreliable in
+    certain cases.  The legacy format can still be read but the new format will
+    be used if they are rewritten.  ABI v14 cannot read the legacy format.  All
+    ABI versions can read the new format.
+
 
 .. directive:: %Platforms
 
@@ -2014,7 +2032,7 @@ For example::
     %End
 
 This directive is used to specify handwritten code that is embedded in-line
-at the very start of the generated module initialisation code.
+at the very start of the generated module initialisation function.
 
 For example::
 
@@ -2088,17 +2106,8 @@ before the :directive:`%MethodCode` directive if it is also given.
 This directive is used as part of the definition of an exception using the
 :directive:`%Exception` directive to specify handwritten code that raises a
 Python exception when a C++ exception has been caught.  The code is embedded
-in-line as the body of a C++ ``catch ()`` clause.
-
-The specified code must handle the Python Global Interpreter Lock (GIL) if
-necessary.  The GIL must be acquired before any calls to the Python API and
-released after the last call as shown in this example fragment::
-
-    SIP_BLOCK_THREADS
-    PyErr_SetNone(PyErr_Exception);
-    SIP_UNBLOCK_THREADS
-
-Finally, the specified code must not include any ``return`` statements.
+in-line as the body of a C++ ``catch ()`` clause and must not include any
+``return`` statements.
 
 The following variable is made available to the handwritten code:
 
@@ -2152,6 +2161,8 @@ structure member to specify handwritten code to convert it from a Python
 object.  It is usually used to handle types that SIP cannot deal with
 automatically.
 
+When targeting ABI v14 it can also be used with global variables.
+
 The following variables are made available to the handwritten code:
 
 *type* \*sipCpp
@@ -2184,8 +2195,9 @@ PyObject \*sipPyType
 .. parsed-literal::
     %SipModuleConfiguration {*option* *option* ...}
 
-This directive is used (by ABI v14 and later) to specify how the :mod:`sip`
-module should be configured.  The possible options are as follows:
+This directive is used to specify how the :mod:`sip` module should be
+configured.  It is ignored by ABI versions prior to v14.  The possible options
+are as follows:
 
 BrokenTypeNames
     The module part of the fully qualified name of :mod:`sip` module types
@@ -2312,7 +2324,7 @@ option is used.
         *code*
     %End
 
-.. versionadded:: 6.13
+.. version-added:: 6.13
 
 In many cases SIP generates a derived class for each class being wrapped (see
 :ref:`ref-derived-classes`).  This directive is used to specify handwritten

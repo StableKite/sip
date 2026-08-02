@@ -6,6 +6,9 @@
 from datetime import date
 
 
+needs_sphinx = '9.1'
+
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
@@ -13,7 +16,7 @@ project = 'sip'
 copyright = '{0} Phil Thompson <phil@riverbankcomputing.com>'.format(
         date.today().year)
 author = 'Phil Thompson'
-version = 'v6.15.3'
+version = 'v6.16.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -22,7 +25,7 @@ version = 'v6.15.3'
 extensions = ['myst_parser', 'sphinx.ext.intersphinx']
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
-#templates_path = ['_templates']
+suppress_warnings = ['duplicate_declaration.c']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 
@@ -30,7 +33,6 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'sphinx_rtd_theme'
-#html_static_path = ['_static']
 
 
 # MyST configuration

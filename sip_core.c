@@ -664,7 +664,6 @@ static PyObject **unused_backdoor = NULL;   /* For passing dict of unused argume
 
 static PyObject *init_name = NULL;      /* '__init__'. */
 static PyObject *empty_tuple;           /* The empty tuple. */
-static PyObject *type_unpickler;        /* The type unpickler function. */
 static sipSymbol *sipSymbolList = NULL; /* The list of published symbols. */
 static sipAttrGetter *sipAttrGetters = NULL;  /* The list of attribute getters. */
 static sipProxyResolver *proxyResolvers = NULL; /* The list of proxy resolvers. */
@@ -844,7 +843,6 @@ static int user_state_is_valid(const sipTypeDef *td, void **user_statep);
 const sipAPIDef *sip_init_library(PyObject *mod_dict)
 {
     static PyMethodDef methods[] = {
-        /* The type unpickler must be first. */
         {"_unpickle_type", unpickle_type, METH_VARARGS, NULL},
         {"assign", assign, METH_VARARGS, NULL},
         {"cast", cast, METH_VARARGS, NULL},
@@ -899,12 +897,6 @@ const sipAPIDef *sip_init_library(PyObject *mod_dict)
 
         if (sip_dict_set_and_discard(mod_dict, md->ml_name, meth) < 0)
             return NULL;
-
-        if (md == &methods[0])
-        {
-            Py_INCREF(meth);
-            type_unpickler = meth;
-        }
     }
 
     /* Initialise the types. */
@@ -3970,7 +3962,7 @@ static int parsePass1(PyObject **parseErrp, PyObject **selfp, int *selfargp,
                 else
                     va_arg(va, int *);
 
-                if (sipTypeNeedsUserState(td))
+                if (td != NULL && sipTypeNeedsUserState(td))
                     va_arg(va, void **);
 
                 if (arg != NULL && !sip_api_can_convert_to_type(arg, td, iflgs))
@@ -5266,6 +5258,7 @@ static PyObject *convertToSequence(void *array, Py_ssize_t nr_elem,
         {
             release(el, td, 0, NULL);
             Py_DECREF(seq);
+            return NULL;
         }
 
         PyTuple_SET_ITEM(seq, i, el_obj);
@@ -5849,7 +5842,7 @@ static sipExportedModuleDef *getModule(PyObject *mname_obj)
 
 
 /*
- * The type unpickler.
+ * The legacy type unpickler.
  */
 static PyObject *unpickle_type(PyObject *obj, PyObject *args)
 {
@@ -5931,8 +5924,7 @@ static PyObject *pickle_type(PyObject *obj, PyObject *args)
                         return NULL;
                     }
 
-                    return Py_BuildValue("O(OsN)", type_unpickler,
-                            em->em_nameobj, pyname, init_args);
+                    return Py_BuildValue("ON", Py_TYPE(obj), init_args);
                 }
         }
     }

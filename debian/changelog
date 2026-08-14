@@ -2,7 +2,7 @@ sip6 (6.16.0-2) UNRELEASED; urgency=medium
 
   * Backport two upstream patches:
     - To fix generating abi3 filenames (closes: #1143693).
-    - To fix != comparison for GCC 16 (closes: #1133610, #1133611).
+    - To fix comparison operators for GCC 16 (closes: #1133610, #1133611).
 
  -- Dmitry Shachnev <mitya57@debian.org>  Thu, 13 Aug 2026 16:47:23 +0300
 

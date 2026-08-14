@@ -2,19 +2,20 @@ From: Phil Thompson <phil@riverbankcomputing.com>
 Date: Thu, 13 Aug 2026 14:36:11 +0100
 Subject: Support for GCC v16
 
-Changes to the code generated for the `!=` operator to satisfy GCC v16's
-implementation of C++20.
+Changes to the code generated for the comparison operators to satisfy GCC
+v16's implementation of C++20.
 
 (cherry picked from commit efa276109f34441b7f30f7d5d025bb43ce8eb879)
+(cherry picked from commit 0efd6cb8681de100314c10602cc126c945d47f49)
 ---
- sipbuild/generator/outputs/code/snippets.py | 11 ++++++++---
- 1 file changed, 8 insertions(+), 3 deletions(-)
+ sipbuild/generator/outputs/code/snippets.py | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
 
 diff --git a/sipbuild/generator/outputs/code/snippets.py b/sipbuild/generator/outputs/code/snippets.py
-index a0ec856..f89b373 100644
+index a0ec856..2a19a85 100644
 --- a/sipbuild/generator/outputs/code/snippets.py
 +++ b/sipbuild/generator/outputs/code/snippets.py
-@@ -4366,10 +4366,15 @@ def _get_binary_slot_call(backend, scope, overload, operator, dereferenced):
+@@ -4366,10 +4366,14 @@ def _get_binary_slot_call(backend, scope, overload, operator, dereferenced):
          if overload.common.namespace_iface_file is not None:
              slot_call += overload.common.namespace_iface_file.fq_cpp_name.as_cpp + '::'
  
@@ -22,11 +23,10 @@ index a0ec856..f89b373 100644
 -            slot_call += f'operator{operator}((*sipCpp), '
 +        sip_cpp = '(*sipCpp)' if dereferenced else 'sipCpp'
 +
-+        # C++20 handles '!=' differently so we can't invoke the operator
-+        # explicitly.  It's possible that there are more similar cases but this
-+        # will do for now.
-+        if operator == '!=':
-+            slot_call += f'({sip_cpp} != '
++        # C++20 handles comparison operators differently so we can't invoke the
++        # operator explicitly.
++        if operator in _OPERATOR_COMPLEMENTS:
++            slot_call += f'({sip_cpp} {operator} '
          else:
 -            slot_call += f'operator{operator}(sipCpp, '
 +            slot_call += f'operator{operator}({sip_cpp}, '

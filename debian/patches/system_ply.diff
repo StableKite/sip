@@ -11,7 +11,7 @@ Forwarded: not-needed
  2 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/sipbuild/generator/parser/parser_manager.py b/sipbuild/generator/parser/parser_manager.py
-index 28d7091..2a168be 100644
+index 8f2501f..87b96ba 100644
 --- a/sipbuild/generator/parser/parser_manager.py
 +++ b/sipbuild/generator/parser/parser_manager.py
 @@ -30,7 +30,7 @@ from ..utils import (argument_as_str, cached_name, find_iface_file,
@@ -23,7 +23,7 @@ index 28d7091..2a168be 100644
  
  
  class ParserManager:
-@@ -48,7 +48,7 @@ class ParserManager:
+@@ -46,7 +46,7 @@ class ParserManager:
          self._lexer.pm = self
  
          # Create the parser.

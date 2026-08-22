@@ -1,10 +1,10 @@
-sip6 (6.16.1-1) UNRELEASED; urgency=medium
+sip6 (6.16.1-1) unstable; urgency=medium
 
   * New upstream release.
   * Drop patches from the previous upload, included in the new release.
   * Refresh other patches.
 
- -- Dmitry Shachnev <mitya57@debian.org>  Sun, 16 Aug 2026 12:56:54 +0300
+ -- Dmitry Shachnev <mitya57@debian.org>  Sat, 22 Aug 2026 10:40:21 +0300
 
 sip6 (6.16.0-2) unstable; urgency=medium
 

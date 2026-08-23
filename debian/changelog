@@ -1,4 +1,4 @@
-sip6 (6.16.1-2) UNRELEASED; urgency=medium
+sip6 (6.16.1-2) unstable; urgency=medium
 
   * Backport upstream patch to fix build of bindings that do not specify
     %MinimumABIVersion (see #1145106).

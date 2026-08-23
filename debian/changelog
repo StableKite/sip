@@ -1,3 +1,10 @@
+sip6 (6.16.1-2) UNRELEASED; urgency=medium
+
+  * Backport upstream patch to fix build of bindings that do not specify
+    %MinimumABIVersion (see #1145106).
+
+ -- Dmitry Shachnev <mitya57@debian.org>  Sun, 23 Aug 2026 17:23:36 +0300
+
 sip6 (6.16.1-1) unstable; urgency=medium
 
   * New upstream release.

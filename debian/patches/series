@@ -2,3 +2,4 @@ intersphinx_local.diff
 system_ply.diff
 minimum_abi_version.diff
 ft-legacy-limited-api.diff
+tests-build-from-source.diff

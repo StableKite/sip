@@ -1,0 +1,75 @@
+Description: Use the tested SIP package in nested build subprocesses
+ The fixture changes directories before invoking Python. Without an explicit
+ source path, those invocations can silently select an older system-installed
+ SIP instead of the package under test. Preserve inherited Python paths while
+ selecting the same package for code generation and standalone runtime builds.
+Author: StableKite
+Forwarded: no
+Last-Update: 2026-11-17
+
+--- a/test/conftest.py
++++ b/test/conftest.py
+@@ -15,0 +16,2 @@
++import sipbuild
++
+@@ -203,0 +206,13 @@
++def _run_python(args):
++    """ Keep build subprocesses on the same SIP package as the tests. """
++
++    env = os.environ.copy()
++    paths = [os.path.dirname(os.path.dirname(sipbuild.__file__))]
++
++    if env.get('PYTHONPATH'):
++        paths.append(env['PYTHONPATH'])
++
++    env['PYTHONPATH'] = os.pathsep.join(paths)
++    subprocess.run(args, env=env).check_returncode()
++
++
+@@ -218 +233 @@
+-    subprocess.run(args).check_returncode()
++    _run_python(args)
+@@ -337 +352 @@
+-    subprocess.run(args).check_returncode()
++    _run_python(args)
+--- /dev/null
++++ b/test/test_build_source.py
+@@ -0,0 +1,38 @@
++# SPDX-License-Identifier: BSD-2-Clause
++
++import json
++import os
++from pathlib import Path
++import sys
++
++import pytest
++import sipbuild
++
++from conftest import _run_python
++
++
++@pytest.mark.parametrize('inherited_path', [False, True])
++def test_build_subprocess_uses_tested_sip(tmp_path, monkeypatch, inherited_path):
++    """ Changing the build directory must not select a system-installed SIP. """
++
++    output = tmp_path / 'provenance.json'
++    inherited = str(tmp_path / 'inherited')
++    monkeypatch.chdir(tmp_path)
++    if inherited_path:
++        monkeypatch.setenv('PYTHONPATH', inherited)
++    else:
++        monkeypatch.delenv('PYTHONPATH', raising=False)
++
++    probe = (
++        'import json, pathlib, sipbuild, sys; '
++        'pathlib.Path(sys.argv[1]).write_text(json.dumps('
++        '{"sip": sipbuild.__file__, "paths": sys.path}))'
++    )
++    _run_python([sys.executable, '-c', probe, str(output)])
++    actual = json.loads(output.read_text())
++    assert Path(actual['sip']).resolve() == Path(sipbuild.__file__).resolve()
++    if inherited_path:
++        assert inherited in actual['paths']
++        assert os.environ['PYTHONPATH'] == inherited
++    else:
++        assert 'PYTHONPATH' not in os.environ

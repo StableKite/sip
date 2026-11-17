@@ -10,3 +10,8 @@ preserved. No package names or dependency-specific replacements are involved.
 
 The regression is part of the existing pytest suite. SBI discovers this rolling
 branch using its exact Debian source/version metadata, without a commit pin.
+
+Nested test builds explicitly use the same SIP package as pytest, preserving
+inherited Python paths. This prevents a previously installed SIP from masking
+or replacing the implementation under test after the fixture changes directory.
+All upstream ABI-13 tests remain enabled.

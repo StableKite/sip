@@ -1,6 +1,8 @@
 #!/usr/bin/make -f
 
 export PYBUILD_NAME=sipbuild
+include /usr/share/dpkg/pkg-info.mk
+export SETUPTOOLS_SCM_PRETEND_VERSION = $(DEB_VERSION_UPSTREAM)
 export PYBUILD_AFTER_BUILD=cd {build_dir} && {interpreter} -c \
 	'from ply import yacc; from sipbuild.generator.parser import rules; yacc.yacc(module=rules)' && \
 	test -f sipbuild/generator/parser/parsetab.py

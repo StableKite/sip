@@ -10,12 +10,12 @@ Last-Update: 2026-11-17
 +++ b/sipbuild/buildable.py
 @@ -4,6 +4,7 @@
 -
-+
 -
++
 +
  import os
-+import sysconfig
 -
++import sysconfig
 +
  from .exceptions import UserException
  from .installable import Installable
@@ -23,13 +23,13 @@ Last-Update: 2026-11-17
          self.target = target
          self.uses_limited_api = uses_limited_api
          self.gil_disabled = gil_disabled
+-
 +
 +        # Stable ABI for free-threaded Python starts with 3.15.  A legacy
 +        # request must instead use the active interpreter's specific ABI.
 +        if (self.uses_limited_api and sysconfig.get_config_var('Py_GIL_DISABLED')
 +                and project.limited_abi_version < (3, 15, 0)):
 +            self.uses_limited_api = False
--
 +
          self.define_macros = []
          self.sources = []
@@ -52,8 +52,8 @@ Last-Update: 2026-11-17
      backend = project.backend
      module = spec.module
 -
-+
 -    _declare_limited_api(sf, project.py_debug)
++
 +    _declare_limited_api(sf, project.py_debug, module=module)
      _include_sip_h(sf, module)
 -
@@ -88,7 +88,7 @@ Last-Update: 2026-11-17
 +                with tempfile.TemporaryDirectory() as directory:
 +                    project = SimpleNamespace(build_dir=directory, sip_module='test.sip',
 +                        limited_abi_version=minimum, py_platform='linux')
-+                    with patch('sipbuild.buildable.sysconfig.get_config_var', return_value=free_threaded):
++                    with patch('sysconfig.get_config_var', return_value=free_threaded):
 +                        module = BuildableModule(project, 'module', 'test.module',
 +                            uses_limited_api=True, gil_disabled=gil_disabled)
 +                    self.assertEqual(module.uses_limited_api, limited)

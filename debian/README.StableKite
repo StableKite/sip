@@ -1,0 +1,12 @@
+Compatibility source branch for Ubuntu sip6 6.16.1-2.
+Canonical packaging: https://salsa.debian.org/python-team/packages/sip6.git
+Upstream: https://github.com/Python-SIP/sip
+
+The additional quilt patch makes legacy stable-ABI requests fall back to the
+active interpreter ABI on a free-threaded Python. Generated headers, composite
+modules and compiler definitions agree. Requests for the newer stable ABI from
+Python 3.15 onward retain their existing behavior. GIL safety declarations are
+preserved. No package names or dependency-specific replacements are involved.
+
+The regression is part of the existing pytest suite. SBI discovers this rolling
+branch using its exact Debian source/version metadata, without a commit pin.

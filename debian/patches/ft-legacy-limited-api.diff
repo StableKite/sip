@@ -1,0 +1,108 @@
+Description: Fall back to the interpreter ABI for legacy stable-ABI requests on FT
+ Stable ABI for free-threaded Python starts at 3.15. Legacy requests must
+ produce interpreter-specific modules, including generated and composite
+ bindings. Preserve newer abi3t requests and all GIL safety declarations.
+Author: StableKite
+Forwarded: no
+Last-Update: 2026-11-17
+
+--- a/sipbuild/buildable.py
++++ b/sipbuild/buildable.py
+@@ -4,6 +4,7 @@
+-
++
+-
++
+ import os
++import sysconfig
+-
++
+ from .exceptions import UserException
+ from .installable import Installable
+@@ -47,6 +48,12 @@
+         self.target = target
+         self.uses_limited_api = uses_limited_api
+         self.gil_disabled = gil_disabled
++
++        # Stable ABI for free-threaded Python starts with 3.15.  A legacy
++        # request must instead use the active interpreter's specific ABI.
++        if (self.uses_limited_api and sysconfig.get_config_var('Py_GIL_DISABLED')
++                and project.limited_abi_version < (3, 15, 0)):
++            self.uses_limited_api = False
+-
++
+         self.define_macros = []
+         self.sources = []
+--- a/sipbuild/bindings.py
++++ b/sipbuild/bindings.py
+@@ -155,6 +155,9 @@
+         buildable = BuildableBindings(self, module.fq_py_name.name,
+                 uses_limited_api=uses_limited_api, gil_disabled=gil_disabled)
+-
++
++        # Keep generated declarations consistent with any ABI fallback.
++        module.use_limited_api = buildable.uses_limited_api
++
+         buildable.builder_settings.extend(self.builder_settings)
+         buildable.debug = self.debug
+         buildable.exceptions = self.exceptions
+--- a/sipbuild/generator/outputs/code/snippets.py
++++ b/sipbuild/generator/outputs/code/snippets.py
+@@ -38,7 +38,7 @@
+     backend = project.backend
+     module = spec.module
+-
++
+-    _declare_limited_api(sf, project.py_debug)
++    _declare_limited_api(sf, project.py_debug, module=module)
+     _include_sip_h(sf, module)
+-
++
+     sf.write(
+--- /dev/null
++++ b/test/test_buildable_abi.py
+@@ -0,0 +1,44 @@
++# SPDX-License-Identifier: BSD-2-Clause
++import tempfile
++from types import SimpleNamespace
++import unittest
++from unittest.mock import patch
++from importlib.machinery import EXTENSION_SUFFIXES
++
++from sipbuild.buildable import BuildableModule
++
++
++class BuildableABI(unittest.TestCase):
++    def test_limited_api_target(self):
++        cases = [
++            (None, (3, 13, 0), False, True),
++            (0, (3, 13, 0), False, True),
++            (1, (3, 13, 0), False, False),
++            (1, (3, 13, 0), True, False),
++            (1, (3, 15, 0), False, True),
++            (1, (3, 15, 0), True, True),
++            (0, (3, 15, 0), True, True),
++        ]
++        for free_threaded, minimum, gil_disabled, limited in cases:
++            with self.subTest(target=free_threaded, minimum=minimum, gil=gil_disabled):
++                with tempfile.TemporaryDirectory() as directory:
++                    project = SimpleNamespace(build_dir=directory, sip_module='test.sip',
++                        limited_abi_version=minimum, py_platform='linux')
++                    with patch('sipbuild.buildable.sysconfig.get_config_var', return_value=free_threaded):
++                        module = BuildableModule(project, 'module', 'test.module',
++                            uses_limited_api=True, gil_disabled=gil_disabled)
++                    self.assertEqual(module.uses_limited_api, limited)
++                    self.assertEqual(module.gil_disabled, gil_disabled)
++                    expected = []
++                    if limited:
++                        version = '0x%02x%02x%02x00' % minimum
++                        expected.append('Py_LIMITED_API=' + version)
++                        if gil_disabled and minimum >= (3, 15, 0):
++                            expected.append('Py_TARGET_ABI3T=' + version)
++                    self.assertEqual(module.define_macros, expected)
++                    if not limited:
++                        self.assertEqual(module.get_module_extension(), EXTENSION_SUFFIXES[0])
++
++
++if __name__ == '__main__':
++    unittest.main()

@@ -8,57 +8,26 @@ Last-Update: 2026-11-17
 
 --- a/sipbuild/buildable.py
 +++ b/sipbuild/buildable.py
-@@ -4,6 +4,7 @@
--
--
-+
-+
- import os
--
+@@ -6,0 +7 @@
 +import sysconfig
-+
- from .exceptions import UserException
- from .installable import Installable
-@@ -47,6 +48,12 @@
-         self.target = target
-         self.uses_limited_api = uses_limited_api
-         self.gil_disabled = gil_disabled
--
+@@ -49,0 +51,6 @@
 +
 +        # Stable ABI for free-threaded Python starts with 3.15.  A legacy
 +        # request must instead use the active interpreter's specific ABI.
 +        if (self.uses_limited_api and sysconfig.get_config_var('Py_GIL_DISABLED')
 +                and project.limited_abi_version < (3, 15, 0)):
 +            self.uses_limited_api = False
-+
-         self.define_macros = []
-         self.sources = []
 --- a/sipbuild/bindings.py
 +++ b/sipbuild/bindings.py
-@@ -155,6 +155,9 @@
-         buildable = BuildableBindings(self, module.fq_py_name.name,
-                 uses_limited_api=uses_limited_api, gil_disabled=gil_disabled)
--
-+
+@@ -157,0 +158,3 @@
 +        # Keep generated declarations consistent with any ABI fallback.
 +        module.use_limited_api = buildable.uses_limited_api
 +
-         buildable.builder_settings.extend(self.builder_settings)
-         buildable.debug = self.debug
-         buildable.exceptions = self.exceptions
 --- a/sipbuild/generator/outputs/code/snippets.py
 +++ b/sipbuild/generator/outputs/code/snippets.py
-@@ -38,7 +38,7 @@
-     backend = project.backend
-     module = spec.module
--
+@@ -41 +41 @@
 -    _declare_limited_api(sf, project.py_debug)
-+
 +    _declare_limited_api(sf, project.py_debug, module=module)
-     _include_sip_h(sf, module)
--
-+
-     sf.write(
 --- /dev/null
 +++ b/test/test_buildable_abi.py
 @@ -0,0 +1,44 @@

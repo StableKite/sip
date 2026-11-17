@@ -1,2 +1,2 @@
-Test-Command: python3 -m pytest -q test/test_buildable_abi.py
+Test-Command: python3 -I -m pytest -q test/test_buildable_abi.py
 Depends: @, python3-pytest

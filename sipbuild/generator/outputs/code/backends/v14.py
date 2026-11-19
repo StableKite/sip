@@ -1145,7 +1145,7 @@ extern {lang}PySlot sipModuleSlots_{module_name}[];
 
         sf.write(f'static PyObject *callable_{callable_name}({_get_py_method_args(spec, is_impl=True, need_self=True)})\n')
 
-        sf.write('{')
+        sf.write('{\n')
 
         return None
 

@@ -11,6 +11,11 @@ def test_module_void_ret_no_args(module):
     module.module_void_ret_no_args()
     assert module.was_module_procedure_called()
 
+
+def test_module_manual_parser_accepts_arguments(module):
+    assert module.module_manual_parser(1, extra=2) == 42
+
+
 def test_module_int_ret_int_arg(module):
     assert module.module_doubler(3) == 6
 

@@ -1,6 +1,29 @@
 %Module(name=threading_module, gil_use="NotUsed")
 %MinimumABIVersion "14.0"
 
+%ModuleHeaderCode
+class FactoryValue
+{
+public:
+    explicit FactoryValue(int value) : value_(value) {}
+    int value() const { return value_; }
+
+private:
+    int value_;
+};
+
+inline FactoryValue make_value(int value) { return FactoryValue(value); }
+%End
+
+class FactoryValue
+{
+public:
+    explicit FactoryValue(int value);
+    int value() const;
+};
+
+FactoryValue make_value(int value) /ReleaseGIL/;
+
 class Counter
 {
 %TypeHeaderCode

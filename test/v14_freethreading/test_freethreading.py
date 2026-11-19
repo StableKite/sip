@@ -26,6 +26,17 @@ import threading_module
 assert Path(threading_module.__file__).resolve() == path
 assert not sys._is_gil_enabled()
 
+first_call = Barrier(8)
+
+def create_value(index):
+    first_call.wait(timeout=10)
+    return threading_module.make_value(index)
+
+with ThreadPoolExecutor(max_workers=8) as executor:
+    wrappers = list(executor.map(create_value, range(8)))
+assert all(type(wrapper) is threading_module.FactoryValue for wrapper in wrappers)
+assert [wrapper.value() for wrapper in wrappers] == list(range(8))
+
 shared = threading_module.Counter()
 barrier = Barrier(8)
 

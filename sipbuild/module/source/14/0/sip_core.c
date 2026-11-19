@@ -2059,7 +2059,11 @@ const sipTypeSpec *sip_get_type_spec_from_wt(sipWrapperType *wt)
 int sip_get_local_py_type(sipModuleState *ms, sipTypeNr type_nr,
         PyTypeObject **py_type_p)
 {
-    PyTypeObject *py_type = ms->type_impls[type_nr].py_type;
+    PyTypeObject *py_type;
+
+    Py_BEGIN_CRITICAL_SECTION_MUTEX(&ms->sip_module_state->mutex);
+    py_type = ms->type_impls[type_nr].py_type;
+    Py_END_CRITICAL_SECTION();
 
     if (py_type == NULL)
     {
@@ -2105,7 +2109,25 @@ int sip_get_local_py_type(sipModuleState *ms, sipTypeNr type_nr,
                 return -1;
         }
 
-        ms->type_impls[type_nr].py_type = py_type;
+        /* Type construction can resolve base types and run callbacks.  Do
+         * not hold the mutex during construction.  Publish only the first
+         * completed type, so simultaneous callers always get the same one.
+         */
+        PyTypeObject *unused = NULL;
+
+        Py_BEGIN_CRITICAL_SECTION_MUTEX(&ms->sip_module_state->mutex);
+        if (ms->type_impls[type_nr].py_type == NULL)
+        {
+            ms->type_impls[type_nr].py_type = py_type;
+        }
+        else
+        {
+            unused = py_type;
+            py_type = ms->type_impls[type_nr].py_type;
+        }
+        Py_END_CRITICAL_SECTION();
+
+        Py_XDECREF(unused);
     }
 
     *py_type_p = py_type;
@@ -2465,7 +2487,12 @@ int sip_is_subtype(sipModuleState *ms, PyTypeObject *py_type,
      * implementation.  If there isn't one then the type being checked can't be
      * a sub-type.
      */
-    PyTypeObject *base_type = ms->type_impls[sipTypeIDTypeNr(type_id)].py_type;
+    PyTypeObject *base_type;
+
+    Py_BEGIN_CRITICAL_SECTION_MUTEX(&ms->sip_module_state->mutex);
+    base_type = ms->type_impls[sipTypeIDTypeNr(type_id)].py_type;
+    Py_END_CRITICAL_SECTION();
+
     if (base_type == NULL)
         return FALSE;
 

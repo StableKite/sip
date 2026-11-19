@@ -8,6 +8,8 @@
 %MinimumABIVersion "13.0"
 %MinimumABIVersion "14.0"
 
+%License(type="BSD-2-Clause")
+
 
 %ModuleHeaderCode
 // POD types.

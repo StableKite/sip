@@ -8,6 +8,10 @@ from sys import getrefcount
 import pytest
 
 
+def test_module_license(module):
+    assert module.__license__["Type"] == "BSD-2-Clause"
+
+
 def test_attrs_bool(module, abi_version):
     if abi_version >= 14:
         # Values are mapped to True and False.

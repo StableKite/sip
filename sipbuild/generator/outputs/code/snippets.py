@@ -283,6 +283,7 @@ static sipVirtErrorHandler{backend.get_spec_suffix()} virtErrorHandlersTable[] =
     # Generate any license information.
     if module.license is not None:
         license = module.license
+        license_decl = 'const sipLicenseSpec' if project.abi_version[0] >= 14 else 'sipLicenseDef'
         licensee = 'SIP_NULLPTR' if license.licensee is None else '"' + license.licensee + '"'
         timestamp = 'SIP_NULLPTR' if license.timestamp is None else '"' + license.timestamp + '"'
         signature = 'SIP_NULLPTR' if license.signature is None else '"' + license.signature + '"'
@@ -291,7 +292,7 @@ static sipVirtErrorHandler{backend.get_spec_suffix()} virtErrorHandlersTable[] =
 f'''
 
 /* Define the module's license. */
-static sipLicenseDef module_license = {{
+static {license_decl} module_license = {{
     "{license.type}",
     {licensee},
     {timestamp},

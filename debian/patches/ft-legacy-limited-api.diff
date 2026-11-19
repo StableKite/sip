@@ -1,7 +1,7 @@
-Description: Fall back to the interpreter ABI for legacy stable-ABI requests on FT
- Stable ABI for free-threaded Python starts at 3.15. Legacy requests must
- produce interpreter-specific modules, including generated and composite
- bindings. Preserve newer abi3t requests and all GIL safety declarations.
+Description: Fall back to the interpreter ABI for incompatible stable-ABI requests on FT
+ Free-threaded Python needs interpreter-specific modules unless the
+ bindings use the free-threaded stable ABI introduced in Python 3.15.
+ Preserve valid abi3t requests and all GIL safety declarations.
 Author: StableKite
 Forwarded: no
 Last-Update: 2026-11-17
@@ -12,10 +12,10 @@ Last-Update: 2026-11-17
 +import sysconfig
 @@ -49,0 +51,6 @@
 +
-+        # Stable ABI for free-threaded Python starts with 3.15.  A legacy
-+        # request must instead use the active interpreter's specific ABI.
++        # Free-threaded builds cannot use the ordinary stable ABI.
++        # Keep the limited API only when the bindings can build for abi3t.
 +        if (self.uses_limited_api and sysconfig.get_config_var('Py_GIL_DISABLED')
-+                and project.limited_abi_version < (3, 15, 0)):
++                and (not self.gil_disabled or project.limited_abi_version < (3, 15, 0))):
 +            self.uses_limited_api = False
 --- a/sipbuild/bindings.py
 +++ b/sipbuild/bindings.py
@@ -48,7 +48,7 @@ Last-Update: 2026-11-17
 +            (0, (3, 13, 0), False, True),
 +            (1, (3, 13, 0), False, False),
 +            (1, (3, 13, 0), True, False),
-+            (1, (3, 15, 0), False, True),
++            (1, (3, 15, 0), False, False),
 +            (1, (3, 15, 0), True, True),
 +            (0, (3, 15, 0), True, True),
 +        ]

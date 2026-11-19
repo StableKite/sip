@@ -154,6 +154,8 @@ class Bindings(Configurable):
         # arguments include a file name.
         buildable = BuildableBindings(self, module.fq_py_name.name,
                 uses_limited_api=uses_limited_api, gil_disabled=gil_disabled)
+        if not buildable.uses_limited_api:
+            module.use_limited_api = False
 
         buildable.builder_settings.extend(self.builder_settings)
         buildable.debug = self.debug

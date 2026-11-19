@@ -4,6 +4,7 @@
 
 
 import os
+import sysconfig
 
 from .exceptions import UserException
 from .installable import Installable
@@ -43,6 +44,12 @@ class BuildableFromSources(Buildable):
             raise UserException(
                     "{0} cannot use the limited API without using a shared "
                     "'sip' module".format(name))
+
+        if uses_limited_api and sysconfig.get_config_var('Py_GIL_DISABLED'):
+            # The ordinary stable ABI cannot be used by a free-threaded
+            # build. Only an ABI3T-compatible module can keep the limited API.
+            uses_limited_api = (
+                    gil_disabled and project.limited_abi_version[:2] >= (3, 15))
 
         self.target = target
         self.uses_limited_api = uses_limited_api

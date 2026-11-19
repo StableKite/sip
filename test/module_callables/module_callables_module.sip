@@ -70,6 +70,11 @@ int incr_all_kwd_args(int value, int incr=1)
 
 
 void module_void_ret_no_args();
+
+SIP_PYOBJECT module_manual_parser(... arguments) /NoArgParser/;
+%MethodCode
+    return PyLong_FromLong(42);
+%End
 int module_doubler(int value);
 int module_sum_diff(int value_1, int value_2, int *diff_p);
 

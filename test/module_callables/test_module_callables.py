@@ -13,6 +13,10 @@ def test_module_void_ret_no_args(module):
 
     assert module.module_void_ret_no_args.__doc__ == 'module_void_ret_no_args()'
 
+def test_module_manual_parser_accepts_arguments(module):
+    assert module.module_manual_parser(1, extra=2) == 42
+
+
 def test_module_int_ret_int_arg(module):
     assert module.module_doubler(3) == 6
 

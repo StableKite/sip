@@ -52,5 +52,22 @@ def exercise(_):
 with ThreadPoolExecutor(max_workers=8) as executor:
     values = [value for group in executor.map(exercise, range(8)) for value in group]
 assert sorted(values) == list(range(8000))
+
+assert threading_module.get_counter_type_data() is None
+threading_module.set_counter_type_data((0, 0))
+barrier = Barrier(8)
+
+def exercise_type_data(worker):
+    barrier.wait(timeout=10)
+    for index in range(5000):
+        threading_module.set_counter_type_data((worker, index))
+        owner, counter = threading_module.get_counter_type_data()
+        assert 0 <= owner < 8
+        assert 0 <= counter < 5000
+
+with ThreadPoolExecutor(max_workers=8) as executor:
+    list(executor.map(exercise_type_data, range(8)))
+threading_module.set_counter_type_data(None)
+assert threading_module.get_counter_type_data() is None
 assert not sys._is_gil_enabled()
 ''', module.__file__], check=True, timeout=45)

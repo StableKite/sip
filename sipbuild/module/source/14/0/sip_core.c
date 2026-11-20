@@ -2412,14 +2412,15 @@ void *sip_get_final_address(sipSipModuleState *sms, PyTypeObject *py_type,
  */
 static void sip_api_set_type_user_object(sipWrapperType *wt, PyObject *data)
 {
-    /*
-     * Note that there are similar issues to those with the user object stored
-     * in a wrapped instance.  Likewise we choose to wait for specific use
-     * cases to inform a better implementation.
-     */
+    PyObject *previous;
+    PyObject *replacement = Py_XNewRef(data);
+
     Py_BEGIN_CRITICAL_SECTION(wt);
-    Py_XSETREF(wt->user_data, Py_XNewRef(data));
+    previous = wt->user_data;
+    wt->user_data = replacement;
     Py_END_CRITICAL_SECTION();
+
+    Py_XDECREF(previous);
 }
 
 
@@ -2428,7 +2429,13 @@ static void sip_api_set_type_user_object(sipWrapperType *wt, PyObject *data)
  */
 static PyObject *sip_api_get_type_user_object(sipWrapperType *wt)
 {
-    return Py_XNewRef(wt->user_data);
+    PyObject *data;
+
+    Py_BEGIN_CRITICAL_SECTION(wt);
+    data = Py_XNewRef(wt->user_data);
+    Py_END_CRITICAL_SECTION();
+
+    return data;
 }
 
 

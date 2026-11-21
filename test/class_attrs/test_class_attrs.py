@@ -175,3 +175,17 @@ def test_inherited_nested_type_before_direct_lookup(module):
     mode = module.Derived.Mode
     assert mode.Active == module.Klass.Mode.Active
     assert mode is module.Klass.Mode
+
+
+def test_renamed_member_and_bit_field(module):
+    obj = module.Klass()
+    assert obj.number == 17
+    obj.number = 23
+    assert obj.number == 23
+    assert obj.ready is False
+    obj.ready = True
+    assert obj.ready is True
+
+
+def test_single_class_output_value(module):
+    assert module.fill_value().get_value() == 29

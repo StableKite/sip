@@ -3565,11 +3565,10 @@ f'''            Py_INCREF(Py_None);
         need_new_instance = _need_new_instance(value)
 
         convertor = 'sipConvertFromNewType' if need_new_instance else 'sipConvertFromType'
-        context = backend.get_module_context()
         value_name = get_const_cast(spec, value, value_name)
         transfer = 'Py_None' if not need_new_instance and value.transfer is Transfer.TRANSFER_BACK else 'SIP_NULLPTR'
 
-        sf.write(f'            {action} {convertor}({context}{value_name}, {backend.get_type_ref(value.definition)}, {transfer});\n')
+        sf.write(f'            {action} {convertor}({value_name}, {backend.get_type_ref(value.definition)}, {transfer});\n')
 
     elif value.type is ArgumentType.ENUM:
         sf.write(f'            {action} {backend.get_enum_to_py_conversion(spec, value.definition, value_name)};\n')

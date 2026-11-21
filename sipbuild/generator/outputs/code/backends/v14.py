@@ -2679,6 +2679,7 @@ def _g_variables_table(sf, spec, attrs, static_variables, scope=None):
 
         read_only = not_settable or variable.no_setter
         need_sip_cpp = False
+        need_address_getter = False
 
         fields = ['.type_id = ' + type_id]
 
@@ -2700,8 +2701,11 @@ def _g_variables_table(sf, spec, attrs, static_variables, scope=None):
                 cpp_name = variable.fq_cpp_name.as_cpp
                 address = '&' + cpp_name
             else:
-                address = 'sipVariableAddrGetter_' + v_ref
                 need_sip_cpp = True
+                need_address_getter = (variable.get_code is None or
+                        (not read_only and variable.set_code is None))
+                address = ('sipVariableAddrGetter_' + v_ref
+                        if need_address_getter else 'SIP_NULLPTR')
 
             value = f'.value = {{.ptr_t = (void *){address}}}'
 
@@ -2766,7 +2770,7 @@ f'''static PyObject *sipVariableGetCode_{v_ref}(sipModuleState *sipMS, void *{ad
                     sf.write(f'extern "C" {{static int sipVariableSetCode_{v_ref}(sipModuleState *, void *, PyObject *, PyObject *);}}\n')
 
             sf.write(
-f'''static int sipVariableSetCode_{v_ref}(sipModuleState *ms, void *{addr_arg}, PyObject *sipPy, PyObject *{type_arg})
+f'''static int sipVariableSetCode_{v_ref}(sipModuleState *sipMS, void *{addr_arg}, PyObject *sipPy, PyObject *{type_arg})
 {{
 ''')
 
@@ -2788,7 +2792,7 @@ f'''static int sipVariableSetCode_{v_ref}(sipModuleState *ms, void *{addr_arg}, 
 ''')
 
         # See if we need a descriptor address getter.
-        if scope is None or variable.is_static or enum_member_value is not None:
+        if not need_address_getter:
             continue
 
         cast = get_type_from_void(spec, scope.iface_file.fq_cpp_name.as_cpp,
@@ -2802,7 +2806,7 @@ f'''static int sipVariableSetCode_{v_ref}(sipModuleState *ms, void *{addr_arg}, 
         sf.write(
 f'''static void *sipVariableAddrGetter_{v_ref}(void *sipCppV)
 {{
-    return &{cast}->{variable.py_name.name};
+    return &{cast}->{variable.fq_cpp_name.base_name};
 }}
 ''')
 

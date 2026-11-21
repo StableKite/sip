@@ -26,7 +26,7 @@ class Klass
 public:
     enum Mode {Active};
 
-    Klass() : attr(0), class_attr(0) {}
+    Klass() : attr(0), renamed(17), ready(false), class_attr(0) {}
 
     static int s_attr;
     static int get_s_attr() {return s_attr;}
@@ -36,6 +36,8 @@ public:
 
     int attr;
     int get_attr() {return attr;}
+    int renamed;
+    bool ready : 1;
 
     Value *class_attr;
     Value *get_class_attr() const {return class_attr;}
@@ -92,6 +94,20 @@ public:
 
     int attr;
     int get_attr();
+    int renamed /PyName=number/;
+    bool ready
+    {
+        %GetCode
+            sipPy = PyBool_FromLong(sipCpp->ready);
+        %End
+        %SetCode
+            int value = PyObject_IsTrue(sipPy);
+            if (value < 0)
+                sipErr = 1;
+            else
+                sipCpp->ready = value != 0;
+        %End
+    };
 
     Value *class_attr;
     Value *get_class_attr() const;
@@ -115,3 +131,10 @@ class Derived : public Klass
 public:
     Derived();
 };
+
+
+%ModuleHeaderCode
+inline void fill_value(Value &value) {value = Value(29);}
+%End
+
+void fill_value(Value &value /Out/);

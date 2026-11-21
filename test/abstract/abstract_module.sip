@@ -22,6 +22,16 @@ class ConcreteClass : public AbstractBaseClass
 public:
     virtual int get_value() const {return 10;}
 };
+class FactoryValue
+{
+public:
+    static FactoryValue *make() {return new FactoryValue(42);}
+    int value() const {return stored_value;}
+
+private:
+    explicit FactoryValue(int value) : stored_value(value) {}
+    int stored_value;
+};
 %End
 
 
@@ -36,4 +46,12 @@ class ConcreteClass : public AbstractBaseClass
 {
 public:
     virtual int get_value() const;
+};
+
+
+class FactoryValue /NoDefaultCtors/
+{
+public:
+    static FactoryValue *make() /Factory/;
+    int value() const;
 };

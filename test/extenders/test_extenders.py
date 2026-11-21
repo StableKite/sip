@@ -86,3 +86,78 @@ def test_init_extender_docstrings(package, abi_package_version):
 
 def test_dir(package):
     assert 'thrice' in dir(package.core_module.NameSpace)
+
+
+def test_wrapped_type_ids(package, abi_package_version):
+    if abi_package_version < 14:
+        pytest.skip("requires SIP ABI 14")
+
+    type_id = package.sip._wrapped_type_id
+    klass = package.core_module.Klass
+
+    class Derived(klass):
+        pass
+
+    assert type_id(klass) == type_id(Derived)
+    assert type_id(klass) != type_id(package.extras1_module.Cast)
+    assert type_id(package.core_module.NameSpace.Kind) is not None
+    assert type_id(package.core_module.NameSpace.Kind) != type_id(klass)
+    assert type_id(int) is None
+    with pytest.raises(TypeError):
+        type_id(4)
+
+
+@pytest.mark.parametrize("by_name", (False, True))
+def test_imported_enum_scope(package, abi_package_version, by_name):
+    if abi_package_version < 14:
+        pytest.skip("requires SIP ABI 14")
+
+    assert (package.extras1_module.scope_of_imported_enum(by_name)
+            is package.core_module.NameSpace)
+
+
+def test_python_subclass_event(package, abi_package_version):
+    if abi_package_version < 14:
+        pytest.skip("requires SIP ABI 14")
+
+    klass = package.core_module.Klass
+    assert not hasattr(klass, "_created_as_python_subclass")
+
+    class Derived(klass):
+        pass
+
+    class DerivedAgain(Derived):
+        pass
+
+    assert Derived.__dict__["_created_as_python_subclass"] is True
+    assert DerivedAgain.__dict__["_created_as_python_subclass"] is True
+
+
+def test_optional_hook(package, abi_package_version, monkeypatch):
+    if abi_package_version < 14:
+        pytest.skip("requires SIP ABI 14")
+
+    import builtins
+
+    package.core_module.call_optional_hook()
+
+    called = []
+    monkeypatch.setattr(builtins, "_sip_test_optional_hook",
+            lambda: called.append(True), raising=False)
+    package.core_module.call_optional_hook()
+    assert called == [True]
+
+    def fail():
+        raise RuntimeError("from the hook")
+
+    monkeypatch.setattr(builtins, "_sip_test_optional_hook", fail)
+    with pytest.raises(RuntimeError, match="from the hook"):
+        package.core_module.call_optional_hook()
+
+
+def test_handwritten_callable_preserves_exception(package, abi_package_version):
+    if abi_package_version < 14:
+        pytest.skip("requires SIP ABI 14")
+
+    with pytest.raises(ValueError, match="handwritten error"):
+        package.core_module.call_handwritten()

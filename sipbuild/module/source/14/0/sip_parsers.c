@@ -2721,6 +2721,23 @@ static void parse_pass_1(sipModuleState *ms, PyObject *arg,
             break;
         }
 
+        case sipType_Py_ssize_t:
+        {
+            PyObject *index = PyNumber_Index(arg);
+            if (index == NULL)
+            {
+                int_conversion_failed = true;
+            }
+            else
+            {
+                *(Py_ssize_t *)*fmt_params = PyLong_AsSsize_t(index);
+                int_conversion_failed = PyErr_Occurred();
+                Py_DECREF(index);
+            }
+
+            break;
+        }
+
         case sipType_size_t:
         {
             *(size_t *)*fmt_params = sip_api_long_as_size_t(arg);

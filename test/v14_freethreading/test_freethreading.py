@@ -71,3 +71,40 @@ threading_module.set_counter_type_data(None)
 assert threading_module.get_counter_type_data() is None
 assert not sys._is_gil_enabled()
 ''', module.__file__], check=True, timeout=45)
+
+
+def test_signed_python_size(module):
+    class Indexable:
+        def __index__(self):
+            return -5
+
+    for size in (-sys.maxsize - 1, -1, 0, sys.maxsize):
+        assert module.identity_size(size) == size
+
+    assert module.identity_size(Indexable()) == -5
+    with pytest.raises(OverflowError):
+        module.identity_size(sys.maxsize + 1)
+
+
+def test_buffer_array_arguments(module):
+    data = bytearray(b'ab\x00c')
+    assert module.count_bytes(data) == 4
+    info = module.ByteArrayInfo(data)
+    assert (info.size(), info.last()) == (4, ord('c'))
+    data.extend(b'd')
+    with memoryview(data) as view:
+        assert module.count_bytes(view) == 5
+
+    assert module.count_bytes(None) == 0
+    with pytest.raises(TypeError):
+        module.count_bytes('not bytes')
+
+
+def test_constructor_transfers_ownership_to_parent(module):
+    parent = module.OwnershipProbe()
+    child = module.OwnershipProbe(parent)
+    assert module.ispyowned(parent)
+    try:
+        assert not module.ispyowned(child)
+    finally:
+        module.transferback(child)

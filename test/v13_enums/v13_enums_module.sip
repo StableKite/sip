@@ -105,6 +105,8 @@ public:
     ClassTypedEnum typed_var;
 };
 
+inline int operator+(EnumClass::ClassScopedEnum e, int incr) {return static_cast<int>(e) + incr;}
+
 %End
 
 
@@ -191,3 +193,5 @@ public:
     static void typed_set(ClassTypedEnum);
     ClassTypedEnum typed_var;
 };
+
+int operator+(EnumClass::ClassScopedEnum e, int incr);

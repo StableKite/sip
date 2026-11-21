@@ -13,6 +13,22 @@ private:
 };
 
 inline FactoryValue make_value(int value) { return FactoryValue(value); }
+inline Py_ssize_t identity_size(Py_ssize_t size) { return size; }
+
+inline int count_bytes(const unsigned char *, int size) { return size; }
+
+class ByteArrayInfo
+{
+public:
+    ByteArrayInfo(const char *data, int size)
+        : size_(size), last_(size ? static_cast<unsigned char>(data[size - 1]) : 0) {}
+    int size() const { return size_; }
+    int last() const { return last_; }
+
+private:
+    int size_;
+    int last_;
+};
 %End
 
 class FactoryValue
@@ -23,6 +39,17 @@ public:
 };
 
 FactoryValue make_value(int value) /ReleaseGIL/;
+Py_ssize_t identity_size(Py_ssize_t size);
+
+int count_bytes(const unsigned char *data /Array/, int size /ArraySize/);
+
+class ByteArrayInfo
+{
+public:
+    ByteArrayInfo(const char *data /Array/, int size /ArraySize/);
+    int size() const;
+    int last() const;
+};
 
 class Counter
 {
@@ -73,3 +100,18 @@ SIP_PYOBJECT get_counter_type_data();
             sipRes = Py_NewRef(Py_None);
     }
 %End
+
+
+class OwnershipProbe
+{
+%TypeHeaderCode
+class OwnershipProbe
+{
+public:
+    explicit OwnershipProbe(OwnershipProbe * = nullptr) {}
+};
+%End
+
+public:
+    explicit OwnershipProbe(OwnershipProbe *parent /TransferThis/ = nullptr);
+};

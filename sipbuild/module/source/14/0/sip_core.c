@@ -1085,51 +1085,73 @@ static PyTypeObject *create_class_type(sipModuleState *ms, sipTypeNr type_nr,
         return NULL;
     }
 
-    /* Invoke any event handlers. */
-    PyObject *mods = sms->module_list;
-    Py_ssize_t i;
-
-    for (i = 0; i < PyList_GET_SIZE(mods); i++)
+    if (sip_call_type_event_handlers(sms, py_type, sipEventFinalisingType) < 0)
     {
-        PyObject *ehs_mod;
-
-        if (PyWeakref_GetRef(PyList_GET_ITEM(mods, i), &ehs_mod) < 0)
-        {
-            Py_DECREF(py_type);
-            return NULL;
-        }
-
-        if (ehs_mod == NULL)
-            continue;
-
-        sipModuleState *ehs_ms = sip_get_module_state(ehs_mod);
-
-        if (ehs_ms->event_handlers != NULL)
-        {
-            const sipEventHandlerSpec *ehs = ehs_ms->event_handlers;
-
-            while (ehs->event_type != sipEventNone)
-            {
-                if (ehs->event_type == sipEventFinalisingType && sip_is_subtype(ehs_ms, py_type, ehs->type_id))
-                {
-                    sipFinalisingTypeEventHandler handler = (sipFinalisingTypeEventHandler)ehs->handler;
-
-                    if (handler(ehs_ms, ehs->type_id, py_type) < 0)
-                    {
-                        Py_DECREF(ehs_mod);
-                        Py_DECREF(py_type);
-                        return NULL;
-                    }
-                }
-
-                ehs++;
-            }
-        }
-
-        Py_DECREF(ehs_mod);
+        Py_DECREF(py_type);
+        return NULL;
     }
 
     return py_type;
+}
+
+
+/*
+ * Dispatch type events using strong references to the registered modules.
+ * Callbacks can invoke Python, so release the registry lock before dispatch.
+ */
+int sip_call_type_event_handlers(sipSipModuleState *sms, PyTypeObject *type,
+        sipEventType event)
+{
+    PyObject *modules;
+    Py_BEGIN_CRITICAL_SECTION_MUTEX(&sms->mutex);
+    modules = Py_XNewRef(sms->module_list);
+    Py_END_CRITICAL_SECTION();
+    if (modules == NULL)
+        return 0;
+
+    int rc = 0;
+    Py_ssize_t count = PyList_Size(modules);
+    for (Py_ssize_t i = 0; i < count; ++i)
+    {
+        PyObject *weak_module = PyList_GetItemRef(modules, i);
+        if (weak_module == NULL)
+        {
+            rc = -1;
+            break;
+        }
+
+        PyObject *module;
+        int status = PyWeakref_GetRef(weak_module, &module);
+        Py_DECREF(weak_module);
+        if (status < 0)
+        {
+            rc = -1;
+            break;
+        }
+        if (status == 0)
+            continue;
+
+        sipModuleState *ms = sip_get_module_state(module);
+        const sipEventHandlerSpec *handler = ms->event_handlers;
+        for (; handler && handler->event_type != sipEventNone; ++handler)
+        {
+            if (handler->event_type == event && sip_is_subtype(ms, type, handler->type_id))
+            {
+                sipFinalisingTypeEventHandler callback =
+                        (sipFinalisingTypeEventHandler)handler->handler;
+                rc = callback(ms, handler->type_id, type);
+                if (rc < 0)
+                    break;
+            }
+        }
+
+        Py_DECREF(module);
+        if (rc < 0)
+            break;
+    }
+
+    Py_DECREF(modules);
+    return rc;
 }
 
 
@@ -1319,6 +1341,26 @@ static sipTypeID sip_api_type_scope(sipModuleState *ms, sipTypeID type_id)
         return sipType_Invalid;
 
     sipTypeID scope_id = ts->scope_id;
+    if (scope_id != sipType_Invalid && def_mod != ms->wrapped_module)
+    {
+        PyObject *scope_mod;
+        sipTypeNr scope_nr;
+        scope_mod = resolve_type_id(sip_get_module_state(def_mod), scope_id,
+                &scope_nr);
+
+        if (scope_mod != NULL)
+        {
+            sipTypeID local_scope_id = (scope_id & SIP_TYPE_ID_TYPE_MASK)
+                    | SIP_TYPE_ID_LOCAL_MODULE | scope_nr;
+            scope_id = sip_get_absolute_type_id(ms->sip_module_state,
+                    scope_mod, local_scope_id);
+            Py_DECREF(scope_mod);
+        }
+        else
+        {
+            scope_id = sipType_Invalid;
+        }
+    }
 
     Py_DECREF(def_mod);
 
@@ -1771,15 +1813,22 @@ static sipTypeID sip_api_find_type(sipModuleState *ms, const char *type)
  */
 static void sip_api_call_hook(const char *hookname)
 {
-    /* Get the function hook. */
-    PyObject *hook = PyImport_ImportModuleAttrString("builtins", hookname);
-    if (hook == NULL)
+    /* The hook is optional and is only looked up in loaded builtins. */
+    PyObject *modules = PyImport_GetModuleDict();
+    PyObject *builtins;
+    if (PyDict_GetItemStringRef(modules, "builtins", &builtins) != 1)
         return;
 
-    /* Call the hook and discard any result. */
-    PyObject *res = PyObject_CallObject(hook, NULL);
+    PyObject *hook;
+    int found = PyModule_Check(builtins)
+            ? PyDict_GetItemStringRef(PyModule_GetDict(builtins), hookname, &hook)
+            : 0;
+    Py_DECREF(builtins);
+    if (found != 1)
+        return;
+
+    PyObject *res = PyObject_CallNoArgs(hook);
     Py_XDECREF(res);
- 
     Py_DECREF(hook);
 }
 
@@ -1856,6 +1905,136 @@ static void *sip_api_cast_to_target_type(sipModuleState *ms, sipTypeID type_id,
     Py_DECREF(def_mod);
 
     return target_cpp;
+}
+
+
+/*
+ * Return an absolute type ID for an existing wrapped type, or sipType_Invalid
+ * for an ordinary Python type.  Preserve the defining identity of subclasses.
+ */
+sipTypeID sip_get_wrapped_type_id(sipSipModuleState *sms, PyTypeObject *type)
+{
+    if (PyObject_TypeCheck((PyObject *)type, sms->wrapper_type_type))
+    {
+        sipWrapperType *wt = (sipWrapperType *)type;
+        if (wt->defining_module != NULL)
+            return sip_get_absolute_type_id(sms, wt->defining_module,
+                    wt->type_id);
+
+        return sipType_Invalid;
+    }
+
+    /* Constructed enums use enum.Enum or the optional SIP enum metatype,
+     * both independent of sipWrapperType. */
+    bool is_enum = false;
+#if defined(SIP_CONFIGURATION_CustomEnums)
+    is_enum = Py_IS_TYPE((PyObject *)type, sms->custom_enum_type);
+#endif
+    if (!is_enum)
+        is_enum = sip_enum_is_enum(sms, (PyObject *)type);
+    if (!is_enum)
+        return sipType_Invalid;
+
+    PyObject *modules;
+    Py_BEGIN_CRITICAL_SECTION_MUTEX(&sms->mutex);
+    modules = Py_XNewRef(sms->module_list);
+    Py_END_CRITICAL_SECTION();
+    if (modules == NULL)
+        return sipType_Invalid;
+
+    sipTypeID type_id = sipType_Invalid;
+    Py_ssize_t count = PyList_Size(modules);
+    for (Py_ssize_t i = 0; i < count; ++i)
+    {
+        PyObject *weak_module = PyList_GetItemRef(modules, i);
+        if (weak_module == NULL)
+            break;
+
+        PyObject *module;
+        int status = PyWeakref_GetRef(weak_module, &module);
+        Py_DECREF(weak_module);
+        if (status < 0)
+            break;
+        if (status == 0)
+            continue;
+
+        sipModuleState *ms = sip_get_module_state(module);
+        const sipModuleSpec *spec = ms->module_spec;
+        sipTypeNr nr = 0;
+        Py_BEGIN_CRITICAL_SECTION_MUTEX(&sms->mutex);
+        while (nr < spec->nr_type_specs)
+        {
+            const sipTypeSpec *ts = spec->type_specs[nr];
+            if ((sipTypeSpecIsEnum(ts)
+#if defined(SIP_CONFIGURATION_CustomEnums)
+                    || sipTypeSpecIsScopedEnum(ts)
+#endif
+                    ) && ms->type_impls[nr].py_type == type)
+                break;
+
+            ++nr;
+        }
+        Py_END_CRITICAL_SECTION();
+
+        if (nr < spec->nr_type_specs)
+        {
+            type_id = sip_get_absolute_type_id(sms, module,
+                    SIP_TYPE_ID_TYPE_ENUM | SIP_TYPE_ID_LOCAL_MODULE | nr);
+            Py_DECREF(module);
+            break;
+        }
+
+        Py_DECREF(module);
+    }
+
+    Py_DECREF(modules);
+    return type_id;
+}
+
+
+/*
+ * Convert a local type ID to an absolute type ID.  Identify the module by
+ * object identity, because two modules can wrap a C++ type of the same name.
+ */
+sipTypeID sip_get_absolute_type_id(sipSipModuleState *sms, PyObject *module,
+        sipTypeID local_id)
+{
+    PyObject *modules = sms->module_list;
+    Py_ssize_t count = PyList_Size(modules);
+    if (count < 0)
+        return sipType_Invalid;
+
+    for (Py_ssize_t i = 0; i < count; ++i)
+    {
+        PyObject *weak_module = PyList_GetItemRef(modules, i);
+        if (weak_module == NULL)
+            return sipType_Invalid;
+
+        PyObject *registered_module;
+        int status = PyWeakref_GetRef(weak_module, &registered_module);
+        Py_DECREF(weak_module);
+
+        if (status < 0)
+            return sipType_Invalid;
+
+        bool matches = registered_module == module;
+        Py_XDECREF(registered_module);
+        if (!matches)
+            continue;
+
+        if (i > UINT8_MAX)
+        {
+            PyErr_SetString(PyExc_OverflowError, "too many loaded SIP modules");
+            return sipType_Invalid;
+        }
+
+        return (local_id & ~SIP_TYPE_ID_LOCAL_MODULE) | SIP_TYPE_ID_ABSOLUTE
+                | ((sipTypeID)i << 16);
+    }
+
+    PyErr_SetString(PyExc_RuntimeError,
+            "the defining SIP module is not registered");
+    return sipType_Invalid;
 }
 
 
@@ -2005,8 +2184,11 @@ PyTypeObject *sip_api_get_py_type_ref(sipModuleState *ms, sipTypeID type_id)
     if (def_mod == NULL)
         return NULL;
 
-    Py_INCREF(py_type);
+    Py_XINCREF(py_type);
     Py_DECREF(def_mod);
+
+    if (py_type == NULL)
+        PyErr_SetString(PyExc_TypeError, "wrapped type has no Python type");
 
     return py_type;
 }

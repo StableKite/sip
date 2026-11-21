@@ -4,6 +4,7 @@
 
 
 from collections.abc import Callable
+from copy import copy
 from dataclasses import dataclass, field
 
 from .....sip_module_configuration import SipModuleConfiguration
@@ -13,14 +14,15 @@ from ....python_slots import (is_extendable_slot, is_number_slot,
 from ....scoped_name import ScopedName, STRIP_GLOBAL
 from ....specification import (AccessSpecifier, Argument, ArgumentType,
         ArrayArgument, DocstringSignature, GILUse, IfaceFileType, KwArgs,
-        MappedType, Module, MultiInterpreterSupport, PySlot, Transfer,
-        WrappedClass, WrappedEnum, WrappedVariable)
+        MappedType, Module, MultiInterpreterSupport, PyQtMethodSpecifier,
+        PySlot, Transfer, WrappedClass, WrappedEnum, WrappedVariable)
 from ....utils import is_namespace_extender
 
-from ...formatters import fmt_argument_as_name, fmt_enum_as_cpp_type
+from ...formatters import (fmt_argument_as_cpp_type, fmt_argument_as_name,
+        fmt_enum_as_cpp_type)
 
-from ..snippets import (g_argument_variable, g_ctor_type_hint,
-        g_member_function, g_overload_type_hint, g_static_function,
+from ..snippets import (g_argument_variable, g_call_args, g_ctor_type_hint,
+        g_delete_temporaries, g_member_function, g_overload_type_hint, g_static_function,
         g_type_init_body)
 from ..utils import (callable_overloads, get_class_from_void,
         get_docstring_text, get_enum_member, get_function_table,
@@ -254,6 +256,125 @@ f'''
         sf.write(
 '''    if (sipPySelf)
         sipInstanceDestroyed(sipMS, &sipPySelf);
+''')
+
+    @staticmethod
+    def g_qt_virtuals(sf, spec, klass):
+        """Generate the Qt hooks for a Python-derived QObject."""
+        name = klass.iface_file.fq_cpp_name.as_word
+        cpp_name = scoped_class_name(spec, klass)
+        type_ref = _get_type_ref(klass)
+
+        sf.write(
+f'''
+
+/* Attach to the interpreter that owns this wrapper, even on a Qt thread. */
+namespace
+{{
+class sipQtCallback_{name}
+{{
+public:
+    sipQtCallback_{name}(sipModuleState *sipMS, void *cpp)
+    {{
+        if (sipMS)
+        {{
+            token = PyThreadState_EnsureFromView(sipGetInterpreterView());
+            if (token)
+            {{
+                previous_error = PyErr_GetRaisedException();
+                wrapper = sipGetPyObjectRef(cpp, {type_ref});
+            }}
+        }}
+    }}
+
+    ~sipQtCallback_{name}()
+    {{
+        if (token)
+        {{
+            if (PyErr_Occurred())
+                PyErr_WriteUnraisable(wrapper ? wrapper : Py_None);
+            Py_XDECREF(wrapper);
+            PyErr_SetRaisedException(previous_error);
+            PyThreadState_Release(token);
+        }}
+    }}
+
+    sipSimpleWrapper *get() const
+    {{
+        return reinterpret_cast<sipSimpleWrapper *>(wrapper);
+    }}
+
+    sipQtCallback_{name}(const sipQtCallback_{name} &) = delete;
+    sipQtCallback_{name} &operator=(const sipQtCallback_{name} &) = delete;
+
+private:
+    PyThreadStateToken *token = nullptr;
+    PyObject *wrapper = nullptr;
+    PyObject *previous_error = nullptr;
+}};
+}}
+''')
+
+        if not klass.pyqt_no_qmetaobject:
+            sf.write(
+f'''
+const QMetaObject *sip{name}::metaObject() const
+{{
+    const QMetaObject *native = {cpp_name}::metaObject();
+    if (native != &{cpp_name}::staticMetaObject)
+        return native;
+
+    sipQtCallback_{name} callback(sipMS,
+            const_cast<{cpp_name} *>(static_cast<const {cpp_name} *>(this)));
+    if (auto *wrapper = callback.get())
+    {{
+        using QtMetaObject = const QMetaObject *(*)(sipModuleState *, sipSimpleWrapper *, sipTypeID);
+        auto get_metaobject = reinterpret_cast<QtMetaObject>(sipImportSymbol("qtcore_qt_metaobject"));
+        if (get_metaobject)
+            if (auto *meta = get_metaobject(sipMS, wrapper, {type_ref}))
+                return meta;
+    }}
+
+    return native;
+}}
+''')
+
+        sf.write(
+f'''
+int sip{name}::qt_metacall(QMetaObject::Call call, int id, void **args)
+{{
+    id = {cpp_name}::qt_metacall(call, id, args);
+    if (id >= 0)
+    {{
+        sipQtCallback_{name} callback(sipMS, static_cast<{cpp_name} *>(this));
+        if (auto *wrapper = callback.get())
+        {{
+            using QtMetaCall = int (*)(sipModuleState *, sipSimpleWrapper *, sipTypeID, QMetaObject::Call, int, void **);
+            auto metacall = reinterpret_cast<QtMetaCall>(sipImportSymbol("qtcore_qt_metacall"));
+            if (metacall)
+                id = metacall(sipMS, wrapper, {type_ref}, call, id, args);
+        }}
+    }}
+
+    return id;
+}}
+
+void *sip{name}::qt_metacast(const char *name)
+{{
+    {{
+        sipQtCallback_{name} callback(sipMS, static_cast<{cpp_name} *>(this));
+        if (auto *wrapper = callback.get())
+        {{
+            using QtMetaCast = bool (*)(sipModuleState *, sipSimpleWrapper *, sipTypeID, const char *, void **);
+            auto metacast = reinterpret_cast<QtMetaCast>(sipImportSymbol("qtcore_qt_metacast"));
+            void *cpp = nullptr;
+            if (metacast && metacast(sipMS, wrapper, {type_ref}, name, &cpp))
+                return cpp;
+        }}
+    }}
+
+    return {cpp_name}::qt_metacast(name);
+}}
 ''')
 
     @classmethod
@@ -969,7 +1090,7 @@ extern const sipABISpec *sipABI_{module_name};
 #define sipConvertToTypeUS(...)         sipABI_{module_name}->api_convert_to_type_us(sipMS, __VA_ARGS__)
 #define sipConvertToVoidPtr             sipABI_{module_name}->api_convert_to_void_ptr
 #define sipEnableAutoconversion(...)    sipABI_{module_name}->api_enable_autoconversion(sipMS, __VA_ARGS__)
-#define sipExportSymbols(...)           sipABI_{module_name}->api_export_symbol(sipMS, __VA_ARGS__)
+#define sipExportSymbols(...)           sipABI_{module_name}->api_export_symbols(sipMS, __VA_ARGS__)
 #define sipFindType(...)                sipABI_{module_name}->api_find_type(sipMS, __VA_ARGS__)
 #define sipForceConvertToType(...)      sipABI_{module_name}->api_force_convert_to_type(sipMS, __VA_ARGS__)
 #define sipForceConvertToTypeUS(...)    sipABI_{module_name}->api_force_convert_to_type_us(sipMS, __VA_ARGS__)
@@ -982,11 +1103,11 @@ extern const sipABISpec *sipABI_{module_name};
 #define sipGetState                     sipABI_{module_name}->api_get_state
 #define sipGetTypeUserObject            sipABI_{module_name}->api_get_type_user_object
 #define sipGetUserObject                sipABI_{module_name}->api_get_user_object
-#define sipIsUserType(...)              sipABI_{module_name}->api_is_user_type
-#define sipGetSimpleWrapperType(...)    sipABI_{module_name}->api_get_simple_wrapper_type(sipMS, __VA_ARGS__)
-#define sipGetVoidPtrType(...)          sipABI_{module_name}->api_get_void_ptr_type(sipMS, __VA_ARGS__)
-#define sipGetWrapperType(...)          sipABI_{module_name}->api_get_wrapper_type(sipMS, __VA_ARGS__)
-#define sipGetWrapperTypeType(...)      sipABI_{module_name}->api_get_wrapper_type_type(sipMS, __VA_ARGS__)
+#define sipIsUserType                   sipABI_{module_name}->api_is_user_type
+#define sipGetSimpleWrapperType()    sipABI_{module_name}->api_get_simple_wrapper_type(sipMS)
+#define sipGetVoidPtrType()             sipABI_{module_name}->api_get_void_ptr_type(sipMS)
+#define sipGetWrapperType()          sipABI_{module_name}->api_get_wrapper_type(sipMS)
+#define sipGetWrapperTypeType()      sipABI_{module_name}->api_get_wrapper_type_type(sipMS)
 #define sipImportSymbol(...)            sipABI_{module_name}->api_import_symbol(sipMS, __VA_ARGS__)
 #define sipIsOwnedByPython              sipABI_{module_name}->api_is_owned_by_python
 #define sipLong_AsChar                  sipABI_{module_name}->api_long_as_char
@@ -1247,6 +1368,8 @@ static sipSubClassConvertorSpec sipSubClassConvertors_{module.py_name}[] = {{
             _g_attributes_table(sf, attrs, "Attrs", klass_name)
 
         _g_properties_table(sf, bindings, attrs, klass)
+
+        _g_qt_class_info(sf, spec, klass, attrs_static_variables)
 
         if attrs_static_variables:
             _g_attributes_table(sf, attrs_static_variables,
@@ -1625,7 +1748,7 @@ static void sipVEH_{spec.module.py_name}_{virtual_error_handler.name}(sipModuleS
 
 
 def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, is_method,
-        overload):
+        overload, *, signal_emitter=False):
     """ Generate the argument variables for a callable. """
 
     # If the scope is a mapped type or a namespace, then ignore it.
@@ -1633,10 +1756,10 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, is_method,
         scope = None
 
     # See if the parser handles self for methods.
-    handle_self = scope is not None and overload is not None
+    handle_self = scope is not None and overload is not None and not signal_emitter
 
     # See how keyword arguments are being handled.
-    if overload is not None:
+    if overload is not None and not signal_emitter:
         kw_args = overload.kw_args
     elif ctor is not None:
         kw_args = ctor.kw_args
@@ -1645,12 +1768,15 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, is_method,
 
     # Generate the local variables that will hold the parsed arguments and
     # values returned via arguments.
-    array_len_arg_nr = -1
+    array_length = None
+    array_size_type = None
     need_owner = False
 
     for arg_nr, arg in enumerate(py_signature.args):
         if arg.array is ArrayArgument.ARRAY_SIZE:
-            array_len_arg_nr = arg_nr
+            array_length = g_argument_variable(sf, spec, scope, arg, arg_nr)[0]
+            array_size_type = fmt_argument_as_cpp_type(spec, arg, plain=True,
+                    no_derefs=True)
 
         if arg.transfer is Transfer.TRANSFER_THIS:
             need_owner = True
@@ -1680,13 +1806,14 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, is_method,
     params = []
     next_param_base = 0
     nr_required = 0
+    buffer_setup = []
 
     for arg_nr, arg in enumerate(py_signature.args):
-        if not arg.is_in:
-            g_argument_variable(sf, spec, scope, arg, arg_nr)
+        if arg.array is ArrayArgument.ARRAY_SIZE:
             continue
 
-        if arg.array is ArrayArgument.ARRAY_SIZE:
+        if not arg.is_in:
+            g_argument_variable(sf, spec, scope, arg, arg_nr)
             continue
 
         if arg.default_value is None:
@@ -1694,17 +1821,22 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, is_method,
 
         param_base = next_param_base
         arg_params = g_argument_variable(sf, spec, scope, arg, arg_nr)
+        data_arg = arg_params[0]
 
         if arg.type == ArgumentType.CAPSULE:
             arg_params.insert(0, '"' + arg.definition + '"')
 
-        next_param_base += len(arg_params)
-        params.append(arg_params)
-
         flags = []
+        byte_array = (not spec.c_bindings and array_length is not None
+                and arg.array is ArrayArgument.ARRAY
+                and arg.type in (ArgumentType.STRING, ArgumentType.SSTRING,
+                                 ArgumentType.USTRING)
+                and len(arg.derefs) == 1 and not arg.is_reference)
 
-        if arg.array is ArrayArgument.ARRAY:
+        if arg.array is ArrayArgument.ARRAY and not byte_array:
             flags.append('IS_ARRAY')
+            if array_length is not None and arg.type in (ArgumentType.CLASS, ArgumentType.MAPPED):
+                arg_params.insert(1, array_length)
 
         # Get the wrapper if explicitly asked for or we are going to keep a
         # reference to.  However if it is an encoded string then we will get
@@ -1715,7 +1847,16 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, is_method,
             if not (arg.type in (ArgumentType.ASCII_STRING, ArgumentType.LATIN1_STRING, ArgumentType.UTF8_STRING) and len(arg.derefs) == 1):
                 flags.append('GET_WRAPPER')
 
-        if arg.type is ArgumentType.ASCII_STRING:
+        if byte_array:
+            type_id = 'pybuffer'
+            _add_string_flags(flags, arg)
+            source_arg = data_arg + 'BufferObject'
+            sf.write(f'        PyObject *{source_arg} = SIP_NULLPTR;\n')
+            arg_params = [*arg_params[1:], source_arg]
+            buffer_setup.append(_byte_array_setup(spec, arg, data_arg,
+                    source_arg, array_length, array_size_type))
+
+        elif arg.type is ArgumentType.ASCII_STRING:
             type_id = 'str_ascii' if _add_string_flags(flags, arg) else 'char_ascii'
 
         elif arg.type is ArgumentType.LATIN1_STRING:
@@ -1761,6 +1902,9 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, is_method,
 
         elif arg.type is ArgumentType.UINT:
             type_id = 'uint'
+
+        elif arg.type is ArgumentType.SSIZE:
+            type_id = 'Py_ssize_t'
 
         elif arg.type is ArgumentType.SIZE:
             type_id = 'size_t'
@@ -1827,6 +1971,9 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, is_method,
 
             if arg.transfer is Transfer.TRANSFER_THIS:
                 flags.append('TRANSFER_THIS')
+                # The parser receives a PyObject** after the C++ pointer.
+                # Constructors already receive that output pointer.
+                arg_params.insert(1, '*sipOwner' if ctor is not None else 'sipOwner')
 
             if len(arg.derefs) != 0 and not arg.disallow_none:
                 flags.append('ALLOW_NONE')
@@ -1845,6 +1992,19 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, is_method,
             if arg.allow_none:
                 flags.append('ALLOW_NONE')
 
+        # ABI 14 reads auxiliary owners before the native value.
+        if type_id in ('str_ascii', 'str_latin1', 'str_utf8'):
+            owner_arg = data_arg + 'Keep'
+            arg_params.remove(owner_arg)
+            arg_params.insert(0, owner_arg)
+
+        if 'GET_WRAPPER' in flags:
+            wrapper_arg = data_arg + ('Wrapper' if arg.get_wrapper else 'Keep')
+            arg_params.remove(wrapper_arg)
+            arg_params.insert(0, wrapper_arg)
+
+        next_param_base += len(arg_params)
+        params.append(arg_params)
         fields = []
 
         if kw_args is not KwArgs.NONE and arg.name is not None and (kw_args is KwArgs.ALL or arg.default_value is not None):
@@ -1889,7 +2049,7 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, is_method,
     type_hint_arg = None
     type_hint_ref = 'NULL'
 
-    if overload is None or not overload.common.no_arg_parser:
+    if not signal_emitter and (overload is None or not overload.common.no_arg_parser):
         callable_name = _get_callable_name(scope,
                 None if overload is None else overload.common)
 
@@ -1933,7 +2093,7 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, is_method,
     else:
         args.append('&sipSelf')
 
-        if scope is None or overload.is_static:
+        if not handle_self or overload.is_static:
             args.append('sipType_Invalid')
             args.append('SIP_NULLPTR')
         else:
@@ -1949,6 +2109,49 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, is_method,
     args = ', '.join(args)
 
     sf.write(f'        if ({parser_name}({args}))\n')
+
+    if not buffer_setup:
+        return None
+
+    return (
+'''            struct sipScopedBuffer
+            {
+                Py_buffer view{};
+                ~sipScopedBuffer()
+                {
+                    if (view.obj)
+                        PyBuffer_Release(&view);
+                }
+            };
+
+''' + ''.join(buffer_setup))
+
+
+def _byte_array_setup(spec, arg, data_arg, source_arg, array_length,
+        array_size_type):
+    """ Acquire a buffer for the duration of a C++ invocation. """
+
+    cpp_type = fmt_argument_as_cpp_type(spec, arg, plain=True)
+    request = 'PyBUF_SIMPLE' if arg.is_const else 'PyBUF_WRITABLE'
+    view = data_arg + 'Buffer.view'
+
+    return f'''            sipScopedBuffer {data_arg}Buffer;
+            if ({source_arg})
+            {{
+                if ({source_arg} != Py_None && PyObject_GetBuffer({source_arg}, &{view}, {request}) < 0)
+                    return SIP_NULLPTR;
+
+                if (static_cast<Py_ssize_t>(static_cast<{array_size_type}>({view}.len)) != {view}.len)
+                {{
+                    PyErr_SetString(PyExc_OverflowError, "array length does not fit its C++ size argument");
+                    return SIP_NULLPTR;
+                }}
+
+                {data_arg} = static_cast<{cpp_type}>({view}.buf);
+                {array_length} = {view}.len;
+            }}
+
+'''
 
 
 def _g_attributes_table(sf, attrs, attrs_name, table_name, is_static=True):
@@ -1987,7 +2190,7 @@ def _g_callables_table(sf, members, scope, attrs, nr_callables=0):
         default_attr_type = 'c'
 
         if isinstance(scope, WrappedEnum):
-            scope_name = scope.fq_cpp_name
+            scope_name = scope.fq_cpp_name.as_word
         else:
             scope_name = scope.iface_file.fq_cpp_name.as_word
 
@@ -2236,6 +2439,168 @@ static int module_traverse(PyObject *mod, visitproc visit, void *arg)
 {
     return sipModuleTraverse(mod, visit, arg);
 }
+''')
+
+
+def _g_qt_class_info(sf, spec, klass, static_attrs):
+    """Expose static Qt metadata using an existing ABI v14 variable spec."""
+    if not any(plugin in spec.plugins for plugin in ('PyQt5', 'PyQt6')):
+        return
+
+    has_meta_object = klass.is_qobject and not klass.pyqt_no_qmetaobject
+    signals = [overload for member in klass.members
+            for overload in klass.overloads
+            if overload.common is member
+            and overload.pyqt_method_specifier is PyQtMethodSpecifier.SIGNAL]
+    if not has_meta_object and klass.pyqt_interface is None and not signals:
+        return
+
+    name = klass.iface_file.fq_cpp_name.as_word
+    signal_ref = 'nullptr'
+    if signals:
+        signal_ref = f'sipQtSignalInfo_{name}'
+        _g_qt_signals(sf, spec, klass, signals, signal_ref)
+    meta_object = ('&' + scoped_class_name(spec, klass) + '::staticMetaObject'
+            if has_meta_object else 'nullptr')
+    interface = (f'"{klass.pyqt_interface}"'
+            if klass.pyqt_interface is not None else 'nullptr')
+    sf.write(
+f'''
+
+static const sipQtClassInfo sipQtClassInfo_{name} = {{
+    {meta_object}, {interface}, {signal_ref}
+}};
+
+extern "C" {{
+static PyObject *sipQtClassInfoGet_{name}(sipModuleState *, void *, PyObject *);
+}}
+
+static PyObject *sipQtClassInfoGet_{name}(sipModuleState *, void *, PyObject *)
+{{
+    return PyCapsule_New(const_cast<sipQtClassInfo *>(&sipQtClassInfo_{name}),
+            SIP_QT_CLASS_INFO_CAPSULE, nullptr);
+}}
+
+static const sipVariableSpec sipQtClassInfoAttr_{name} = {{
+    .type_id = sipType_pyobject,
+    .flags = SIP_WV_RO,
+    .get_code = sipQtClassInfoGet_{name},
+}};
+''')
+    static_attrs.append(('v', '_sip_qt_class_info', 'variable',
+            f'&sipQtClassInfoAttr_{name}'))
+
+
+def _g_qt_signals(sf, spec, klass, signals, array_name):
+    emitters = {}
+    for signal in signals:
+        args = signal.cpp_signature.args
+        if args and args[-1].default_value is not None:
+            emitters.setdefault(signal.cpp_name, []).append(signal)
+
+    for name, overloads in emitters.items():
+        _g_qt_signal_emitter(sf, spec, klass, name, overloads)
+
+    sf.write(f'\nstatic const sipQtSignalInfo {array_name}[] = {{\n')
+    for signal in signals:
+        arguments = []
+        stripped = False
+        for original in signal.cpp_signature.args:
+            arg = copy(original)
+            if arg.is_const and (arg.is_reference or not arg.derefs):
+                arg.is_const = False
+                arg.is_reference = False
+            stripped |= bool(arg.scopes_stripped)
+            arguments.append(arg)
+
+        args = ','.join(fmt_argument_as_cpp_type(spec, arg,
+                scope=klass.iface_file, strip=arg.scopes_stripped or STRIP_GLOBAL)
+                for arg in arguments)
+        signature = f'{signal.cpp_name}({args})'
+        if stripped:
+            full_args = ','.join(fmt_argument_as_cpp_type(spec, arg,
+                    scope=klass.iface_file, strip=STRIP_GLOBAL)
+                    for arg in arguments)
+            signature += f'|({full_args})'
+
+        sf.write(f'    {{"{signature}", ')
+        if spec.bindings.docstrings:
+            sf.write('"')
+            docstring = signal.docstring
+            if docstring is None:
+                sf.write('\\1')
+                g_overload_type_hint(sf, spec, signal)
+            else:
+                if docstring.signature is DocstringSignature.PREPENDED:
+                    g_overload_type_hint(sf, spec, signal)
+                    sf.write('\\n')
+                sf.write(get_docstring_text(docstring))
+                if docstring.signature is DocstringSignature.APPENDED:
+                    sf.write('\\n')
+                    g_overload_type_hint(sf, spec, signal)
+            sf.write('"')
+        else:
+            sf.write('nullptr')
+        emitter = ('emit_' + klass.iface_file.fq_cpp_name.as_word + '_' + signal.cpp_name
+                if signal in emitters.get(signal.cpp_name, ()) else 'nullptr')
+        sf.write(f', {emitter}}},\n')
+
+    sf.write('    {nullptr, nullptr, nullptr}\n};\n')
+
+
+def _g_qt_signal_emitter(sf, spec, klass, name, overloads):
+    emitter = 'emit_' + klass.iface_file.fq_cpp_name.as_word + '_' + name
+    cpp_name = scoped_class_name(spec, klass)
+    max_args = max(len(overload.py_signature.args) for overload in overloads)
+    sf.write(
+f'''\n
+extern "C" {{
+static int {emitter}(sipModuleState *, void *, PyObject *);
+}}
+
+static int {emitter}(sipModuleState *sipMS, void *cpp, PyObject *args)
+{{
+    Py_ssize_t sipNrArgs = PyTuple_Size(args);
+    if (sipNrArgs < 0)
+        return -1;
+
+    if (sipNrArgs > {max_args})
+    {{
+        PyErr_SetString(PyExc_TypeError, "arguments do not match Qt signal {name}");
+        return -1;
+    }}
+
+    // The caller owns an immutable tuple for the duration of the emission.
+    PyObject *sipArgs[{max(1, max_args)}];
+    for (Py_ssize_t i = 0; i < sipNrArgs; ++i)
+        sipArgs[i] = PyTuple_GetItem(args, i);
+    PyObject *sipPState = nullptr;
+    PyObject **sipPStateP = &sipPState;
+    PyObject *sipKwdNames = nullptr;
+    PyObject *sipSelf = nullptr;
+    auto *sipCpp = static_cast<{cpp_name} *>(cpp);
+''')
+
+    for index, overload in enumerate(overloads):
+        sf.write('    {\n')
+        buffer_setup = _g_arg_parser(sf, spec, klass, overload.py_signature,
+                index, ctor=None, is_method=False, overload=overload,
+                signal_emitter=True)
+        sf.write('        {\n')
+        if buffer_setup:
+            sf.write(buffer_setup)
+        sf.write(f'            Py_BEGIN_ALLOW_THREADS\n            sipCpp->{name}(')
+        g_call_args(sf, spec, overload.cpp_signature, overload.py_signature)
+        sf.write(');\n            Py_END_ALLOW_THREADS\n')
+        g_delete_temporaries(sf, spec, overload.py_signature)
+        sf.write('            Py_XDECREF(sipPState);\n            return 0;\n        }\n    }\n')
+
+    sf.write(
+f'''    Py_XDECREF(sipPState);
+    if (!PyErr_Occurred())
+        PyErr_SetString(PyExc_TypeError, "arguments do not match Qt signal {name}");
+    return -1;
+}}
 ''')
 
 
@@ -2590,8 +2955,12 @@ def _g_variables_table(sf, spec, attrs, static_variables, scope=None):
                 module.next_key -= 1
 
             if scope is None or variable.is_static:
-                cpp_name = variable.fq_cpp_name.as_cpp
-                address = '&' + cpp_name
+                # An accessor can expose a value that has no native address.
+                if read_only and variable.get_code is not None:
+                    address = 'NULL'
+                else:
+                    cpp_name = variable.fq_cpp_name.as_cpp
+                    address = '&' + cpp_name
             else:
                 address = 'sipVariableAddrGetter_' + v_ref
                 need_sip_cpp = True
@@ -2844,6 +3213,12 @@ def _get_class_flags(module, klass, py_debug):
 
     if module.call_super_init:
         flags.append('SIP_TYPE_SUPER_INIT')
+
+    if klass.pyqt_flags & 0x01:
+        flags.append('SIP_TYPE_QT_FLAGS')
+
+    if klass.is_qobject:
+        flags.append('SIP_TYPE_QOBJECT')
 
     flags.append('SIP_TYPE_NAMESPACE' if klass.iface_file.type is IfaceFileType.NAMESPACE else 'SIP_TYPE_CLASS')
 

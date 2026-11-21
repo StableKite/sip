@@ -96,6 +96,7 @@ public:
 int operator-(int lhs, const Reverse &rhs);
 int operator+(int lhs, const Reverse &rhs);
 int operator*(int lhs, const Reverse &rhs);
+double operator*(double lhs, const Reverse &rhs);
 int operator/(int lhs, const Reverse &rhs);
 int operator%(int lhs, const Reverse &rhs);
 int operator&(int lhs, const Reverse &rhs);
@@ -112,6 +113,7 @@ int Klass::s_attr_int = 0;
 int operator-(int lhs, const Reverse &rhs) {return lhs - rhs.attr_int;}
 int operator+(int lhs, const Reverse &rhs) {return lhs + rhs.attr_int;}
 int operator*(int lhs, const Reverse &rhs) {return lhs * rhs.attr_int;}
+double operator*(double lhs, const Reverse &rhs) {return lhs * rhs.attr_int;}
 int operator/(int lhs, const Reverse &rhs) {return lhs / rhs.attr_int;}
 int operator%(int lhs, const Reverse &rhs) {return lhs % rhs.attr_int;}
 int operator&(int lhs, const Reverse &rhs) {return lhs & rhs.attr_int;}
@@ -213,7 +215,8 @@ public:
 
 int operator-(int lhs, const Reverse &rhs);
 int operator+(int lhs, const Reverse &rhs);
-int operator*(int lhs, const Reverse &rhs);
+int operator*(int lhs /Constrained/, const Reverse &rhs);
+double operator*(double lhs, const Reverse &rhs);
 int operator/(int lhs, const Reverse &rhs);
 int operator%(int lhs, const Reverse &rhs);
 int operator&(int lhs, const Reverse &rhs);

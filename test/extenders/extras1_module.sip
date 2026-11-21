@@ -87,3 +87,21 @@ public:
 
     operator Klass() const;
 };
+
+
+%If (SIP_ABI_14 -)
+PyObject *scope_of_imported_enum(bool by_name,
+        NameSpace::Kind kind=NameSpace::Example);
+%MethodCode
+    sipTypeID type_id = a0 ? sipFindType("NameSpace::Kind")
+            : sipType_NameSpace_Kind;
+    if (type_id == sipType_Invalid)
+        sipRes = NULL;
+    else
+    {
+        sipTypeID scope_id = sipTypeScope(type_id);
+        sipRes = scope_id != sipType_Invalid
+                ? (PyObject *)sipGetPyTypeRef(scope_id) : NULL;
+    }
+%End
+%End

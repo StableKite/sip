@@ -395,15 +395,15 @@ def py_scope(scope):
 
 
 def pyqt5_supported(spec):
-    """ Return True if the PyQt5 plugin was specified. """
+    """ Return True if the legacy PyQt5 plugin should be generated. """
 
-    return 'PyQt5' in spec.plugins
+    return spec.bindings.project.abi_version[0] < 14 and 'PyQt5' in spec.plugins
 
 
 def pyqt6_supported(spec):
-    """ Return True if the PyQt6 plugin was specified. """
+    """ Return True if the legacy PyQt6 plugin should be generated. """
 
-    return 'PyQt6' in spec.plugins
+    return spec.bindings.project.abi_version[0] < 14 and 'PyQt6' in spec.plugins
 
 
 def release_gil(gil_action, bindings):

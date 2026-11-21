@@ -816,10 +816,20 @@ PyObject *sip_wrap_instance(sipModuleState *ms, void *cpp,
 
     sipSipModuleState *sms = ms->sip_module_state;
 
-    if (args == NULL)
-        args = sms->empty_tuple;
-
-    PyObject *self = py_type->tp_new(py_type, args, NULL);
+    PyObject *self;
+    if (args == NULL && py_type->tp_new == SimpleWrapper_new)
+    {
+        /*
+         * The native instance already exists.  A type that cannot be
+         * constructed from Python can still be returned by a C++ factory.
+         */
+        self = py_type->tp_alloc(py_type, 0);
+    }
+    else
+    {
+        self = py_type->tp_new(py_type,
+                (args != NULL ? args : sms->empty_tuple), NULL);
+    }
     if (self == NULL)
         return NULL;
 

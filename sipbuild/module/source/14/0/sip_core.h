@@ -73,6 +73,8 @@ void *sip_api_malloc(size_t nbytes);
 /*
  * These are not part of the SIP API but are used within the SIP module.
  */
+int sip_call_type_event_handlers(sipSipModuleState *sms, PyTypeObject *type,
+        sipEventType event);
 int sip_add_attrs_to_type(sipModuleState *ms, PyTypeObject *py_type,
         const sipAttrGroupSpec *attrs, const sipTypeSpec *ts);
 void sip_add_to_parent(sipWrapper *self, sipWrapper *owner);
@@ -88,6 +90,9 @@ int sip_dict_set_and_discard(PyObject *dict, const char *name, PyObject *obj);
 void *sip_get_complex_cpp_ptr(sipModuleState *ms, PyObject *w_inst,
         sipTypeID type_id);
 void *sip_get_cpp_ptr(PyObject *w_inst, PyTypeObject *target_type);
+sipTypeID sip_get_absolute_type_id(sipSipModuleState *sms, PyObject *module,
+        sipTypeID local_id);
+sipTypeID sip_get_wrapped_type_id(sipSipModuleState *sms, PyTypeObject *type);
 void *sip_get_final_address(sipSipModuleState *sms, PyTypeObject *py_type,
         void *cpp);
 sipConvertFromFunc sip_get_from_convertor(PyTypeObject *py_type,

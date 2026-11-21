@@ -18,4 +18,9 @@ public:
     int int_attr;
 };
 
+namespace NameSpace
+{
+    enum Kind { Example };
+}
+
 #endif

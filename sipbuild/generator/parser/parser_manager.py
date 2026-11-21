@@ -1946,7 +1946,7 @@ class ParserManager:
                     # The major number is supported.
                     if minor is not None and min_minor is not None and minor < min_minor:
                         # We have specified a minor number which is too old.
-                        raise UserException(f"ABI v{major.minor} is being targeted but the {spec.module.fq_py_name.name} module requires v{min_major}.{min_minor}")
+                        raise UserException(f"ABI v{major}.{minor} is being targeted but the {spec.module.fq_py_name.name} module requires v{min_major}.{min_minor}")
 
                     break
             else:
@@ -1965,10 +1965,7 @@ class ParserManager:
         if major == 13 and minor < 1:
             self._deprecated_target_abi(major, minor, '13.1')
 
-        if major >= 14:
-            # ABI v14 and later don't use plugins.
-            spec.plugins = []
-        else:
+        if major < 14:
             # ABIs prior to v14 always use the GIL.
             self.gil_use = GILUse.USED
 

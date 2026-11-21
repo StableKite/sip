@@ -15,7 +15,7 @@ from ..python_slots import (is_hash_return_slot, is_int_return_slot,
         is_void_return_slot, is_zero_arg_slot, reflected_slot)
 from ..scoped_name import ScopedName
 from ..specification import (AccessSpecifier, Argument, ArgumentType,
-        ArrayArgument, CachedName, ClassKey, Constructor, EnumBaseType,
+        ArrayArgument, ClassKey, Constructor, EnumBaseType,
         IfaceFileType, IndexedClassList, MappedType, Member,
         PyQtMethodSpecifier, PySlot, Signature, Transfer, ValueType,
         VirtualHandler, VirtualOverload, VisibleMember, WrappedClass)
@@ -169,7 +169,7 @@ def resolve(spec, modules):
             exception_mod.nr_exceptions += 1
 
     # For PyQt6 mark all enum interface files as being used.
-    if 'PyQt6' in spec.plugins:
+    if abi_version[0] < 14 and 'PyQt6' in spec.plugins:
         for enum in spec.enums:
             if enum.module is spec.module:
                 _enum_iface_file_is_used(enum, spec.module)
@@ -542,7 +542,7 @@ def _move_slot_v14(spec, error_log, global_slot, overload, arg_module,
     # Fix the member name if it is a reflected slot.
     member_name = reflected_slot(global_slot.py_slot)
     if member_name is not None and is_second:
-        member_name = CachedName(member_name)
+        member_name = cached_name(spec, member_name)
         overload.is_reflected = True
     else:
         member_name = global_slot.py_name
@@ -565,7 +565,10 @@ def _move_slot_v14(spec, error_log, global_slot, overload, arg_module,
 
     arg_overloads.append(overload)
 
-    # Remove the self argument.
+    # An auto-generated slot such as __matmul__ can share the original
+    # signature with __mul__. Give each relocated overload its own arguments.
+    overload.py_signature = copy(overload.py_signature)
+    overload.py_signature.args = list(overload.py_signature.args)
     del overload.py_signature.args[1 if is_second else 0]
 
     # Remove from the list.

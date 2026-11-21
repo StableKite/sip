@@ -38,6 +38,7 @@ static PyObject *meth_transferback(PyObject *mod, PyObject *args);
 static PyObject *meth_transferto(PyObject *mod, PyObject *args);
 static PyObject *meth_wrapinstance(PyObject *mod, PyObject *args);
 static PyObject *meth_unwrapinstance(PyObject *mod, PyObject *args);
+static PyObject *meth_wrapped_type_id(PyObject *mod, PyObject *arg);
 
 
 PyMethodDef sipSipModuleMethods[] = {
@@ -54,6 +55,7 @@ PyMethodDef sipSipModuleMethods[] = {
     {"transferto", meth_transferto, METH_VARARGS, NULL},
     {"wrapinstance", meth_wrapinstance, METH_VARARGS, NULL},
     {"unwrapinstance", meth_unwrapinstance, METH_VARARGS, NULL},
+    {"_wrapped_type_id", meth_wrapped_type_id, METH_O, NULL},
     {0}
 };
 
@@ -61,6 +63,33 @@ PyMethodDef sipSipModuleMethods[] = {
 /* Forward declarations. */
 static void clear_wrapper(sipSipModuleState *sms, PyObject *w_inst);
 static void print_object(const char *label, PyObject *obj);
+
+
+/*
+ * Return the absolute SIP type ID of a generated wrapper or a Python
+ * subclass.  Resolve the defining module by identity, because unrelated
+ * modules may wrap C++ types with the same name.
+ */
+static PyObject *meth_wrapped_type_id(PyObject *smod, PyObject *arg)
+{
+    sipSipModuleState *sms = sip_get_sip_module_state(smod);
+    if (!PyType_Check(arg))
+    {
+        PyErr_SetString(PyExc_TypeError, "expected a Python type");
+        return NULL;
+    }
+
+    sipTypeID type_id = sip_get_wrapped_type_id(sms, (PyTypeObject *)arg);
+    if (type_id == sipType_Invalid)
+    {
+        if (PyErr_Occurred())
+            return NULL;
+
+        Py_RETURN_NONE;
+    }
+
+    return PyLong_FromUnsignedLong(type_id);
+}
 
 
 /*

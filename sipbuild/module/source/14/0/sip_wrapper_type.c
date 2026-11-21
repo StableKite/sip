@@ -197,7 +197,8 @@ static int WrapperType_init(sipWrapperType *self, PyObject *args,
 
     self->user_type = TRUE;
 
-    return 0;
+    return sip_call_type_event_handlers(sms, (PyTypeObject *)self,
+            sipEventPythonSubclass);
 }
 
 

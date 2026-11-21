@@ -216,3 +216,7 @@ def test_typed_set_member(module, typed_members):
 
 def test_typed_var_member(module, typed_members):
     typed_members.typed_var = module.EnumClass.ClassTypedEnum.ClassTypedMember
+
+
+def test_nested_enum_operator(module):
+    assert module.EnumClass.ClassScopedEnum.ClassScopedMember + 3 == 73

@@ -240,6 +240,7 @@ typedef enum
     sipEventFinalisingAddress,  /* Before wrapping a C/C++ instance. */
     sipEventFinalisingType,     /* When finalising a wrapper type. */
     sipEventWrappedInstance,    /* After wrapping a C/C++ instance. */
+    sipEventPythonSubclass,     /* When a Python subclass has been created. */
 } sipEventType;
 
 /*
@@ -924,6 +925,38 @@ struct _sipImportedModuleSpec {
  * and functions that can be used by generated code.  Note that the offset of
  * each field doesn't change if the module configuration options do change.
  */
+/*
+ * Optional wrapped-type introspection for native users of the SIP runtime.
+ * The separately versioned capsule keeps the ABI 14.0 function table intact.
+ */
+#define SIP_WRAPPED_TYPE_API_CAPSULE "_C_WRAPPED_TYPE_API_v2"
+
+typedef struct
+{
+    sipTypeID (*type_of)(sipModuleState *ms, PyTypeObject *type);
+    const sipTypeSpec *(*type_spec)(sipModuleState *ms, sipTypeID id);
+    PyObject *(*defining_module_ref)(sipModuleState *ms, sipTypeID id);
+} sipWrappedTypeAPI;
+
+#define SIP_QT_CLASS_INFO_ATTR "_sip_qt_class_info"
+#define SIP_QT_CLASS_INFO_CAPSULE "sip.qt_class_info.v2"
+
+typedef int (*sipQtSignalEmitFunc)(sipModuleState *, void *, PyObject *);
+
+typedef struct
+{
+    const char *signature;
+    const char *docstring;
+    sipQtSignalEmitFunc emit_signal;
+} sipQtSignalInfo;
+
+typedef struct
+{
+    const void *meta_object;
+    const char *interface_name;
+    const sipQtSignalInfo *signal_table;
+} sipQtClassInfo;
+
 struct _sipABISpec {
     size_t module_state_size;   /* The sizeof the wrapped module state */
 
@@ -1362,6 +1395,8 @@ struct _sipABISpec {
 #define SIP_TYPE_ALLOW_NONE 0x0020  /* If the type can handle None. */
 #define SIP_TYPE_SUPER_INIT 0x0040  /* If the instance's super init should be called. */
 #define SIP_TYPE_USER_STATE 0x0080  /* If the convertors need user state. */
+#define SIP_TYPE_QT_FLAGS   0x0100  /* If the class wraps a QFlags value. */
+#define SIP_TYPE_QOBJECT    0x0200  /* If the class derives from QObject. */
 
 
 #if defined(SIP_CONFIGURATION_PyEnums)

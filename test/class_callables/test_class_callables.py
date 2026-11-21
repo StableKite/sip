@@ -207,6 +207,7 @@ def test_slot_radd(reverse):
 def test_slot_rmul(reverse):
     reverse.set_attr_int(10)
     assert 5 * reverse == 50
+    assert 0.25 * reverse == 2.5
 
 def test_slot_rtruediv(reverse):
     reverse.set_attr_int(10)

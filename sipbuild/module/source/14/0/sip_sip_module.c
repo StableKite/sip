@@ -37,6 +37,15 @@ static int module_clear(PyObject *module);
 static int module_exec(PyObject *module);
 static void module_free(void *module_ptr);
 static int module_traverse(PyObject *module, visitproc visit, void *arg);
+static sipTypeID wrapped_type_of(sipModuleState *ms, PyTypeObject *type);
+static const sipTypeSpec *wrapped_type_spec(sipModuleState *ms, sipTypeID id);
+static PyObject *wrapped_type_defining_module_ref(sipModuleState *ms, sipTypeID id);
+
+static const sipWrappedTypeAPI wrapped_type_api = {
+    wrapped_type_of,
+    wrapped_type_spec,
+    wrapped_type_defining_module_ref,
+};
 
 
 /* The standalone sip module definition. */
@@ -91,6 +100,11 @@ static int module_exec(PyObject *smod)
     if (sip_sip_module_init(sms, smod) < 0)
         return -1;
 
+    if (PyModule_Add(smod, SIP_WRAPPED_TYPE_API_CAPSULE,
+                PyCapsule_New((void *)&wrapped_type_api,
+                        SIP_WRAPPED_TYPE_API_CAPSULE, NULL)) < 0)
+        return -1;
+
     /* Publish the first stage bootstrap function. */
     PyObject *api_obj = PyCapsule_New((void *)bootstrap, "_C_BOOTSTRAP", NULL);
 
@@ -98,6 +112,29 @@ static int module_exec(PyObject *smod)
     Py_XDECREF(api_obj);
 
     return rc;
+}
+
+
+static sipTypeID wrapped_type_of(sipModuleState *ms, PyTypeObject *type)
+{
+    return sip_get_wrapped_type_id(ms->sip_module_state, type);
+}
+
+
+static const sipTypeSpec *wrapped_type_spec(sipModuleState *ms, sipTypeID id)
+{
+    PyObject *module;
+    const sipTypeSpec *spec = sip_get_type_spec(ms, id, &module);
+    if (spec != NULL)
+        Py_DECREF(module);
+
+    return spec;
+}
+
+
+static PyObject *wrapped_type_defining_module_ref(sipModuleState *ms, sipTypeID id)
+{
+    return sip_get_type_detail(ms, id, NULL, NULL);
 }
 
 

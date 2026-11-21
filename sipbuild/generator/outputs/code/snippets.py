@@ -343,7 +343,7 @@ f'''#ifndef _{module_name}API_H
     _declare_limited_api(sf, project.py_debug, module=module)
     _include_sip_h(sf, module)
 
-    if pyqt5_supported(spec) or pyqt6_supported(spec):
+    if _uses_qt(spec):
         sf.write(
 '''
 #include <QMetaType>
@@ -443,9 +443,9 @@ def g_type_init_body(sf, spec, klass):
         else:
             error_flag = old_error_flag = False
 
-        backend.g_arg_parser(sf, spec, klass, ctor.py_signature, signature_nr,
-                ctor=ctor)
-        _ctor_call(sf, spec, klass, ctor, error_flag, old_error_flag)
+        arg_setup = backend.g_arg_parser(sf, spec, klass, ctor.py_signature,
+                signature_nr, ctor=ctor)
+        _ctor_call(sf, spec, klass, ctor, error_flag, old_error_flag, arg_setup)
 
         sf.write('    }\n')
         signature_nr += 1
@@ -802,7 +802,7 @@ def g_ctor_type_hint(sf, spec, klass, ctor):
     sf.write(py_name + signature)
 
 
-def _ctor_call(sf, spec, klass, ctor, error_flag, old_error_flag):
+def _ctor_call(sf, spec, klass, ctor, error_flag, old_error_flag, arg_setup):
     """ Generate a single constructor call. """
 
     bindings = spec.bindings
@@ -813,6 +813,9 @@ def _ctor_call(sf, spec, klass, ctor, error_flag, old_error_flag):
     scope_s = scoped_class_name(spec, klass)
 
     sf.write('        {\n')
+
+    if arg_setup:
+        sf.write(arg_setup)
 
     if ctor.premethod_code is not None:
         sf.write('\n')
@@ -1445,6 +1448,10 @@ def _convert_to_definitions(sf, spec, scope):
     sf.write('}\n')
 
 
+def _uses_qt(spec):
+    return 'PyQt5' in spec.plugins or 'PyQt6' in spec.plugins
+
+
 def _class_functions(sf, spec, klass):
     """ Generate the member functions for a class. """
 
@@ -1484,7 +1491,7 @@ def _class_functions(sf, spec, klass):
         public_dtor = klass.dtor is AccessSpecifier.PUBLIC
 
         if klass.can_create or public_dtor:
-            if (pyqt5_supported(spec) or pyqt6_supported(spec)) and klass.is_qobject and public_dtor:
+            if _uses_qt(spec) and klass.is_qobject and public_dtor:
                 need_ptr = need_cast_ptr = True
             elif klass.has_shadow:
                 need_ptr = need_state = True
@@ -1518,7 +1525,7 @@ def _class_functions(sf, spec, klass):
             if rel_gil:
                 sf.write('    Py_BEGIN_ALLOW_THREADS\n\n')
 
-            if (pyqt5_supported(spec) or pyqt6_supported(spec)) and klass.is_qobject and public_dtor:
+            if _uses_qt(spec) and klass.is_qobject and public_dtor:
                 # QObjects should only be deleted in the threads that they
                 # belong to.
                 sf.write(
@@ -1874,7 +1881,9 @@ def _shadow_code(sf, spec, klass):
         sf.write('}\n')
 
     # The meta methods if required.
-    if (pyqt5_supported(spec) or pyqt6_supported(spec)) and klass.is_qobject:
+    if project.abi_version[0] >= 14 and klass.is_qobject and _uses_qt(spec):
+        backend.g_qt_virtuals(sf, spec, klass)
+    elif (pyqt5_supported(spec) or pyqt6_supported(spec)) and klass.is_qobject:
         module_name = spec.module.py_name
         type_ref = backend.get_type_ref(klass)
 
@@ -3202,7 +3211,7 @@ f'''    class sip{protected_klass_base_name} : public {protected_klass_base_name
         sf.write(f'    {virtual_s}~sip{klass_name}(){throw_specifier};\n')
 
     # The metacall methods if required.
-    if (pyqt5_supported(spec) or pyqt6_supported(spec)) and klass.is_qobject:
+    if _uses_qt(spec) and klass.is_qobject:
         sf.write(
 '''
     int qt_metacall(QMetaObject::Call, int, void **) SIP_OVERRIDE;
@@ -3444,6 +3453,7 @@ def g_function_body(sf, spec, scope, overload, signature_nr,
 
     # In case we have to fiddle with it.
     py_signature_adjusted = False
+    arg_setup = None
 
     # ABI v14 handles slots as normal callables.
     py_slot = None if project.abi_version[0] >= 14 else overload.common.py_slot
@@ -3464,10 +3474,11 @@ def g_function_body(sf, spec, scope, overload, signature_nr,
                 is_method=is_method, overload=overload)
 
     elif not is_int_arg_slot(py_slot) and not is_zero_arg_slot(py_slot):
-        backend.g_arg_parser(sf, spec, scope, py_signature, signature_nr,
-                is_method=is_method, overload=overload)
+        arg_setup = backend.g_arg_parser(sf, spec, scope, py_signature,
+                signature_nr, is_method=is_method, overload=overload)
 
-    _function_call(sf, spec, scope, overload, dereferenced, original_scope)
+    _function_call(sf, spec, scope, overload, dereferenced, original_scope,
+            arg_setup)
 
     sf.write('    }\n')
 
@@ -3858,7 +3869,8 @@ def _needs_heap_copy(arg, using_copy_ctor=True):
     return False
 
 
-def _function_call(sf, spec, scope, overload, dereferenced, original_scope):
+def _function_call(sf, spec, scope, overload, dereferenced, original_scope,
+        arg_setup):
     """ Generate a function call. """
 
     bindings = spec.bindings
@@ -3883,6 +3895,9 @@ def _function_call(sf, spec, scope, overload, dereferenced, original_scope):
 ''')
 
         return
+
+    if arg_setup:
+        sf.write(arg_setup)
 
     # Save the full result type as we may want to fiddle with it.
     saved_result_is_const = result.is_const

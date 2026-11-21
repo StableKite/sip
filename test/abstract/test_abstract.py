@@ -40,3 +40,12 @@ def test_concrete_py_instantiation(module):
             return 20
 
     assert Klass().get_value() == 20
+
+
+def test_wrap_factory_value(module):
+    with pytest.raises(TypeError):
+        module.FactoryValue()
+
+    result = module.FactoryValue.make()
+    assert type(result) is module.FactoryValue
+    assert result.value() == 42

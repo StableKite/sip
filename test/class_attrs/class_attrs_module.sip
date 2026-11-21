@@ -24,12 +24,15 @@ private:
 class Klass
 {
 public:
+    enum Mode {Active};
+
     Klass() : attr(0), class_attr(0) {}
 
     static int s_attr;
     static int get_s_attr() {return s_attr;}
 
     static int s_attr_with_code;
+    static PyObject *declaring_type;
 
     int attr;
     int get_attr() {return attr;}
@@ -45,6 +48,7 @@ public:
 %ModuleCode
 int Klass::s_attr = 0;
 int Klass::s_attr_with_code = 0;
+PyObject *Klass::declaring_type = nullptr;
 %End
 
 
@@ -59,10 +63,19 @@ public:
 class Klass
 {
 public:
+    enum Mode {Active};
+
     Klass();
 
     static int s_attr;
     static int get_s_attr();
+
+    static SIP_PYOBJECT declaring_type
+    {
+        %GetCode
+            sipPy = Py_NewRef(sipPyType);
+        %End
+    };
 
     static int s_attr_with_code
     {
@@ -84,4 +97,21 @@ public:
     Value *get_class_attr() const;
 
     Value value_attr;
+};
+
+
+bool is_user_type(SIP_PYTYPE type);
+%MethodCode
+    sipRes = sipIsUserType(reinterpret_cast<sipWrapperType *>(a0));
+%End
+
+
+%ModuleHeaderCode
+class Derived : public Klass {};
+%End
+
+class Derived : public Klass
+{
+public:
+    Derived();
 };

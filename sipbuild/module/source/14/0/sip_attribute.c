@@ -181,9 +181,10 @@ PyObject *sip_mod_con_getattro(sipModuleState *ms, PyObject *self,
      * take precedence over any attributes set by the user.
      */
     attr_spec = sip_get_attribute_spec(utf8_name, attrs_static_variables);
+    PyTypeObject *binding_type = PyType_Check(self) ? (PyTypeObject *)self : NULL;
 
     if (attr_spec != NULL)
-        return sip_variable_get(ms, self, attr_spec, NULL);
+        return sip_variable_get(ms, NULL, attr_spec, binding_type);
 
     /* Get any extension attribute. */
     const sipAttrSpec *x_attr_spec = NULL;
@@ -196,7 +197,7 @@ PyObject *sip_mod_con_getattro(sipModuleState *ms, PyObject *self,
             return NULL;
 
         if (x_attr_spec != NULL && sipAttrIsStaticVariable(x_attr_spec))
-            return sip_variable_get(x_ms, self, x_attr_spec, NULL);
+            return sip_variable_get(x_ms, NULL, x_attr_spec, binding_type);
     }
 
     /*

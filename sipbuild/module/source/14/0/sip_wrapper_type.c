@@ -16,6 +16,7 @@
 #include "sip_docstrings.h"
 #include "sip_simple_wrapper.h"
 #include "sip_sip_module.h"
+#include "sip_variable.h"
 #include "sip_wrapped_module.h"
 
 
@@ -135,10 +136,82 @@ static PyObject *WrapperType_getattro(sipWrapperType *self, PyObject *name)
         attrs_types = ((const sipClassTypeSpec *)ts)->attrs_types;
     }
 
-    return sip_mod_con_getattro(sip_get_module_state(self->defining_module),
-            (PyObject *)self, name, ((PyTypeObject *)self)->tp_dict,
-            attrs_static_variables, attrs_types,
-            sipTypeSpecIsNamespace(ts) ? ts : NULL);
+    sipModuleState *ms = sip_get_module_state(self->defining_module);
+    PyObject *attr = sip_mod_con_getattro(ms, (PyObject *)self, name,
+            ((PyTypeObject *)self)->tp_dict, attrs_static_variables,
+            attrs_types, sipTypeSpecIsNamespace(ts) ? ts : NULL);
+    if (attr != NULL || !PyErr_ExceptionMatches(PyExc_AttributeError))
+        return attr;
+
+    /* Python's normal MRO lookup cannot see unmaterialised C++ attributes. */
+    PyObject *original_error = PyErr_GetRaisedException();
+    PyObject *mro_name = PyUnicode_InternFromString("__mro__");
+    PyObject *mro = mro_name != NULL ?
+            PyType_Type.tp_getattro((PyObject *)self, mro_name) : NULL;
+    Py_XDECREF(mro_name);
+    if (mro == NULL)
+    {
+        Py_DECREF(original_error);
+        return NULL;
+    }
+
+    if (!PyTuple_Check(mro))
+    {
+        Py_DECREF(mro);
+        PyErr_SetRaisedException(original_error);
+        return NULL;
+    }
+
+    const char *utf8_name = PyUnicode_AsUTF8(name);
+    if (utf8_name == NULL)
+        goto done;
+
+    for (Py_ssize_t i = 1; i < PyTuple_GET_SIZE(mro); ++i)
+    {
+        PyObject *base = PyTuple_GET_ITEM(mro, i);
+        if (!PyObject_TypeCheck(base, ms->sip_module_state->wrapper_type_type))
+            continue;
+
+        sipWrapperType *wrapped = (sipWrapperType *)base;
+        if (wrapped->defining_module == NULL)
+            continue;
+
+        const sipTypeSpec *base_ts = sip_get_type_spec_from_wt(wrapped);
+        const sipAttrGroupSpec *base_types;
+        if (sipTypeSpecIsMapped(base_ts))
+        {
+            base_types = ((const sipMappedTypeSpec *)base_ts)->attrs_types;
+        }
+        else
+        {
+            const sipClassTypeSpec *cls = (const sipClassTypeSpec *)base_ts;
+            const sipAttrSpec *var = sip_get_attribute_spec(utf8_name,
+                    cls->attrs_static_variables);
+            if (var != NULL)
+            {
+                attr = sip_variable_get(sip_get_module_state(wrapped->defining_module),
+                        NULL, var, (PyTypeObject *)self);
+                goto done;
+            }
+
+            base_types = cls->attrs_types;
+        }
+
+        if (sip_get_attribute_spec(utf8_name, base_types) != NULL)
+        {
+            attr = PyObject_GetAttr(base, name);
+            goto done;
+        }
+    }
+
+    Py_DECREF(mro);
+    PyErr_SetRaisedException(original_error);
+    return NULL;
+
+done:
+    Py_DECREF(mro);
+    Py_DECREF(original_error);
+    return attr;
 }
 
 

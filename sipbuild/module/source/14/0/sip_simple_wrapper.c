@@ -234,7 +234,8 @@ static void SimpleWrapper_dealloc(PyObject *self)
 
     sipDeallocFunc dealloc = ((const sipClassTypeSpec *)sip_get_type_spec_from_wt(wt))->dealloc;
 
-    if (dealloc != NULL)
+    /* A native destructor or sip.delete() can already have detached it. */
+    if (dealloc != NULL && sw->data != NULL)
         dealloc(sw);
 
     /*

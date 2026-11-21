@@ -137,6 +137,17 @@ def test_class_attribute_with_code(module):
     module.Klass.s_attr_with_code = 5
     assert module.Klass.s_attr_with_code == 5
 
+def test_static_attribute_getter_receives_access_type(module):
+    class Subclass(module.Klass):
+        pass
+
+    assert module.Klass.declaring_type is module.Klass
+    assert Subclass.declaring_type is Subclass
+    assert module.Derived.declaring_type is module.Derived
+    assert not module.is_user_type(module.Klass)
+    assert module.is_user_type(Subclass)
+
+
 def test_class_attribute_invalid(module):
     klass = module.Klass()
     value = module.Klass()
@@ -158,3 +169,9 @@ def test_dir(klass):
 
 def test_dir_dynamic(klass):
     assert 'attr' in dir(klass)
+
+
+def test_inherited_nested_type_before_direct_lookup(module):
+    mode = module.Derived.Mode
+    assert mode.Active == module.Klass.Mode.Active
+    assert mode is module.Klass.Mode

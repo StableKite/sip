@@ -564,7 +564,11 @@ def _move_slot_v14(spec, error_log, global_slot, overload, arg_module,
 
     arg_overloads.append(overload)
 
-    # Remove the self argument.
+    # A declaration can share its signature with an automatically generated
+    # slot, for example operator* and __matmul__.  Each moved slot has its own
+    # self argument and must shorten its own Python signature.
+    overload.py_signature = copy(overload.py_signature)
+    overload.py_signature.args = list(overload.py_signature.args)
     del overload.py_signature.args[1 if is_second else 0]
 
     # Remove from the list.

@@ -2236,7 +2236,14 @@ static bool parse_vc_kwd_args(sipModuleState *ms, PyObject **p_state_p,
 
             if (fmt_spec->kw_name != NULL && PyUnicode_CompareWithASCIIString(kwd_name, fmt_spec->kw_name) == 0)
             {
-                arg_fmts[fmt_nr] = fmt_spec;
+                if (fmt_nr < nr_pos_args)
+                {
+                    failure.reason = Duplicate;
+                    failure.detail_str = fmt_spec->kw_name;
+                    goto release;
+                }
+
+                arg_fmts[arg_nr] = fmt_spec;
                 break;
             }
         }
@@ -2264,30 +2271,26 @@ static bool parse_vc_kwd_args(sipModuleState *ms, PyObject **p_state_p,
 
         const sipArgParserFormatSpec *fmt_spec = &ap_spec->formats[arg_nr];
 
-        /*
-         * If there is already a format then it must also be a keyword
-         * argument.
-         */
-        if (arg_fmts[arg_nr] != NULL)
-        {
-            failure.reason = Duplicate;
-            failure.detail_str = fmt_spec->kw_name;
-            goto release;
-        }
-
         arg_fmts[arg_nr] = fmt_spec;
 
         if (fmt_spec->type_id == sipType_ellipsis)
             break;
     }
 
-    /* Check all required arguments have a format. */
-    for (fmt_nr = 0; fmt_nr < ap_spec->nr_required; fmt_nr++)
-        if (arg_fmts[fmt_nr] == NULL)
+    /* Check required arguments not supplied positionally. */
+    for (fmt_nr = nr_pos_args; fmt_nr < ap_spec->nr_required; fmt_nr++)
+    {
+        const sipArgParserFormatSpec *fmt_spec = &ap_spec->formats[fmt_nr];
+        for (arg_nr = nr_pos_args; arg_nr < nr_args; arg_nr++)
+            if (arg_fmts[arg_nr] == fmt_spec)
+                break;
+
+        if (arg_nr == nr_args)
         {
             failure.reason = TooFew;
             goto release;
         }
+    }
 
     /*
      * Pass 1 checks the argument type and does cheap conversions with no side
@@ -2974,11 +2977,11 @@ static void parse_pass_2(sipModuleState *ms, PyObject *self, PyObject *arg,
 
         case sipType_str_ascii:
         {
-            PyObject **keep_p = (PyObject **)*fmt_params++;
+            const char **value_p = (const char **)*fmt_params++;
+            PyObject **keep_p = (PyObject **)*fmt_params;
 
             *keep_p = arg;
-
-            *(const char **)*fmt_params = sip_string_as_ascii_string(keep_p);
+            *value_p = sip_string_as_ascii_string(keep_p);
 
             if (PyErr_Occurred())
                 failure->reason = Raised;
@@ -2988,11 +2991,11 @@ static void parse_pass_2(sipModuleState *ms, PyObject *self, PyObject *arg,
 
         case sipType_str_latin1:
         {
-            PyObject **keep_p = (PyObject **)*fmt_params++;
+            const char **value_p = (const char **)*fmt_params++;
+            PyObject **keep_p = (PyObject **)*fmt_params;
 
             *keep_p = arg;
-
-            *(const char **)*fmt_params = sip_string_as_latin1_string(keep_p);
+            *value_p = sip_string_as_latin1_string(keep_p);
 
             if (PyErr_Occurred())
                 failure->reason = Raised;
@@ -3002,11 +3005,11 @@ static void parse_pass_2(sipModuleState *ms, PyObject *self, PyObject *arg,
 
         case sipType_str_utf8:
         {
-            PyObject **keep_p = (PyObject **)*fmt_params++;
+            const char **value_p = (const char **)*fmt_params++;
+            PyObject **keep_p = (PyObject **)*fmt_params;
 
             *keep_p = arg;
-
-            *(const char **)*fmt_params = sip_string_as_utf8_string(keep_p);
+            *value_p = sip_string_as_utf8_string(keep_p);
 
             if (PyErr_Occurred())
                 failure->reason = Raised;
@@ -3020,6 +3023,8 @@ static void parse_pass_2(sipModuleState *ms, PyObject *self, PyObject *arg,
 
             if (PyErr_Occurred())
                 failure->reason = Raised;
+
+            break;
         }
 
         case sipType_char_latin1:
@@ -3028,6 +3033,8 @@ static void parse_pass_2(sipModuleState *ms, PyObject *self, PyObject *arg,
 
             if (PyErr_Occurred())
                 failure->reason = Raised;
+
+            break;
         }
 
         case sipType_char_utf8:
@@ -3036,6 +3043,8 @@ static void parse_pass_2(sipModuleState *ms, PyObject *self, PyObject *arg,
 
             if (PyErr_Occurred())
                 failure->reason = Raised;
+
+            break;
         }
 
         default:

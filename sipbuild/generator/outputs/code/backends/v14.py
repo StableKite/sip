@@ -1012,7 +1012,7 @@ extern const sipABISpec *sipABI_{module_name};
 #define sipGetState                     sipABI_{module_name}->api_get_state
 #define sipGetTypeUserObjectRef         sipABI_{module_name}->api_get_type_user_object_ref
 #define sipGetUserObjectRef             sipABI_{module_name}->api_get_user_object_ref
-#define sipIsUserType(...)              sipABI_{module_name}->api_is_user_type
+#define sipIsUserType                   sipABI_{module_name}->api_is_user_type
 #define sipGetSimpleWrapperType()       sipABI_{module_name}->api_get_simple_wrapper_type(sipMS)
 #define sipGetVoidPtrType()             sipABI_{module_name}->api_get_void_ptr_type(sipMS)
 #define sipGetWrapperType()             sipABI_{module_name}->api_get_wrapper_type(sipMS)

@@ -10,6 +10,16 @@
 
 
 %ModuleHeaderCode
+#include <cstring>
+
+inline int encode_options(int base, int tens, int units)
+{
+    return 100 * base + 10 * tens + units;
+}
+
+inline int encoded_length(const char *text) {return text ? std::strlen(text) : -1;}
+inline unsigned char encoded_byte(char character) {return character;}
+
 inline int sum_bytes(const unsigned char *data, Py_ssize_t size)
 {
     int sum = 0;
@@ -20,6 +30,7 @@ inline int sum_bytes(const unsigned char *data, Py_ssize_t size)
 }
 
 inline Py_ssize_t echo_size(Py_ssize_t value) {return value;}
+inline Py_ssize_t echo_size_with_hook(Py_ssize_t value) {return value;}
 
 class Operand
 {
@@ -38,6 +49,11 @@ inline int operator*(int factor, const Operand &operand)
 inline int operator*(double factor, const Operand &operand)
 {
     return static_cast<int>(operand.value() * factor);
+}
+
+inline int operator*(const Operand &lhs, const Operand &rhs)
+{
+    return lhs.value() * rhs.value();
 }
 
 class FactoryOnly
@@ -110,8 +126,21 @@ class OwnedClass
 };
 
 
+int encode_options(int base, int tens = 2, int units = 3) /KeywordArgs="All"/;
+int encoded_length(const char *text /Encoding="ASCII"/);
+int latin1_length(const char *text /Encoding="Latin-1"/);
+%MethodCode
+    sipRes = encoded_length(a0);
+%End
+int utf8_length(const char *text /Encoding="UTF-8"/);
+%MethodCode
+    sipRes = encoded_length(a0);
+%End
+unsigned char encoded_byte(char character /Encoding="ASCII"/);
+
 int sum_bytes(const unsigned char *data /Array/, Py_ssize_t size /ArraySize/);
 Py_ssize_t echo_size(Py_ssize_t value);
+Py_ssize_t echo_size_with_hook(Py_ssize_t value) /PostHook=_sip_test_optional_hook/;
 
 class Operand
 {
@@ -121,6 +150,7 @@ public:
 
 int operator*(int factor /Constrained/, const Operand &operand);
 int operator*(double factor, const Operand &operand);
+int operator*(const Operand &lhs, const Operand &rhs) /__matmul__/;
 
 SIP_PYOBJECT get_argument_wrapper(OwnedClass *value /GetWrapper/);
 %MethodCode

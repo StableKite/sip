@@ -1807,9 +1807,15 @@ static sipTypeID sip_api_find_type(sipModuleState *ms, const char *type)
  */
 static void sip_api_call_hook(const char *hookname)
 {
-    /* Get the function hook. */
-    PyObject *hook = PyImport_ImportModuleAttrString("builtins", hookname);
-    if (hook == NULL)
+    PyObject *builtins = PyImport_ImportModule("builtins");
+    if (builtins == NULL)
+        return;
+
+    /* Hooks are optional.  Use a strong reference if one is installed. */
+    PyObject *hook;
+    int found = PyObject_GetOptionalAttrString(builtins, hookname, &hook);
+    Py_DECREF(builtins);
+    if (found <= 0)
         return;
 
     /* Call the hook and discard any result. */

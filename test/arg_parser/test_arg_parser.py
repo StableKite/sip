@@ -3,6 +3,8 @@
 # Copyright (c) 2026 Phil Thompson <phil@riverbankcomputing.com>
 
 
+import builtins
+
 import pytest
 
 
@@ -57,10 +59,46 @@ def test_signed_size(module):
     assert module.echo_size(-57) == -57
 
 
+def test_nonconsecutive_keyword_arguments(module):
+    assert module.encode_options(1, units=7) == 127
+    assert module.encode_options(units=7, base=1) == 127
+    assert module.encode_options(1, units=7, tens=8) == 187
+    with pytest.raises(TypeError):
+        module.encode_options(units=7, tens=8)
+    with pytest.raises(TypeError):
+        module.encode_options(1, 2, tens=8)
+
+
+def test_encoded_strings_and_characters(module):
+    assert module.encoded_length("hello") == 5
+    assert module.encoded_length(b"bytes") == 5
+    assert module.encoded_length(None) == -1
+    assert module.latin1_length("\u00e9") == 1
+    assert module.utf8_length("\u00e9") == 2
+    assert module.encoded_byte("A") == b"A"
+    with pytest.raises(UnicodeEncodeError):
+        module.encoded_length("\u00e9")
+
+
+def test_optional_post_hook(module, monkeypatch):
+    assert module.echo_size_with_hook(1) == 1
+    calls = []
+    monkeypatch.setattr(builtins, "_sip_test_optional_hook",
+            lambda: calls.append(True), raising=False)
+    assert module.echo_size_with_hook(2) == 2
+    assert calls == [True]
+
+
 def test_reflected_overloads(module):
     operand = module.Operand(6)
     assert 3 * operand == 18
     assert 0.5 * operand == 3
+
+
+def test_global_matrix_multiply_alias(module):
+    lhs, rhs = module.Operand(6), module.Operand(7)
+    assert lhs * rhs == 42
+    assert lhs @ rhs == 42
 
 
 def test_argument_wrapper(module):

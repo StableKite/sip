@@ -2419,6 +2419,10 @@ static int sip_api_enable_autoconversion(sipModuleState *ms,
 void *sip_get_final_address(sipSipModuleState *sms, PyTypeObject *py_type,
         void *cpp)
 {
+    /* Mapped values without a Python type cannot match type event handlers. */
+    if (py_type == NULL)
+        return cpp;
+
     /* Invoke any event handlers. */
     PyObject *mods = sms->module_list;
     Py_ssize_t i;

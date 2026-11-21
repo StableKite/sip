@@ -140,9 +140,9 @@ f'''    if (targetType == {sc_type_ref})
     def g_code(sf, code):
         """ Generate a block of handwritten code. """
 
-        # Provide a dummy module state if it is refered to in the code.
+        # Provide a dummy module state if it is referred to in the code.
         if is_used_in_code(code, 'sipMS'):
-            sf.write('            sipModuleState *sipMS = NULL;\n\n')
+            sf.write('            void *sipMS = SIP_NULLPTR;\n            (void)sipMS;\n\n')
 
         sf.write_code(code)
 
@@ -2984,7 +2984,7 @@ def _g_module_init_body(sf, spec):
     if is_used_in_code(module.preinitialisation_code, 'sipMS') or \
        is_used_in_code(module.initialisation_code, 'sipMS') or \
        is_used_in_code(module.postinitialisation_code, 'sipMS'):
-        sf.write('    sipModuleState *sipMS = NULL;\n')
+        sf.write('    void *sipMS = SIP_NULLPTR;\n    (void)sipMS;\n')
 
     if project.sip_module:
         sf.write('    PyObject *sip_sipmod, *sip_capiobj;\n\n')

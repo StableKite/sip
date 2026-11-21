@@ -37,16 +37,14 @@ static const uintptr_t hash_primes[] = {
 
 
 /* Forward declarations. */
-static void add_aliases(sipModuleState *ms, sipSimpleWrapper *obj, void *addr,
-        const sipTypeSpec *ts);
 static void add_object(sipModuleState *ms, sipSimpleWrapper *obj, void *addr);
 static sipHashEntry *find_hash_entry(sipObjectMap *om, void *key);
 static sipHashEntry *new_hash_table(uintptr_t size);
-static void remove_aliases(sipModuleState *ms, sipSimpleWrapper *obj,
-        void *addr, const sipTypeSpec *ts);
 static int remove_object(sipModuleState *ms, sipSimpleWrapper *obj,
         void *addr);
 static void reorganise_map(sipObjectMap *om);
+static void update_aliases(sipModuleState *ms, sipSimpleWrapper *obj,
+        void *addr, const sipClassTypeSpec *cts, bool adding);
 
 
 /*
@@ -161,88 +159,64 @@ next_object:
  */
 void sip_om_add_object(sipModuleState *ms, sipSimpleWrapper *obj)
 {
-    /* Add the object. */
+    sipWrapperType *wt = (sipWrapperType *)Py_TYPE((PyObject *)obj);
+    const sipClassTypeSpec *cts = (const sipClassTypeSpec *)sip_get_type_spec_from_wt(wt);
     add_object(ms, obj, obj->data);
-
-    /* Add any aliases. */
-    add_aliases(ms, obj, obj->data,
-            sip_get_type_spec_from_wt(
-                    (sipWrapperType *)Py_TYPE((PyObject *)obj)));
+    update_aliases(sip_get_module_state(wt->defining_module), obj, obj->data,
+            cts, true);
 }
 
 
 /*
- * Add an alias for any address that is different when cast to a super-type.
+ * Update aliases for each base sub-object at a different C/C++ address.
+ * Each cast uses the module and address of the current type in the hierarchy.
  */
-static void add_aliases(sipModuleState *ms, sipSimpleWrapper *obj, void *addr,
-        const sipTypeSpec *ts)
+static void update_aliases(sipModuleState *ms, sipSimpleWrapper *obj,
+        void *addr, const sipClassTypeSpec *cts, bool adding)
 {
-    const sipClassTypeSpec *cts = (const sipClassTypeSpec *)ts;
+    if (cts->supers == NULL || cts->cast == NULL)
+        return;
+
     const sipTypeID *supers = cts->supers;
-
-    /* See if there are any super-classes. */
-    if (supers != NULL)
+    sipTypeID sup_type_id;
+    do
     {
-        sipTypeID sup_type_id = *supers++;
-
+        sup_type_id = *supers++;
         PyObject *sup_mod;
-        const sipTypeSpec *sup_ts = sip_get_type_spec(ms, sup_type_id,
-                &sup_mod);
-        assert(sup_mod != NULL);
+        const sipTypeSpec *sup_ts = sip_get_type_spec(ms, sup_type_id, &sup_mod);
+        if (sup_ts == NULL)
+            return;
 
-        /* Recurse up the hierachy for the first super-class. */
-        add_aliases(sip_get_module_state(sup_mod), obj, addr, sup_ts);
-        Py_DECREF(sup_mod);
-
-        /*
-         * We only check for aliases for subsequent super-classes because the
-         * first one can never need one.
-         */
-        sipWrapperType *wt = (sipWrapperType *)Py_TYPE((PyObject *)obj);
-        sipCastFunc cast = ((const sipClassTypeSpec *)sip_get_type_spec_from_wt(
-                wt))->cast;
-
-        while (!sipTypeIDIsSentinel(sup_type_id))
+        const sipClassTypeSpec *sup_cts = (const sipClassTypeSpec *)sup_ts;
+        void *sup_addr = cts->cast(ms, addr, sup_cts);
+        if (sup_addr != NULL)
         {
-            sup_type_id = *supers++;
-
-            sup_ts = sip_get_type_spec(ms, sup_type_id, &sup_mod);
-            assert(sup_mod != NULL);
-
-            /* Recurse up the hierachy for the remaining super-classes. */
-            sipModuleState *sup_ms = sip_get_module_state(sup_mod);
-            add_aliases(sup_ms, obj, addr, sup_ts);
-
-            void *sup_addr = cast(sup_ms, addr,
-                    (const sipClassTypeSpec *)sup_ts);
-
             if (sup_addr != addr)
             {
-                sipSimpleWrapper *alias = sip_api_malloc(
-                        sizeof (sipSimpleWrapper));
-
-                /* Note that we silently ignore errors. */
-                if (alias != NULL)
+                if (adding)
                 {
-                    /*
-                     * An alias is basically a bit-wise copy of the Python
-                     * object but only to ensure the fields we are subverting
-                     * are in the right place.  An alias should never be passed
-                     * to the Python API.
-                     */
-                    *alias = *obj;
-
-                    alias->flags = (obj->flags & SIP_SHARE_MAP) | SIP_ALIAS;
-                    alias->data = obj;
-                    alias->next = NULL;
-
-                    add_object(ms, alias, sup_addr);
+                    sipSimpleWrapper *alias = sip_api_malloc(sizeof (sipSimpleWrapper));
+                    if (alias != NULL)
+                    {
+                        /* An alias is an object-map entry, not a Python object. */
+                        *alias = *obj;
+                        alias->flags = (obj->flags & SIP_SHARE_MAP) | SIP_ALIAS;
+                        alias->data = obj;
+                        alias->next = NULL;
+                        add_object(ms, alias, sup_addr);
+                    }
+                }
+                else
+                {
+                    remove_object(ms, obj, sup_addr);
                 }
             }
-
-            Py_DECREF(sup_mod);
+            update_aliases(sip_get_module_state(sup_mod), obj, sup_addr, sup_cts,
+                    adding);
         }
+        Py_DECREF(sup_mod);
     }
+    while (!sipTypeIDIsSentinel(sup_type_id));
 }
 
 
@@ -385,69 +359,15 @@ static void reorganise_map(sipObjectMap *om)
  */
 int sip_om_remove_object(sipModuleState *ms, sipSimpleWrapper *obj)
 {
-    /* Remove any aliases. */
-    remove_aliases(ms, obj, obj->data,
-            sip_get_type_spec_from_wt(
-                    (sipWrapperType *)Py_TYPE((PyObject *)obj)));
+    sipWrapperType *wt = (sipWrapperType *)Py_TYPE((PyObject *)obj);
+    const sipClassTypeSpec *cts = (const sipClassTypeSpec *)sip_get_type_spec_from_wt(wt);
+    update_aliases(sip_get_module_state(wt->defining_module), obj, obj->data,
+            cts, false);
 
-    /* Remove the object. */
     return remove_object(ms, obj, obj->data);
 }
 
 
-/*
- * Remove an alias for any address that is different when cast to a super-type.
- */
-static void remove_aliases(sipModuleState *ms, sipSimpleWrapper *obj,
-        void *addr, const sipTypeSpec *ts)
-{
-    const sipClassTypeSpec *cts = (const sipClassTypeSpec *)ts;
-    const sipTypeID *supers = cts->supers;
-
-    /* See if there are any super-classes. */
-    if (supers != NULL)
-    {
-        sipTypeID sup_type_id = *supers++;
-
-        PyObject *sup_mod;
-        const sipTypeSpec *sup_ts = sip_get_type_spec(ms, sup_type_id,
-                &sup_mod);
-        assert(sup_mod != NULL);
-
-        /* Recurse up the hierachy for the first super-class. */
-        remove_aliases(sip_get_module_state(sup_mod), obj, addr, sup_ts);
-        Py_DECREF(sup_mod);
-
-        /*
-         * We only check for aliases for subsequent super-classes because the
-         * first one can never need one.
-         */
-        sipWrapperType *wt = (sipWrapperType *)Py_TYPE((PyObject *)obj);
-        sipCastFunc cast = ((const sipClassTypeSpec *)sip_get_type_spec_from_wt(
-                wt))->cast;
-
-        while (!sipTypeIDIsSentinel(sup_type_id))
-        {
-            sup_type_id = *supers++;
-
-            sup_ts = sip_get_type_spec(ms, sup_type_id, &sup_mod);
-            assert(sup_mod != NULL);
-
-            sipModuleState *sup_ms = sip_get_module_state(sup_mod);
-
-            /* Recurse up the hierachy for the remaining super-classes. */
-            remove_aliases(sup_ms, obj, addr, sup_ts);
-
-            void *sup_addr = cast(sup_ms, addr,
-                    (const sipClassTypeSpec *)sup_ts);
-
-            if (sup_addr != addr)
-                remove_object(ms, obj, sup_addr);
-
-            Py_DECREF(sup_mod);
-        }
-    }
-}
 
 
 /*

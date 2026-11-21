@@ -17,7 +17,7 @@ from ..python_slots import (is_hash_return_slot, is_int_return_slot,
         is_void_return_slot, is_zero_arg_slot, reflected_slot)
 from ..scoped_name import ScopedName
 from ..specification import (AccessSpecifier, Argument, ArgumentType,
-        ArrayArgument, CachedName, ClassKey, Constructor, EnumBaseType,
+        ArrayArgument, ClassKey, Constructor, EnumBaseType,
         IfaceFileType, IndexedClassList, MappedType, Member, PySlot, Signature,
         Transfer, ValueType, VirtualHandler, VirtualOverload, VisibleMember,
         WrappedClass)
@@ -541,7 +541,7 @@ def _move_slot_v14(spec, error_log, global_slot, overload, arg_module,
     # Fix the member name if it is a reflected slot.
     member_name = reflected_slot(global_slot.py_slot)
     if member_name is not None and is_second:
-        member_name = CachedName(member_name)
+        member_name = cached_name(spec, member_name)
         overload.is_reflected = True
     else:
         member_name = global_slot.py_name

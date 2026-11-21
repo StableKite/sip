@@ -10,6 +10,36 @@
 
 
 %ModuleHeaderCode
+inline int sum_bytes(const unsigned char *data, Py_ssize_t size)
+{
+    int sum = 0;
+    for (Py_ssize_t i = 0; i < size; ++i)
+        sum += data[i];
+
+    return sum;
+}
+
+inline Py_ssize_t echo_size(Py_ssize_t value) {return value;}
+
+class Operand
+{
+public:
+    explicit Operand(int value) : m_value(value) {}
+    int value() const {return m_value;}
+private:
+    int m_value;
+};
+
+inline int operator*(int factor, const Operand &operand)
+{
+    return operand.value() * factor;
+}
+
+inline int operator*(double factor, const Operand &operand)
+{
+    return static_cast<int>(operand.value() * factor);
+}
+
 class OwnedClass
 {
 };
@@ -70,3 +100,21 @@ protected:
 class OwnedClass
 {
 };
+
+
+int sum_bytes(const unsigned char *data /Array/, Py_ssize_t size /ArraySize/);
+Py_ssize_t echo_size(Py_ssize_t value);
+
+class Operand
+{
+public:
+    explicit Operand(int value);
+};
+
+int operator*(int factor /Constrained/, const Operand &operand);
+int operator*(double factor, const Operand &operand);
+
+SIP_PYOBJECT get_argument_wrapper(OwnedClass *value /GetWrapper/);
+%MethodCode
+    sipRes = Py_NewRef(a0Wrapper);
+%End

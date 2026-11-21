@@ -1724,12 +1724,12 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, overload):
 
     # Generate the local variables that will hold the parsed arguments and
     # values returned via arguments.
-    array_len_arg_nr = -1
+    array_len_param = None
     need_owner = False
 
     for arg_nr, arg in enumerate(py_signature.args):
         if arg.array is ArrayArgument.ARRAY_SIZE:
-            array_len_arg_nr = arg_nr
+            array_len_param = g_argument_variable(sf, spec, scope, arg, arg_nr)[0]
 
         if arg.transfer is Transfer.TRANSFER_THIS:
             need_owner = True
@@ -1777,9 +1777,6 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, overload):
         if arg.type == ArgumentType.CAPSULE:
             arg_params.insert(0, '"' + arg.definition + '"')
 
-        next_param_base += len(arg_params)
-        params.append(arg_params)
-
         flags = []
 
         if arg.array is ArrayArgument.ARRAY:
@@ -1802,6 +1799,13 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, overload):
 
         elif arg.type is ArgumentType.UTF8_STRING:
             type_id = 'str_utf8' if _add_string_flags(flags, arg) else 'char_utf8'
+
+        elif arg.array is ArrayArgument.ARRAY and arg.type in (
+                ArgumentType.STRING, ArgumentType.SSTRING, ArgumentType.USTRING):
+            # For arrays the parser handles all byte types as raw memory.
+            if not arg.disallow_none:
+                flags.append('ALLOW_NONE')
+            type_id = 'char'
 
         elif arg.type is ArgumentType.STRING:
             type_id = 'str' if _add_string_flags(flags, arg) else 'char'
@@ -1843,6 +1847,9 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, overload):
 
         elif arg.type is ArgumentType.SIZE:
             type_id = 'size_t'
+
+        elif arg.type is ArgumentType.SSIZE:
+            type_id = 'Py_ssize_t'
 
         elif arg.type is ArgumentType.BYTE:
             type_id = 'byte'
@@ -1905,7 +1912,6 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, overload):
             _add_format_flags(flags, arg)
 
             if arg.transfer is Transfer.TRANSFER_THIS:
-                params.append(('sipOwner', ))
                 flags.append('TRANSFER_THIS')
 
             if len(arg.derefs) != 0 and not arg.disallow_none:
@@ -1924,6 +1930,20 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, overload):
 
             if arg.allow_none:
                 flags.append('ALLOW_NONE')
+
+        extra_index = 1
+        if 'GET_WRAPPER' in flags:
+            wrapper = arg_params.pop(1)
+            arg_params.insert(0, wrapper)
+            extra_index += 1
+
+        if arg.array is ArrayArgument.ARRAY:
+            arg_params.insert(extra_index, array_len_param)
+        elif 'TRANSFER_THIS' in flags:
+            arg_params.insert(extra_index, '*sipOwner' if ctor else 'sipOwner')
+
+        next_param_base += len(arg_params)
+        params.append(arg_params)
 
         fields = []
 
@@ -2067,7 +2087,7 @@ def _g_callables_table(sf, members, scope, attrs, nr_callables=0):
         default_attr_type = 'c'
 
         if isinstance(scope, WrappedEnum):
-            scope_name = scope.fq_cpp_name
+            scope_name = scope.fq_cpp_name.as_word
         else:
             scope_name = scope.iface_file.fq_cpp_name.as_word
 

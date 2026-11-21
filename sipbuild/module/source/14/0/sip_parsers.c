@@ -2509,10 +2509,10 @@ static void parse_pass_1(sipModuleState *ms, PyObject *arg,
             {
                 if (allow_none || arg != Py_None)
                 {
-                    const char **cp_p = (const char **)*fmt_params++;
-
-                    *cp_p = sip_bytes_as_char_array(arg,
+                    void *cp_p = *fmt_params++;
+                    const char *cp = sip_bytes_as_char_array(arg,
                             (Py_ssize_t *)*fmt_params);
+                    memcpy(cp_p, &cp, sizeof(cp));
                     type_conversion_failed = PyErr_Occurred();
                 }
                 else
@@ -2734,6 +2734,15 @@ static void parse_pass_1(sipModuleState *ms, PyObject *arg,
         case sipType_uint:
         {
             *(unsigned *)*fmt_params = sip_api_long_as_unsigned_int(arg);
+            int_conversion_failed = PyErr_Occurred();
+
+            break;
+        }
+
+        case sipType_Py_ssize_t:
+        {
+            *(Py_ssize_t *)*fmt_params = PyNumber_AsSsize_t(arg,
+                    PyExc_OverflowError);
             int_conversion_failed = PyErr_Occurred();
 
             break;

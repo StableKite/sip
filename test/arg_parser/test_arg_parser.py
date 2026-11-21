@@ -46,3 +46,23 @@ def test_protected_unbound_callable(module):
 
     module.Klass.set_prot_inst(klass, 20)
     assert module.Klass.get_prot_inst(klass) == 20
+
+
+def test_byte_array_length(module):
+    assert module.sum_bytes(b"") == 0
+    assert module.sum_bytes(bytes([0, 128, 255])) == 383
+
+
+def test_signed_size(module):
+    assert module.echo_size(-57) == -57
+
+
+def test_reflected_overloads(module):
+    operand = module.Operand(6)
+    assert 3 * operand == 18
+    assert 0.5 * operand == 3
+
+
+def test_argument_wrapper(module):
+    owner = module.OwnedClass()
+    assert module.get_argument_wrapper(owner) is owner

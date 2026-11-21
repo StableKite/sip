@@ -3,19 +3,19 @@
 /*
  * The implementation of the Python object to C/C++ integer convertors.
  *
- * Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
+ * Copyright (c) 2026 Phil Thompson <phil@riverbankcomputing.com>
  */
 
 
-/* Remove when Python v3.12 is no longer supported. */
-#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #include <limits.h>
+#include <stdbool.h>
 
-#include "sip_core.h"
+#include "sip_int_convertors.h"
 
 
+/* Forward declarations. */
 static long long long_as_long_long(PyObject *o, long long min, long long max);
 static unsigned long long_as_unsigned_long(PyObject *o, unsigned long max);
 static void raise_signed_overflow(long long min, long long max);
@@ -23,14 +23,19 @@ static void raise_unsigned_overflow(unsigned long long max);
 
 
 /*
- * Convert a Python object to a C++ bool (returned as an int).
+ * Convert a Python object to a C bool.
  */
-int sip_api_convert_to_bool(PyObject *o)
+bool sip_api_convert_to_bool(PyObject *o)
 {
-    int v;
+    /* Handle the actual values explictly. */
+    if (o == Py_True)
+        return 1;
 
-    /* Convert the object to an int while checking for overflow. */
-    v = sip_api_long_as_int(o);
+    if (o == Py_False)
+        return 0;
+
+    /* Convert the object while checking for overflow. */
+    bool v = sip_api_long_as_int(o);
 
     if (PyErr_Occurred())
     {
@@ -43,10 +48,7 @@ int sip_api_convert_to_bool(PyObject *o)
         }
         else
         {
-            PyErr_Format(PyExc_TypeError, "a 'bool' is expected not '%s'",
-                    Py_TYPE(o)->tp_name);
-
-            v = -1;
+            PyErr_SetString(PyExc_TypeError, "a bool is expected");
         }
     }
     else if (v != 0)
@@ -181,7 +183,7 @@ unsigned long long sip_api_long_as_unsigned_long_long(PyObject *o)
 
 /*
  * Convert a Python object to a long long checking that the value is within a
- * range if overflow checking is enabled.
+ * range.
  */
 static long long long_as_long_long(PyObject *o, long long min, long long max)
 {
@@ -208,7 +210,7 @@ static long long long_as_long_long(PyObject *o, long long min, long long max)
 
 /*
  * Convert a Python object to an unsigned long checking that the value is
- * within a range if overflow checking is enabled.
+ * within a range.
  */
 static unsigned long long_as_unsigned_long(PyObject *o, unsigned long max)
 {

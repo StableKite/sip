@@ -1,12 +1,20 @@
 #!/bin/sh
 
-set -e
+set -eu
 
-cd $AUTOPKGTEST_TMP
+cd "$AUTOPKGTEST_TMP"
 
 for py in $(py3versions -s); do
-  echo "testing $py"
-  $py -c "from PyQt6.sip import _C_API"
-  echo "testing $py-dbg"
-  $py-dbg -c "from PyQt6.sip import _C_API"
+    for interpreter in "$py" "$py-dbg"; do
+        echo "testing $interpreter"
+        "$interpreter" - <<'PY'
+import sys
+
+before = sys._is_gil_enabled()
+from PyQt6 import sip
+
+assert sip.SIP_ABI_VERSION >> 16 == 14, sip.SIP_ABI_VERSION
+assert sys._is_gil_enabled() == before
+PY
+    done
 done

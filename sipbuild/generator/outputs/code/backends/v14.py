@@ -1969,7 +1969,7 @@ def _g_arg_parser(sf, spec, scope, py_signature, signature_nr, ctor, overload):
     type_hint_arg = None
     type_hint_ref = 'NULL'
 
-    if overload is None or not overload.common.no_arg_parser:
+    if ctor is not None or (overload is not None and not overload.common.no_arg_parser):
         callable_name = _get_callable_name(scope,
                 None if overload is None else overload.common)
 

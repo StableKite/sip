@@ -111,6 +111,10 @@ public:
         klass_name_as_word = klass.cpp_name_as_word
         type_spec = spec.get_type_specification(klass)
 
+        if spec.abi_major_version >= 14 and self.pyqt_major_version == 6:
+            self._g_abi14_qobject_impl(writer, klass, type_spec)
+            return
+
         if not self.get_no_qmetaobject(klass):
             writer.write(
 f'''
@@ -147,6 +151,66 @@ void *sip{klass_name_as_word}::qt_metacast(const char *_clname)
 }}
 ''')
 
+    def _g_abi14_qobject_impl(self, writer, klass, type_spec):
+        name = klass.cpp_name_as_word
+        cpp = klass.cpp_name
+
+        if not self.get_no_qmetaobject(klass):
+            writer.write(
+f"""
+const QMetaObject *sip{name}::metaObject() const
+{{
+    const QMetaObject *native = {cpp}::metaObject();
+    if (native != &{cpp}::staticMetaObject)
+        return native;
+
+    sipQtCallback callback(sipMS,
+            const_cast<{cpp} *>(static_cast<const {cpp} *>(this)), {type_spec});
+    if (auto *wrapper = callback.wrapper())
+        if (auto handler = reinterpret_cast<sip_qt_metaobject_func>(
+                sipImportSymbol("qtcore_qt_metaobject")))
+            if (const QMetaObject *meta = handler(sipMS, wrapper, {type_spec}))
+                return meta;
+
+    return native;
+}}
+""")
+
+        writer.write(
+f"""
+int sip{name}::qt_metacall(QMetaObject::Call call, int id, void **args)
+{{
+    id = {cpp}::qt_metacall(call, id, args);
+    if (id >= 0)
+    {{
+        sipQtCallback callback(sipMS, static_cast<{cpp} *>(this), {type_spec});
+        if (auto *wrapper = callback.wrapper())
+            if (auto handler = reinterpret_cast<sip_qt_metacall_func>(
+                    sipImportSymbol("qtcore_qt_metacall")))
+                id = handler(sipMS, wrapper, {type_spec}, call, id, args);
+    }}
+
+    return id;
+}}
+
+void *sip{name}::qt_metacast(const char *name)
+{{
+    {{
+        sipQtCallback callback(sipMS, static_cast<{cpp} *>(this), {type_spec});
+        if (auto *wrapper = callback.wrapper())
+            if (auto handler = reinterpret_cast<sip_qt_metacast_func>(
+                    sipImportSymbol("qtcore_qt_metacast")))
+            {{
+                void *cpp = nullptr;
+                if (handler(sipMS, wrapper, {type_spec}, name, &cpp))
+                    return cpp;
+            }}
+    }}
+
+    return {cpp}::qt_metacast(name);
+}}
+""")
+
     def sip_class_generate_impl(self, writer, spec, klass):
         """ Generate code that implements support for a class, usually in the
         form of a type-specific data structure.  The name of the data structure
@@ -177,7 +241,8 @@ void *sip{klass_name_as_word}::qt_metacast(const char *_clname)
         klass_name_as_word = klass.cpp_name_as_word
         plugin_name = 'plugin_' + klass_name_as_word
 
-        writer.write(f'\n\nstatic pyqt{self.pyqt_major_version}ClassPluginDef {plugin_name} = {{\n')
+        const = 'const ' if spec.abi_major_version >= 14 else ''
+        writer.write(f'\n\nstatic {const}pyqt{self.pyqt_major_version}ClassPluginDef {plugin_name} = {{\n')
 
         mo_ref = f'&{klass_name}::staticMetaObject' if is_qmetaobject else 'SIP_NULLPTR'
         writer.write(f'    {mo_ref},\n')
@@ -403,7 +468,8 @@ void *sip{klass_name_as_word}::qt_metacast(const char *_clname)
 
         name = 'plugin_' + mapped_type.cpp_name_as_word
 
-        writer.write(f'\n\nstatic pyqt6MappedTypePluginDef {name} = {{{pyqt6_flags}}};\n')
+        const = 'const ' if spec.abi_major_version >= 14 else ''
+        writer.write(f'\n\nstatic {const}pyqt6MappedTypePluginDef {name} = {{{pyqt6_flags}}};\n')
 
         return name
 
@@ -414,6 +480,9 @@ void *sip{klass_name_as_word}::qt_metacast(const char *_clname)
 
         # This test can go when we are moved to PyQt-builder.
         if self.pyqt_major_version == 0:
+            return
+
+        if spec.abi_major_version >= 14 and self.pyqt_major_version == 6:
             return
 
         module_name = spec.module_name
@@ -432,6 +501,10 @@ sip_qt_metacast_func sip_{module_name}_qt_metacast;
 
         # This test can go when we are moved to PyQt-builder.
         if self.pyqt_major_version == 0:
+            return
+
+        if spec.abi_major_version >= 14 and self.pyqt_major_version == 6:
+            writer.write(_ABI14_PYQT6_HEADER)
             return
 
         module_name = spec.module_name
@@ -459,9 +532,10 @@ extern sip_qt_metacast_func sip_{module_name}_qt_metacast;
         if self.pyqt_major_version == 0:
             return
 
-        module_name = spec.module_name
+        if spec.abi_major_version < 14 or self.pyqt_major_version != 6:
+            module_name = spec.module_name
 
-        writer.write(
+            writer.write(
 f'''
 
     sip_{module_name}_qt_metaobject = (sip_qt_metaobject_func)sipImportSymbol("qtcore_qt_metaobject");
@@ -652,71 +726,179 @@ class PyQtMethodType(Enum):
     SLOT = auto()
 
 
-def _g_pyqt_emitters(writer, spec, klass, plugin):
-    """ Generate the PyQt emitters for a class. """
+_ABI14_PYQT6_HEADER = """
+#include <QMetaType>
+#include <QThread>
 
-    klass_name_as_word = klass.cpp_name_as_word
+using sip_qt_metaobject_func = const QMetaObject *(*)(sipModuleState *,
+        sipSimpleWrapper *, sipTypeID);
+using sip_qt_metacall_func = int (*)(sipModuleState *, sipSimpleWrapper *,
+        sipTypeID, QMetaObject::Call, int, void **);
+using sip_qt_metacast_func = bool (*)(sipModuleState *, sipSimpleWrapper *,
+        sipTypeID, const char *, void **);
 
-    for function in klass.functions:
-        in_emitter = False
-        overload_nr = 0
+using pyqt6EmitFunc = int (*)(sipModuleState *, void *, PyObject *);
 
-        for overload in function.overloads:
-            if not (plugin.is_signal(overload) and _has_optional_args(overload)):
-                continue
+struct pyqt6QtSignal
+{
+    const char *signature;
+    const char *docstring;
+    sipCallableImplFunc non_signals;
+    pyqt6EmitFunc emitter;
+};
 
-            if not in_emitter:
-                in_emitter = True
+struct pyqt6ClassPluginDef
+{
+    const QMetaObject *static_metaobject;
+    const pyqt6QtSignal *qt_signals;
+    const char *qt_interface;
+};
 
-                writer.write('\n\n')
+struct pyqt6MappedTypePluginDef
+{
+    unsigned flags;
+};
 
-                if not spec.c_bindings:
-                    writer.write(f'extern "C" {{static int emit_{klass_name_as_word}_{overload.unscoped_cpp_name}(void *, PyObject *);}}\n\n')
-
-                writer.write(
-f'''static int emit_{klass_name_as_word}_{overload.unscoped_cpp_name}(void *sipCppV, PyObject *sipArgs)
-{{
-    PyObject *sipParseErr = SIP_NULLPTR;
-    {klass.cpp_name} *sipCpp = reinterpret_cast<{klass.cpp_name} *>(sipCppV);
-''')
-
-            # Generate the code that parses the args and emits the appropriate
-            # overloaded signal.
-            writer.write('\n    {\n')
-
-            overload.generate_signature_parser(writer, overload_nr=overload_nr,
-                    simple_call=True)
-            overload_nr += 1
-
-            writer.write(
-f'''        {{
-            Py_BEGIN_ALLOW_THREADS
-            sipCpp->{overload.unscoped_cpp_name}(''')
-
-            overload.generate_call_arguments(writer)
-
-            writer.write(''');
-            Py_END_ALLOW_THREADS
-
-''')
-
-            overload.generate_signature_parser_tidy_up(writer)
-
-            writer.write(
-'''
-            return 0;
+// A Qt callback may run on a native thread. Keep the wrapper alive while
+// executing the callback in the interpreter that created it.
+namespace
+{
+class sipQtCallback
+{
+public:
+    sipQtCallback(sipModuleState *sipMS, void *cpp, sipTypeID type)
+    {
+        if (sipMS)
+        {
+            _thread = PyThreadState_EnsureFromView(sipGetInterpreterView());
+            if (_thread)
+            {
+                _previous_error = PyErr_GetRaisedException();
+                _wrapper = sipGetPyObjectRef(cpp, type);
+            }
         }
     }
-''')
 
-        if in_emitter:
+    ~sipQtCallback()
+    {
+        if (_thread)
+        {
+            if (PyErr_Occurred())
+                PyErr_WriteUnraisable(_wrapper ? _wrapper : Py_None);
+            Py_XDECREF(_wrapper);
+            PyErr_SetRaisedException(_previous_error);
+            PyThreadState_Release(_thread);
+        }
+    }
+
+    sipSimpleWrapper *wrapper() const
+    {
+        return reinterpret_cast<sipSimpleWrapper *>(_wrapper);
+    }
+
+    sipQtCallback(const sipQtCallback &) = delete;
+    sipQtCallback &operator=(const sipQtCallback &) = delete;
+
+private:
+    PyThreadStateToken *_thread = nullptr;
+    PyObject *_wrapper = nullptr;
+    PyObject *_previous_error = nullptr;
+};
+}
+
+"""
+
+
+def _g_pyqt_emitters(writer, spec, klass, plugin):
+    """ Generate the PyQt emitters for a class. """
+    abi14 = spec.abi_major_version >= 14 and plugin.pyqt_major_version == 6
+
+    for function in klass.functions:
+        overloads = [overload for overload in function.overloads
+                if plugin.is_signal(overload) and _has_optional_args(overload)]
+        if not overloads:
+            continue
+
+        signal_name = overloads[0].unscoped_cpp_name
+        name = f'emit_{klass.cpp_name_as_word}_{signal_name}'
+        context = 'sipModuleState *sipMS, ' if abi14 else ''
+        context_decl = 'sipModuleState *, ' if abi14 else ''
+
+        writer.write('\n\n')
+        if not spec.c_bindings:
+            writer.write(f'extern "C" {{static int {name}({context_decl}void *, PyObject *);}}\n\n')
+
+        args_name = 'args' if abi14 else 'sipArgs'
+        writer.write(
+f"""
+static int {name}({context}void *sipCppV, PyObject *{args_name})
+{{
+    auto *sipCpp = static_cast<{klass.cpp_name} *>(sipCppV);
+""")
+
+        if abi14:
+            max_args = max(len(overload.cpp_signature.arguments)
+                    for overload in overloads)
             writer.write(
-f'''
-    sipNoMethod(sipParseErr, {klass.py_name_as_str}, {function.py_name_as_str}, SIP_NULLPTR);
+f"""    Py_ssize_t sipNrArgs = PyTuple_Size(args);
+    if (sipNrArgs < 0)
+        return -1;
 
-    return -1;
-}}
-''')
+    if (sipNrArgs > {max_args})
+    {{
+        PyErr_SetString(PyExc_TypeError, "arguments do not match Qt signal {signal_name}");
+        return -1;
+    }}
+
+    // The caller holds the immutable argument tuple throughout emission.
+    PyObject *sipArgs[{max_args}];
+    for (Py_ssize_t i = 0; i < sipNrArgs; ++i)
+        sipArgs[i] = PyTuple_GetItem(args, i);
+
+    PyObject *sipPState = nullptr;
+    PyObject **sipPStateP = &sipPState;
+    PyObject *sipKwdNames = nullptr;
+    PyObject *sipSelf = nullptr;
+""")
+        else:
+            writer.write('    PyObject *sipParseErr = SIP_NULLPTR;\n')
+
+        for overload_nr, overload in enumerate(overloads):
+            writer.write('\n    {\n')
+            overload.generate_signature_parser(writer, overload_nr=overload_nr,
+                    simple_call=True)
+
+            writer.write(
+f"""        {{
+            Py_BEGIN_ALLOW_THREADS
+            sipCpp->{signal_name}(""")
+            overload.generate_call_arguments(writer)
+            writer.write(');\n            Py_END_ALLOW_THREADS\n\n')
+
+            overload.generate_signature_parser_tidy_up(writer)
+            if abi14:
+                writer.write('            Py_XDECREF(sipPState);\n')
+
+            writer.write(
+"""            return 0;
+        }
+    }
+""")
+
+        if abi14:
+            writer.write(
+f"""
+    Py_XDECREF(sipPState);
+    if (!PyErr_Occurred())
+        PyErr_SetString(PyExc_TypeError, "arguments do not match Qt signal {signal_name}");
+""")
+        else:
+            writer.write(
+f"""
+    sipNoMethod(sipParseErr, {klass.py_name_as_str}, {function.py_name_as_str}, SIP_NULLPTR);
+""")
+
+        writer.write('\n    return -1;\n}\n')
 
 
 def _g_signal_table_entry(writer, spec, klass, signal, function_impl, plugin):

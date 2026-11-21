@@ -222,9 +222,12 @@ class Function(_Proxy):
         function.
         """
 
-        # Note that the use case only calls this for a class.  Also note that
-        # this currently does not work for ABI v14.
-        return f'&methods_{self._scope.iface_file.fq_cpp_name.as_word}[{self._subject.member_nr}]'
+        # The plugin calls this for methods on classes only.
+        scope = self._scope.iface_file.fq_cpp_name.as_word
+        if self._spec.bindings.project.abi_version[0] >= 14:
+            return f'callable_{scope}_{self._subject.py_name.name}'
+
+        return f'&methods_{scope}[{self._subject.member_nr}]'
 
     @cached_property
     def overloads(self):

@@ -46,6 +46,15 @@ class TestProject(Project):
 %Module(name=plugin_data_probe, gil_use="NotUsed")
 %MinimumABIVersion "14.0"
 
+%InitialisationCode
+    static int probe_value = 23;
+    static const sipSymbolSpec exported[] = {
+        {"plugin_probe_value", &probe_value},
+        {nullptr, nullptr}
+    };
+    sipExportSymbols(exported);
+%End
+
 %ModuleHeaderCode
 class Annotated {};
 class Plain {};
@@ -69,6 +78,12 @@ bool resolves_module_state();
 %MethodCode
     sipRes = sipGetModuleState() == sipMS;
 %End
+
+int resolve_export();
+%MethodCode
+    const auto *value = static_cast<const int *>(sipImportSymbol("plugin_probe_value"));
+    sipRes = value ? *value : -1;
+%End
 ''')
     subprocess.run([sys.executable, '-m', 'sipbuild.tools.build'],
             cwd=tmp_path, check=True, timeout=90)
@@ -83,4 +98,5 @@ import plugin_data_probe
 assert plugin_data_probe.attached_value() == 42
 assert not plugin_data_probe.has_unannotated_data()
 assert plugin_data_probe.resolves_module_state()
+assert plugin_data_probe.resolve_export() == 23
 ''', str(implementation.parent)], check=True, timeout=20)

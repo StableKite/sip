@@ -999,7 +999,7 @@ extern const sipABISpec *sipABI_{module_name};
 #define sipConvertToTypeUS(...)         sipABI_{module_name}->api_convert_to_type_us(sipMS, __VA_ARGS__)
 #define sipConvertToVoidPtr             sipABI_{module_name}->api_convert_to_void_ptr
 #define sipEnableAutoconversion(...)    sipABI_{module_name}->api_enable_autoconversion(sipMS, __VA_ARGS__)
-#define sipExportSymbols(...)           sipABI_{module_name}->api_export_symbol(sipMS, __VA_ARGS__)
+#define sipExportSymbols(...)           sipABI_{module_name}->api_export_symbols(sipMS, __VA_ARGS__)
 #define sipFindType(...)                sipABI_{module_name}->api_find_type(sipMS, __VA_ARGS__)
 #define sipForceConvertToType(...)      sipABI_{module_name}->api_force_convert_to_type(sipMS, __VA_ARGS__)
 #define sipForceConvertToTypeUS(...)    sipABI_{module_name}->api_force_convert_to_type_us(sipMS, __VA_ARGS__)

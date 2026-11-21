@@ -21,6 +21,16 @@ sys.path.insert(0, str(Path(sys.argv[1]).parent))
 assert not sys._is_gil_enabled()
 import user_metadata_module as wrapped
 assert not sys._is_gil_enabled()
+create = Barrier(8)
+
+def wrap_value(index):
+    create.wait(timeout=10)
+    return wrapped.make_value(index)
+
+with ThreadPoolExecutor(max_workers=8) as executor:
+    values = list(executor.map(wrap_value, range(8)))
+assert all(type(value) is wrapped.FactoryValue for value in values)
+assert [value.value for value in values] == list(range(8))
 
 instance = wrapped.Wrapper()
 assert instance.data() is None

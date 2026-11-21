@@ -5,7 +5,25 @@
 class Wrapper
 {
 };
+
+struct FactoryValue
+{
+    int value;
+};
+
+static FactoryValue *make_value(int value)
+{
+    return new FactoryValue{value};
+}
 %End
+
+class FactoryValue
+{
+public:
+    int value;
+};
+
+FactoryValue *make_value(int value) /Factory/;
 
 class Wrapper
 {

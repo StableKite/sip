@@ -46,6 +46,15 @@ class TestProject(Project):
 %Module(name=plugin_data_probe, gil_use="NotUsed")
 %MinimumABIVersion "14.0"
 
+%ModuleCode
+static int finalize_annotated_type(sipModuleState *, sipTypeID,
+        PyTypeObject *type)
+{
+    return PyObject_SetAttrString(reinterpret_cast<PyObject *>(type),
+            "_finalized_by_plugin", Py_True);
+}
+%End
+
 %InitialisationCode
     static int probe_value = 23;
     static const sipSymbolSpec exported[] = {
@@ -53,15 +62,25 @@ class TestProject(Project):
         {nullptr, nullptr}
     };
     sipExportSymbols(exported);
+
+    static const sipEventHandlerSpec handlers[] = {
+        {sipEventFinalisingType, sipType_Annotated,
+            reinterpret_cast<void *>(finalize_annotated_type)},
+        {sipEventNone, 0, nullptr}
+    };
+    if (sipRegisterEventHandlers(handlers) < 0)
+        return -1;
 %End
 
 %ModuleHeaderCode
 class Annotated {};
 class Plain {};
+class Derived : public Annotated {};
 %End
 
 class Annotated {};
 class Plain {};
+class Derived : public Annotated {};
 
 int attached_value();
 %MethodCode
@@ -95,6 +114,9 @@ import sys
 sys.path.insert(0, sys.argv[1])
 import plugin_data_probe
 
+assert plugin_data_probe.Annotated.__dict__['_finalized_by_plugin'] is True
+assert plugin_data_probe.Derived.__dict__['_finalized_by_plugin'] is True
+assert not hasattr(plugin_data_probe.Plain, '_finalized_by_plugin')
 assert plugin_data_probe.attached_value() == 42
 assert not plugin_data_probe.has_unannotated_data()
 assert plugin_data_probe.resolves_module_state()

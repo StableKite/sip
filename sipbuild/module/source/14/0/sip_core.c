@@ -1104,11 +1104,19 @@ static PyTypeObject *create_class_type(sipModuleState *ms, sipTypeNr type_nr,
     PyObject *mods = sms->module_list;
     Py_ssize_t i;
 
-    for (i = 0; i < PyList_GET_SIZE(mods); i++)
+    for (i = 0; i < PyList_Size(mods); i++)
     {
-        PyObject *ehs_mod;
+        PyObject *weak = PyList_GetItemRef(mods, i);
+        if (weak == NULL)
+        {
+            Py_DECREF(py_type);
+            return NULL;
+        }
 
-        if (PyWeakref_GetRef(PyList_GET_ITEM(mods, i), &ehs_mod) < 0)
+        PyObject *ehs_mod;
+        int rc = PyWeakref_GetRef(weak, &ehs_mod);
+        Py_DECREF(weak);
+        if (rc < 0)
         {
             Py_DECREF(py_type);
             return NULL;
@@ -1125,7 +1133,10 @@ static PyTypeObject *create_class_type(sipModuleState *ms, sipTypeNr type_nr,
 
             while (ehs->event_type != sipEventNone)
             {
-                if (ehs->event_type == sipEventFinalisingType && sip_is_subtype(ehs_ms, py_type, ehs->type_id))
+                /* Avoid resolving the type recursively when creating it. */
+                if (ehs->event_type == sipEventFinalisingType &&
+                        (type_id == sip_api_make_absolute(ehs_ms, ehs->type_id) ||
+                         sip_is_subtype(ehs_ms, py_type, ehs->type_id)))
                 {
                     sipFinalisingTypeEventHandler handler = (sipFinalisingTypeEventHandler)ehs->handler;
 

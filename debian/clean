@@ -1,0 +1,3 @@
+sip.egg-info/
+sipbuild/_version.py
+sipbuild/generator/parser/ply/

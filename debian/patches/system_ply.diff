@@ -1,0 +1,35 @@
+Description: Use the packaged PLY library with SIP 6.17
+Origin: vendor, following the Debian system_ply.diff
+Forwarded: not-needed
+
+--- a/sipbuild/generator/parser/parser_manager.py
++++ b/sipbuild/generator/parser/parser_manager.py
+@@ -32,7 +32,7 @@
+ 
+ from . import rules
+ from . import tokens
+-from .ply import lex, yacc
++from ply import lex, yacc
+ 
+ 
+ class ParserManager:
+@@ -48,7 +48,7 @@
+         self._lexer.pm = self
+ 
+         # Create the parser.
+-        self._parser = yacc.yacc(module=rules, debug=False)
++        self._parser = yacc.yacc(module=rules, debug=False, write_tables=False)
+         self._parser.pm = self
+ 
+         # This is a hack to give p_error() access to the current parser object.
+--- a/sipbuild/generator/parser/tokens.py
++++ b/sipbuild/generator/parser/tokens.py
+@@ -5,7 +5,7 @@
+ 
+ from ..specification import CodeBlock
+ 
+-from .ply.lex import TOKEN
++from ply.lex import TOKEN
+ 
+ 
+ # The lexer states.

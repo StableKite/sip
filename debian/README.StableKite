@@ -1,0 +1,5 @@
+SBI discovers this compatibility source under the Ubuntu Stonking
+sip6 6.16.1-2 source identity. The installed SIP generator is 6.17.3,
+including the StableKite ABI 14 fixes used by the PyQt6 bindings.
+The Debian build retains the ABI 13 test suite. The ABI 14 suite runs
+separately on CPython 3.15t.

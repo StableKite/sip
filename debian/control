@@ -1,0 +1,62 @@
+Source: sip6
+Section: devel
+Maintainer: Debian Python Team <team+python@tracker.debian.org>
+Uploaders: Dmitry Shachnev <mitya57@debian.org>
+Build-Depends: debhelper-compat (= 14),
+               dh-python (>= 5.20211213),
+               dh-sequence-sphinxdoc <!nodoc>,
+               pybuild-plugin-pyproject,
+               python3-all,
+               python3-all-dev <!nocheck>,
+               python3-doc <!nodoc>,
+               python3-myst-parser (>= 5.1.0) <!nodoc>,
+               python3-packaging (>= 24.2),
+               python3-ply,
+               python3-pytest <!nocheck>,
+               python3-setuptools (>= 77),
+               python3-setuptools-scm (>= 8),
+               python3-sphinx (>= 9.1.0) <!nodoc>,
+               python3-sphinx-rtd-theme (>= 3.1.0) <!nodoc>
+Standards-Version: 4.7.4
+Homepage: https://github.com/Python-SIP/sip
+Vcs-Git: https://salsa.debian.org/python-team/packages/sip6.git
+Vcs-Browser: https://salsa.debian.org/python-team/packages/sip6
+Testsuite: autopkgtest-pkg-pybuild
+
+Package: python3-sipbuild
+Architecture: all
+Section: python
+Depends: python3-ply
+Description: Python bindings generator for C/C++ libraries — the build system
+ SIP is a collection of tools that makes it very easy to create Python bindings
+ for C and C++ libraries.
+ .
+ The sipbuild module implements the SIP build system. The module may be used by
+ project-specific project.py scripts or extended by other build systems.
+
+Package: sip-tools
+Architecture: all
+Depends: python3-sipbuild (= ${binary:Version})
+Description: Python bindings generator for C/C++ libraries — command line tools
+ SIP is a collection of tools that makes it very easy to create Python bindings
+ for C and C++ libraries.
+ .
+ This package contains the following command line tools:
+  - sip-build
+  - sip-distinfo
+  - sip-install
+  - sip-module
+  - sip-sdist
+  - sip-wheel
+
+Package: sip6-doc
+Build-Profiles: <!nodoc>
+Architecture: all
+Section: doc
+Suggests: python3-doc
+Multi-Arch: foreign
+Description: Python bindings generator for C/C++ libraries — documentation
+ SIP is a collection of tools that makes it very easy to create Python bindings
+ for C and C++ libraries.
+ .
+ This package contains the HTML documentation for SIP.

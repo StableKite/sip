@@ -87,3 +87,9 @@ int incr_optional_kwd_args(int value, int incr=1) /KeywordArgs="Optional"/;
 int incr_all_kwd_args(int value, int incr=1) /KeywordArgs="All"/;
 void reset_module_procedure_called();
 bool was_module_procedure_called();
+
+SIP_PYOBJECT module_manual_error() /NoArgParser/;
+%MethodCode
+    PyErr_SetString(PyExc_ValueError, "manual binding error");
+    return nullptr;
+%End

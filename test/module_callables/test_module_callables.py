@@ -93,3 +93,8 @@ def test_all_kwd_args_support(module):
         module.incr_all_kwd_args(incr=3)
 
     assert module.incr_all_kwd_args.__doc__ == 'incr_all_kwd_args(value: int, incr: int = 1) -> int'
+
+
+def test_manual_binding_exception_is_preserved(module):
+    with pytest.raises(ValueError, match='manual binding error'):
+        module.module_manual_error()

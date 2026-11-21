@@ -206,6 +206,9 @@ static PyObject *Callable_vectorcall(CallableObject *self,
      * If we haven't found a matching signature (and there has been no error)
      * and the type is extendable then look for other possible implementations.
      */
+    if (res == NULL && p_state == NULL && PyErr_Occurred())
+        return NULL;
+
     if (res == NULL && p_state != Py_None && self->extending_ts != NULL)
         res = call_extender(ms, &p_state, self->self, args, nr_args, kwd_names,
                 self->extending_ts, sipAttrGetName(attr_spec));
@@ -294,6 +297,7 @@ static int call_extender_handler(sipModuleState *x_ms,
     if (cc->result != NULL)
         return 1;
 
-    /* Stop if there was an error. */
-    return *cc->p_state_p == Py_None ? -1 : 0;
+    /* Stop if a callable reported an error without using the parser. */
+    PyObject *state = *cc->p_state_p;
+    return (state == Py_None || (state == NULL && PyErr_Occurred())) ? -1 : 0;
 }

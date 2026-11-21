@@ -695,8 +695,9 @@ PyObject *sip_api_convert_from_type(sipModuleState *ms, void *cpp,
 
     if (cfrom != NULL)
     {
-        Py_DECREF(py_type);
-        return cfrom(ms, cpp, transferObj);
+        PyObject *converted = cfrom(sip_get_module_state(def_mod), cpp, transferObj);
+        Py_DECREF(def_mod);
+        return converted;
     }
 
     if (sipTypeSpecIsMapped(ts))
@@ -1370,12 +1371,12 @@ int sip_api_can_convert_to_type(sipModuleState *ms, PyObject *pyObj,
             if (cto == NULL || (flags & SIP_NO_CONVERTORS) != 0)
                 ok = PyObject_TypeCheck(pyObj, py_type);
             else
-                ok = cto(ms, pyObj, NULL, NULL, NULL, NULL);
+                ok = cto(sip_get_module_state(def_mod), pyObj, NULL, NULL, NULL, NULL);
         }
         else
         {
             if ((cto = ((const sipMappedTypeSpec *)ts)->cto) != NULL)
-                ok = cto(ms, pyObj, NULL, NULL, NULL, NULL);
+                ok = cto(sip_get_module_state(def_mod), pyObj, NULL, NULL, NULL, NULL);
             else
                 ok = FALSE;
         }
@@ -1413,7 +1414,7 @@ PyObject *sip_api_convert_from_new_type(sipModuleState *ms, void *cpp,
 
     if (cfrom != NULL)
     {
-        if ((res = cfrom(ms, cpp, transferObj)) != NULL)
+        if ((res = cfrom(sip_get_module_state(def_mod), cpp, transferObj)) != NULL)
         {
             /*
              * We no longer need the C/C++ instance so we release it (unless
@@ -1816,14 +1817,14 @@ void *sip_api_convert_to_type_us(sipModuleState *ms, PyObject *pyObj,
                 }
                 else if (user_state_is_valid(ts, user_statep))
                 {
-                    state = cto(ms, pyObj, &cpp, iserrp, transferObj,
+                    state = cto(sip_get_module_state(def_mod), pyObj, &cpp, iserrp, transferObj,
                             user_statep);
                 }
             }
             else if ((cto = ((const sipMappedTypeSpec *)ts)->cto) != NULL)
             {
                 if (user_state_is_valid(ts, user_statep))
-                    state = cto(ms, pyObj, &cpp, iserrp, transferObj,
+                    state = cto(sip_get_module_state(def_mod), pyObj, &cpp, iserrp, transferObj,
                             user_statep);
             }
             else

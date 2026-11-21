@@ -1892,8 +1892,11 @@ static void *sip_api_cast_to_target_type(sipModuleState *ms, sipTypeID type_id,
     if (def_mod == NULL)
         return NULL;
 
-    void *target_cpp = cts->cast(sip_get_module_state(def_mod), cpp,
-            target_cts);
+    void *target_cpp = NULL;
+    if (cts == target_cts)
+        target_cpp = cpp;
+    else if (cts->cast != NULL)
+        target_cpp = cts->cast(sip_get_module_state(def_mod), cpp, target_cts);
 
     Py_DECREF(def_mod);
 
@@ -2017,6 +2020,7 @@ PyObject *sip_get_type_detail(sipModuleState *ms, sipTypeID type_id,
 PyTypeObject *sip_get_py_type(sipModuleState *ms, sipTypeID type_id,
         PyObject **def_mod_p)
 {
+    *def_mod_p = NULL;
     if (!sipTypeIsClass(type_id))
     {
         PyErr_SetString(PyExc_TypeError,
@@ -2029,6 +2033,14 @@ PyTypeObject *sip_get_py_type(sipModuleState *ms, sipTypeID type_id,
 
     if (def_mod == NULL)
         return NULL;
+
+    if (py_type == NULL)
+    {
+        Py_DECREF(def_mod);
+        PyErr_Format(PyExc_TypeError,
+                "type ID %0x does not resolve to a Python class", type_id);
+        return NULL;
+    }
 
     *def_mod_p = def_mod;
 

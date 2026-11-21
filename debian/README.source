@@ -1,6 +1,6 @@
 This compatibility branch retains the Ubuntu Stonking source identity
 pyqt6-sip 13.12.0-1 for SBI's prepared-source discovery. Its runtime is
-generated from StableKite/sip commit b327b4d641255d108bdaeedbab1db7207c905ba3
+generated from StableKite/sip commit bc7c3368a54fd33434db7e7b17ca64359d8f1bad
 and targets ABI 14.0 on Python 3.15 or later.
 
 To reproduce the runtime source archive from that SIP checkout:

@@ -101,3 +101,9 @@ def test_type_from_the_second_imported_module(package):
     converted = package.extras2_module.convert_second_import(value)
     assert type(converted) is package.core_module.Klass
     assert converted.get_int_attr() == 79
+
+
+def test_multiple_inheritance_across_imports(package):
+    value = package.extras2_module.Multi()
+    assert value.right() is value
+    assert package.extras2_module.convert_second_import(value).get_int_attr() == 11

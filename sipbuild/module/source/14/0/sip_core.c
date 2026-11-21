@@ -1892,8 +1892,11 @@ static void *sip_api_cast_to_target_type(sipModuleState *ms, sipTypeID type_id,
     if (def_mod == NULL)
         return NULL;
 
-    void *target_cpp = cts->cast(sip_get_module_state(def_mod), cpp,
-            target_cts);
+    void *target_cpp = NULL;
+    if (cts == target_cts)
+        target_cpp = cpp;
+    else if (cts->cast != NULL)
+        target_cpp = cts->cast(sip_get_module_state(def_mod), cpp, target_cts);
 
     Py_DECREF(def_mod);
 

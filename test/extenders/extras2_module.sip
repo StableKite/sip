@@ -49,3 +49,22 @@ inline Klass convert_second_import(const Cast &value) { return value; }
 %End
 
 Klass convert_second_import(const Cast &value);
+
+
+class Multi : public Klass, public Cast
+{
+%TypeHeaderCode
+#include "klass.h"
+
+class Multi : public Klass, public Cast
+{
+public:
+    Multi() : Klass(), Cast(11) {}
+    const Cast *right() const { return this; }
+};
+%End
+
+public:
+    Multi();
+    const Cast *right() const;
+};

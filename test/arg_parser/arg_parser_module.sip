@@ -40,6 +40,14 @@ inline int operator*(double factor, const Operand &operand)
     return static_cast<int>(operand.value() * factor);
 }
 
+class FactoryOnly
+{
+public:
+    int value() const {return 42;}
+};
+
+inline FactoryOnly *make_factory_only() {return new FactoryOnly;}
+
 class OwnedClass
 {
 };
@@ -118,3 +126,12 @@ SIP_PYOBJECT get_argument_wrapper(OwnedClass *value /GetWrapper/);
 %MethodCode
     sipRes = Py_NewRef(a0Wrapper);
 %End
+
+
+class FactoryOnly /NoDefaultCtors/
+{
+public:
+    int value() const;
+};
+
+FactoryOnly *make_factory_only() /Factory/;

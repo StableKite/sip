@@ -66,3 +66,12 @@ def test_reflected_overloads(module):
 def test_argument_wrapper(module):
     owner = module.OwnedClass()
     assert module.get_argument_wrapper(owner) is owner
+
+
+def test_wrap_factory_only_class(module):
+    with pytest.raises(TypeError):
+        module.FactoryOnly()
+
+    wrapped = module.make_factory_only()
+    assert isinstance(wrapped, module.FactoryOnly)
+    assert wrapped.value() == 42

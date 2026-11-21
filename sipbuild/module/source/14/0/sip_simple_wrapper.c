@@ -819,7 +819,14 @@ PyObject *sip_wrap_instance(sipModuleState *ms, void *cpp,
     if (args == NULL)
         args = sms->empty_tuple;
 
-    PyObject *self = py_type->tp_new(py_type, args, NULL);
+    /*
+     * A generated class may forbid direct construction from Python while
+     * still wrapping instances created by C/C++.  User subclasses keep their
+     * own __new__ implementation when SIP wraps them.
+     */
+    newfunc new_wrapper = ((sipWrapperType *)py_type)->user_type
+            ? py_type->tp_new : PyBaseObject_Type.tp_new;
+    PyObject *self = new_wrapper(py_type, args, NULL);
     if (self == NULL)
         return NULL;
 

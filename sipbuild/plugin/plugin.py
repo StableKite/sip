@@ -43,7 +43,7 @@ class Plugin:
 
         return False
 
-    def sip_class_get_access_specifiers(self):
+    def sip_class_get_access_specifiers(self, spec):
         """ Return a sequence of non-standard strings that can appear in a
         plugin-specific access specifier.
         """

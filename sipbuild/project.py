@@ -527,8 +527,8 @@ class Project(AbstractProject, Configurable):
             raise UserException("The plugin does not have a key")
 
         # Check the key is unique.
-        for plugin in self.plugins:
-            if plugin.sip_key == plugin.sip_key:
+        for installed_plugin in self.plugins:
+            if plugin.sip_key == installed_plugin.sip_key:
                 raise UserException(
                         "A plugin with the key '{0}' has already been installed".format(plugin.sip_key))
 

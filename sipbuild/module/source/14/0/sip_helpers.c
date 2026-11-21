@@ -361,11 +361,18 @@ sipModuleState *sip_api_get_module_state(sipModuleState *ms, void *token)
     PyObject *mods = ms->sip_module_state->module_list;
     Py_ssize_t i;
 
-    for (i = 0; i < PyList_GET_SIZE(mods); i++)
+    for (i = 0; i < PyList_Size(mods); i++)
     {
         PyObject *mod;
+        PyObject *weak = PyList_GetItemRef(mods, i);
 
-        if (PyWeakref_GetRef(PyList_GET_ITEM(mods, i), &mod) < 0)
+        if (weak == NULL)
+            return NULL;
+
+        int rc = PyWeakref_GetRef(weak, &mod);
+        Py_DECREF(weak);
+
+        if (rc < 0)
             return NULL;
 
         if (mod == NULL)

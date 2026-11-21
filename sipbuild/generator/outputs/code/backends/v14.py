@@ -1071,7 +1071,7 @@ f'''#define sipBadLengthForSlice            sipABI_{module_name}->api_bad_length
 #define sipGetDateTime                  sipABI_{module_name}->api_get_date_time
 #define sipGetFrameRef                  sipABI_{module_name}->api_get_frame_ref
 #define sipGetMethod                    sipABI_{module_name}->api_get_method
-#define sipGetModuleState(...)          sipABI_{module_name}->api_get_module_state(sipMS, SIP_MODULE_TOKEN_{module_name}, __VA_ARGS__)
+#define sipGetModuleState()             sipABI_{module_name}->api_get_module_state(sipMS, SIP_MODULE_TOKEN_{module_name})
 #define sipGetModuleStateByType(...)    sipABI_{module_name}->api_get_module_state_by_type(SIP_MODULE_TOKEN_{module_name}, __VA_ARGS__)
 #define sipGetTime                      sipABI_{module_name}->api_get_time
 #define sipMakeAbsolute(...)            sipABI_{module_name}->api_make_absolute(sipMS, __VA_ARGS__)
@@ -1283,9 +1283,9 @@ static sipSubClassConvertorSpec sipSubClassConvertors_{module.py_name}[] = {{
             sf.write(f'\nstatic const sipPluginDataSpec sipPluginsData_{klass_name}[] = {{\n')
 
             for plugin, data in plugins_data:
-                sf.write(f'    &{data},  SIP_PLUGIN_ID_{plugin.sip_key}}},\n')
+                sf.write(f'    {{SIP_PLUGIN_ID_{plugin.sip_key}, &{data}}},\n')
 
-            sf.write('    {0}\n}\n')
+            sf.write('    {0}\n};\n')
 
         # Generate the enums table.
         cls.g_enums_specifications(sf, spec, scope=klass)
@@ -1423,7 +1423,7 @@ static sipSubClassConvertorSpec sipSubClassConvertors_{module.py_name}[] = {{
                         selector=(klass.finalisation_code is not None)),
                 StructField('array_delete', 'array_delete_' + klass_name,
                         selector=(spec.c_bindings or klass.needs_array_helper)),
-                StructField('plugins_data', '&sipPluginsData_' + klass_name,
+                StructField('plugins_data', 'sipPluginsData_' + klass_name,
                         selector=plugins_data),
                 StructField('sizeof_class',
                         f'sizeof ({scoped_class_name(spec, klass)})',

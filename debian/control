@@ -15,6 +15,7 @@ Vcs-Browser: https://salsa.debian.org/python-team/packages/pyqt6-sip
 
 Package: python3-pyqt6.sip
 Architecture: any
+Provides: pyqt6-sip-abi-14
 Description: runtime module for Python extensions using SIP
  SIP is a collection of tools that makes it very easy to create Python bindings
  for C and C++ libraries.

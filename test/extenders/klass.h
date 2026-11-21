@@ -18,4 +18,21 @@ public:
     int int_attr;
 };
 
+class Cast
+{
+public:
+    Cast(int n) : int_attr(n) {}
+
+    operator Klass() const {
+        Klass klass;
+        klass.int_attr = int_attr;
+        return klass;
+    };
+
+private:
+    int int_attr;
+};
+
+struct WrappedValue { Klass value; };
+
 #endif

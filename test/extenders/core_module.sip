@@ -44,3 +44,30 @@ public:
 
     int operator+(int n /Constrained/) const;
 };
+
+
+%MappedType WrappedValue
+{
+%TypeHeaderCode
+#include "klass.h"
+%End
+
+%ConvertToTypeCode
+    if (sipIsErr == NULL)
+        return sipCanConvertToType(sipPy, sipType_Klass, SIP_NOT_NONE);
+
+    int state = 0;
+    auto *value = reinterpret_cast<Klass *>(sipForceConvertToType(sipPy,
+            sipType_Klass, NULL, SIP_NOT_NONE, &state, sipIsErr));
+    if (!value)
+        return 0;
+
+    *sipCppPtr = new WrappedValue{*value};
+    sipReleaseType(value, sipType_Klass, state);
+    return SIP_TEMPORARY;
+%End
+
+%ConvertFromTypeCode
+    return sipConvertFromNewType(new Klass(sipCpp->value), sipType_Klass, NULL);
+%End
+};

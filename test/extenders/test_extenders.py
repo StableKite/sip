@@ -86,3 +86,18 @@ def test_init_extender_docstrings(package, abi_package_version):
 
 def test_dir(package):
     assert 'thrice' in dir(package.core_module.NameSpace)
+
+
+def test_imported_mapped_type_uses_its_defining_module(package):
+    value = package.core_module.Klass()
+    value.set_int_attr(73)
+    wrapped = package.extras1_module.copy_value(value)
+    assert type(wrapped) is type(value)
+    assert wrapped.get_int_attr() == 73
+
+
+def test_type_from_the_second_imported_module(package):
+    value = package.extras1_module.Cast(79)
+    converted = package.extras2_module.convert_second_import(value)
+    assert type(converted) is package.core_module.Klass
+    assert converted.get_int_attr() == 79

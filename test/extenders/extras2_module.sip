@@ -8,7 +8,7 @@
 %MinimumABIVersion "13.0"
 %MinimumABIVersion "14.0"
 
-%Import core_module.sip
+%Import extras1_module.sip
 
 
 %ModuleHeaderCode
@@ -42,3 +42,10 @@ namespace NameSpace
 };
 
 int operator*(const Klass &lhs, int rhs);
+
+
+%ModuleHeaderCode
+inline Klass convert_second_import(const Cast &value) { return value; }
+%End
+
+Klass convert_second_import(const Cast &value);

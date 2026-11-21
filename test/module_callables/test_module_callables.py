@@ -98,3 +98,8 @@ def test_all_kwd_args_support(module):
 def test_manual_binding_exception_is_preserved(module):
     with pytest.raises(ValueError, match='manual binding error'):
         module.module_manual_error()
+
+
+def test_legacy_handwritten_error_is_preserved(module):
+    with pytest.raises(ValueError, match="legacy error flag"):
+        module.module_legacy_error()

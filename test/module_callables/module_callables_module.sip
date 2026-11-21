@@ -93,3 +93,10 @@ SIP_PYOBJECT module_manual_error() /NoArgParser/;
     PyErr_SetString(PyExc_ValueError, "manual binding error");
     return nullptr;
 %End
+
+
+SIP_PYOBJECT module_legacy_error();
+%MethodCode
+    PyErr_SetString(PyExc_ValueError, "legacy error flag");
+    sipIsErr = 1;
+%End

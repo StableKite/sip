@@ -216,7 +216,7 @@ f'''    if (sipIsTargetType(sipMS, {sc_type_ref}, target_cts))
         if iface_file.module is module:
             module_ref = 'SIP_TYPE_ID_LOCAL_MODULE'
         else:
-            module_ref = iface_file.module.module_nr
+            module_ref = f'({iface_file.module.module_nr} << 16)'
 
         if not is_namespace_extender(klass):
             sf.write(f'#define {_get_type_ref(klass)} (SIP_TYPE_ID_TYPE_CLASS|{external}{module_ref}|{iface_file.type_nr})\n')
@@ -691,7 +691,7 @@ static const sipInitExtenderSpec sipInitExtenders_{module.py_name}[] = {{
         if iface_file.module is module:
             module_ref = 'SIP_TYPE_ID_LOCAL_MODULE'
         else:
-            module_ref = iface_file.module.module_nr
+            module_ref = f'({iface_file.module.module_nr} << 16)'
 
         sf.write(
 f'''
@@ -802,6 +802,12 @@ extern const sipMappedTypeSpec sipTypeSpec_{module_name}_{mapped_type_name};
 '''            if (sipError == sipErrorNone)
             {
 ''')
+
+    @staticmethod
+    def need_deprecated_error_flag(code):
+        """ Recognise handwritten methods shared with older SIP ABIs. """
+
+        return is_used_in_code(code, 'sipIsErr')
 
     # Map GILUse values.
     _MAP_GIL_USED = {
@@ -1611,7 +1617,8 @@ static void sipVEH_{spec.module.py_name}_{virtual_error_handler.name}(sipModuleS
     def get_enum_ref_value(spec, enum):
         """ Return the value of an enum's reference. """
 
-        module_nr = 'SIP_TYPE_ID_LOCAL_MODULE' if enum.module is spec.module else enum.module.module_nr
+        module_nr = ('SIP_TYPE_ID_LOCAL_MODULE' if enum.module is spec.module
+                else f'({enum.module.module_nr} << 16)')
 
         return f'(SIP_TYPE_ID_TYPE_ENUM|{module_nr}|{enum.type_nr})'
 
@@ -2698,8 +2705,11 @@ def _g_variables_table(sf, spec, attrs, static_variables, scope=None):
                 module.next_key -= 1
 
             if scope is None or variable.is_static:
-                cpp_name = variable.fq_cpp_name.as_cpp
-                address = '&' + cpp_name
+                if variable.get_code is not None and (read_only or variable.set_code is not None):
+                    address = 'SIP_NULLPTR'
+                else:
+                    cpp_name = variable.fq_cpp_name.as_cpp
+                    address = '&' + cpp_name
             else:
                 need_sip_cpp = True
                 need_address_getter = (variable.get_code is None or

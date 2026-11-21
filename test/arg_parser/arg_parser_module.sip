@@ -30,7 +30,7 @@ inline int sum_bytes(const unsigned char *data, Py_ssize_t size)
 }
 
 inline Py_ssize_t echo_size(Py_ssize_t value) {return value;}
-inline Py_ssize_t echo_size_with_hook(Py_ssize_t value) {return value;}
+inline int echo_size_with_hook(int value) {return value;}
 
 class Operand
 {
@@ -139,8 +139,10 @@ int utf8_length(const char *text /Encoding="UTF-8"/);
 unsigned char encoded_byte(char character /Encoding="ASCII"/);
 
 int sum_bytes(const unsigned char *data /Array/, Py_ssize_t size /ArraySize/);
+%If (SIP_ABI_14 -)
 Py_ssize_t echo_size(Py_ssize_t value);
-Py_ssize_t echo_size_with_hook(Py_ssize_t value) /PostHook=_sip_test_optional_hook/;
+%End
+int echo_size_with_hook(int value) /PostHook=_sip_test_optional_hook/;
 
 class Operand
 {

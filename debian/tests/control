@@ -1,2 +1,2 @@
-Test-Command: python3 -I -m pytest -q test/test_buildable_abi.py
-Depends: @, python3-pytest
+Test-Command: python3 -I -m pytest -q test/arg_parser test/v13_standalone_sip_module --sip-abi-version 14
+Depends: @, build-essential, python3-dev, python3-pytest, python3-setuptools

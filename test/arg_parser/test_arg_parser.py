@@ -55,7 +55,9 @@ def test_byte_array_length(module):
     assert module.sum_bytes(bytes([0, 128, 255])) == 383
 
 
-def test_signed_size(module):
+def test_signed_size(request, module):
+    if request.config.getoption("sip_abi_version") < 14:
+        pytest.skip("Py_ssize_t argument parsing requires ABI 14")
     assert module.echo_size(-57) == -57
 
 
